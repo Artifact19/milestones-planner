@@ -1,5 +1,4 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import AuthPage from './components/AuthPage'
 import TopBar from './components/TopBar'
@@ -224,10 +223,8 @@ function TrackerMain() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <TrackerMain />
-      </AuthProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <TrackerMain />
+    </AuthProvider>
   )
 }

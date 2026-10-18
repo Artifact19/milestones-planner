@@ -4,7 +4,9 @@
   html, body, #root {
     min-height: 100%;
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    transition: background-color 0.25s ease, color 0.25s ease;
+    background-color: #F0F4EC;
+    color: #1C291D;
+    -webkit-font-smoothing: antialiased;
   }
 
   .font-display {
@@ -17,231 +19,163 @@
 }
 
 /* ============================================================
-   WARM BOTANICAL LIGHT THEME (Default Light)
-   Soft almond/parchment canvas, deep pine accents, terracotta & sage
+   SAGE + CREAM THEME (NATURÉLLE PALETTE)
+   #A8B5A0 (Sage Green)
+   #C7D3C1 (Pale Celadon)
+   #F2F5EF (Tinted Sage Cream)
+   #FAFAF7 (Warm Linen / Soft Off-White)
+   
+   Gentle on the eyes, warm paper-matte feel, zero harsh white glare.
    ============================================================ */
-:root, [data-theme="light"] {
-  --theme-bg-app: #F4EFE6;
-  --theme-bg-header: rgba(244, 239, 230, 0.96);
-  --theme-bg-card: rgba(255, 255, 255, 0.92);
-  --theme-bg-card-subtle: #FAF7F2;
-  --theme-border: #E2DACB;
-  --theme-text-main: #14261C;
-  --theme-text-muted: #607361;
-  --theme-accent-forest: #173324;
-  --theme-accent-terracotta: #8B4526;
-  --theme-accent-sage: #537748;
-  --theme-accent-wheat: #C69355;
+
+/* Main Canvas Background */
+.bg-\[\#F2EFE9\],
+.bg-\[\#F2EFE9\]\/90,
+.bg-\[\#F2EFE9\]\/95 {
+  background-color: #F0F4EC !important;
 }
 
-body[data-theme="light"], html[data-theme="light"] body {
-  background-color: #F4EFE6;
-  color: #14261C;
+/* Sticky Header Bar (Frosted Tinted Cream) */
+header {
+  background-color: rgba(240, 244, 236, 0.95) !important;
+  border-color: #C7D3C1 !important;
 }
 
-/* Light theme overrides for natural harmony */
-[data-theme="light"] .bg-\[\#F2EFE9\] {
-  background-color: #F4EFE6 !important;
-}
-[data-theme="light"] .bg-\[\#FAF8F5\] {
-  background-color: #FAF7F2 !important;
-}
-[data-theme="light"] .border-\[\#E5E0D8\] {
-  border-color: #E2DACB !important;
-}
-[data-theme="light"] .text-\[\#1C1917\] {
-  color: #14261C !important;
-}
-[data-theme="light"] .text-\[\#78716C\] {
-  color: #607361 !important;
-}
-[data-theme="light"] .text-\[\#57534E\],
-[data-theme="light"] .text-\[\#44403C\] {
-  color: #384A3B !important;
-}
-[data-theme="light"] .bg-\[\#1C1917\] {
-  background-color: #173324 !important;
-}
-[data-theme="light"] .text-\[\#224A32\] {
-  color: #3B6133 !important;
-}
-[data-theme="light"] .text-\[\#695431\] {
-  color: #7E3C1F !important;
-}
-[data-theme="light"] .border-\[\#E8DAC5\] {
-  border-color: #DFC8B2 !important;
-}
-[data-theme="light"] .bg-\[\#FAF4EB\],
-[data-theme="light"] .bg-\[\#F4ECE1\] {
-  background-color: #F6ECE1 !important;
-}
-[data-theme="light"] .bg-\[\#EBF2EC\] {
-  background-color: #E6F0E4 !important;
-}
-[data-theme="light"] .border-\[\#CFE1D3\] {
-  border-color: #BFD6BD !important;
+/* Cards & Raised Surfaces (Warm Linen #FAFAF7 - never pure blinding #FFF) */
+.bg-white,
+.bg-white\/75,
+.bg-white\/80,
+.bg-white\/90,
+.bg-white\/92,
+.bg-white\/95 {
+  background-color: #FAFAF7 !important;
+  border-color: #CBD8C5 !important;
+  color: #1C291D !important;
+  box-shadow: 0 4px 20px -4px rgba(44, 62, 45, 0.05), 0 1px 3px rgba(44, 62, 45, 0.03) !important;
 }
 
-
-/* ============================================================
-   DEEP FOREST DARK THEME (Inspired by user uploaded palette)
-   Deep velvety pine canvas, moss cards, warm terracotta & golden wheat
-   ============================================================ */
-:root[data-theme="dark"], [data-theme="dark"], .dark {
-  --theme-bg-app: #0D1C14;
-  --theme-bg-header: rgba(13, 28, 20, 0.95);
-  --theme-bg-card: rgba(20, 42, 31, 0.92);
-  --theme-bg-card-subtle: #162E22;
-  --theme-border: #264A36;
-  --theme-text-main: #F4EFE6;
-  --theme-text-muted: #8EA58E;
-  --theme-accent-forest: #254A35;
-  --theme-accent-terracotta: #8B4526;
-  --theme-accent-sage: #668D59;
-  --theme-accent-wheat: #DEB47E;
+/* Inset Panels & Sub-Pills (Soft Celadon Cream #E7EEE3) */
+.bg-\[\#FAF8F5\],
+.bg-\[\#FAF7F2\] {
+  background-color: #E7EEE3 !important;
+  border-color: #C7D3C1 !important;
 }
 
-body[data-theme="dark"], html[data-theme="dark"] body {
-  background-color: #0D1C14 !important;
-  color: #F4EFE6 !important;
+/* Primary Action Buttons & Dark Badges (Deep Sage Forest #3D5640) */
+.bg-\[\#1C1917\] {
+  background-color: #3D5640 !important;
+  border-color: #3D5640 !important;
+  color: #FAFAF7 !important;
 }
 
-/* Background canvas */
-[data-theme="dark"] .bg-\[\#F2EFE9\],
-[data-theme="dark"] .bg-\[\#F2EFE9\]\/90,
-[data-theme="dark"] .bg-\[\#F2EFE9\]\/95 {
-  background-color: #0D1C14 !important;
+.hover\:bg-black:hover,
+.bg-\[\#1C1917\]:hover {
+  background-color: #304432 !important;
 }
 
-/* Header & surfaces */
-[data-theme="dark"] header {
-  background-color: rgba(13, 28, 20, 0.96) !important;
-  border-color: #244633 !important;
+/* Borders across the app */
+.border-\[\#E5E0D8\],
+.border-\[\#E5E0D8\]\/80,
+.border-\[\#E5E0D8\]\/60 {
+  border-color: #CBD8C5 !important;
 }
 
-/* Cards & containers */
-[data-theme="dark"] .bg-white,
-[data-theme="dark"] .bg-white\/75,
-[data-theme="dark"] .bg-white\/80,
-[data-theme="dark"] .bg-white\/90,
-[data-theme="dark"] .bg-white\/95 {
-  background-color: rgba(20, 42, 31, 0.92) !important;
-  border-color: #264A36 !important;
-  color: #F4EFE6 !important;
+/* Text Hierarchy */
+.text-\[\#1C1917\] {
+  color: #1C291D !important;
 }
 
-/* Subtle cards & secondary pills */
-[data-theme="dark"] .bg-\[\#FAF8F5\] {
-  background-color: #162E22 !important;
-  border-color: #274D38 !important;
-  color: #F4EFE6 !important;
+.text-\[\#44403C\],
+.text-\[\#57534E\] {
+  color: #354937 !important;
 }
 
-/* Primary buttons & active badges (Warm Terracotta from palette!) */
-[data-theme="dark"] .bg-\[\#1C1917\] {
-  background-color: #8B4526 !important;
-  color: #FFFFFF !important;
-  border-color: #8B4526 !important;
-}
-[data-theme="dark"] .hover\:bg-black:hover {
-  background-color: #72361B !important;
+.text-\[\#78716C\] {
+  color: #556B57 !important;
 }
 
-/* Borders */
-[data-theme="dark"] .border-\[\#E5E0D8\],
-[data-theme="dark"] .border-\[\#E5E0D8\]\/80,
-[data-theme="dark"] .border-\[\#E5E0D8\]\/60 {
-  border-color: #254734 !important;
+.text-stone-500,
+.text-stone-400 {
+  color: #6C816E !important;
 }
 
-/* Typography */
-[data-theme="dark"] .text-\[\#1C1917\] {
-  color: #F4EFE6 !important;
-}
-[data-theme="dark"] .text-\[\#44403C\],
-[data-theme="dark"] .text-\[\#57534E\] {
-  color: #C8DAC7 !important;
-}
-[data-theme="dark"] .text-\[\#78716C\] {
-  color: #8CA38C !important;
-}
-[data-theme="dark"] .text-stone-500,
-[data-theme="dark"] .text-stone-400 {
-  color: #789178 !important;
-}
-[data-theme="dark"] .text-stone-300 {
-  color: #2B4E38 !important;
+.text-stone-300 {
+  color: #B4C5B2 !important;
 }
 
-/* Inputs & textareas */
-[data-theme="dark"] input,
-[data-theme="dark"] textarea,
-[data-theme="dark"] select {
-  background-color: #14291E !important;
-  color: #F4EFE6 !important;
-  border-color: #2D543D !important;
-}
-[data-theme="dark"] input::placeholder,
-[data-theme="dark"] textarea::placeholder {
-  color: #6B826B !important;
+/* Inputs, Textareas & Form Selects */
+input, textarea, select {
+  background-color: #F4F7F1 !important;
+  border-color: #C7D3C1 !important;
+  color: #1C291D !important;
 }
 
-/* Success / Completion badges (Natural Sage Green) */
-[data-theme="dark"] .bg-\[\#EBF2EC\] {
-  background-color: #1A3827 !important;
-  border-color: #2F6144 !important;
-}
-[data-theme="dark"] .border-\[\#CFE1D3\] {
-  border-color: #2F6144 !important;
-}
-[data-theme="dark"] .text-\[\#224A32\] {
-  color: #77B68E !important;
+input::placeholder, textarea::placeholder {
+  color: #7D927E !important;
 }
 
-/* Sunday & Retro Intentions (Warm Chestnut & Golden Wheat from palette) */
-[data-theme="dark"] .bg-\[\#FAF4EB\],
-[data-theme="dark"] .bg-\[\#F4ECE1\] {
-  background-color: #281B13 !important;
-  border-color: #57331F !important;
-}
-[data-theme="dark"] .border-\[\#E8DAC5\] {
-  border-color: #57331F !important;
-}
-[data-theme="dark"] .text-\[\#695431\] {
-  color: #DEB47E !important;
+/* Completion Badges (Soothing Sage Tone #A8B5A0) */
+.bg-\[\#EBF2EC\] {
+  background-color: #DEE8DA !important;
+  border-color: #B2C7AE !important;
 }
 
-/* Hover effects */
-[data-theme="dark"] .hover\:bg-\[\#FAF8F5\]:hover,
-[data-theme="dark"] .hover\:bg-white:hover {
-  background-color: #1C3A2B !important;
-}
-[data-theme="dark"] .hover\:border-\[\#1C1917\]:hover {
-  border-color: #8B4526 !important;
+.border-\[\#CFE1D3\] {
+  border-color: #B2C7AE !important;
 }
 
-/* Progress bar */
-[data-theme="dark"] .bg-\[\#224A32\] {
-  background-color: #5E9B75 !important;
+.text-\[\#224A32\] {
+  color: #2D4830 !important;
 }
 
-/* Floating bottom dock */
-[data-theme="dark"] .shadow-\[0_8px_30px_rgb\(0\,0\,0\,0\.12\)\] {
-  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.6) !important;
+/* Sunday & Retro Intentions (Warm Sand Ochre from palette balance) */
+.bg-\[\#FAF4EB\],
+.bg-\[\#F4ECE1\] {
+  background-color: #F2EDE2 !important;
+  border-color: #DACDBE !important;
 }
 
-/* Custom scrollbars in dark mode */
-[data-theme="dark"] ::-webkit-scrollbar {
+.border-\[\#E8DAC5\] {
+  border-color: #DACDBE !important;
+}
+
+.text-\[\#695431\] {
+  color: #6B4E26 !important;
+}
+
+/* Button & Pill Hover States */
+.hover\:bg-\[\#FAF8F5\]:hover,
+.hover\:bg-white:hover {
+  background-color: #E2ECE0 !important;
+}
+
+.hover\:border-\[\#1C1917\]:hover {
+  border-color: #3D5640 !important;
+}
+
+/* Architectural Progress bar */
+.bg-\[\#224A32\] {
+  background-color: #4A6B4E !important;
+}
+
+/* Selection */
+::selection {
+  background-color: #C7D3C1 !important;
+  color: #1C291D !important;
+}
+
+/* Smooth custom scrollbars */
+::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
-[data-theme="dark"] ::-webkit-scrollbar-track {
-  background: #0D1C14;
+::-webkit-scrollbar-track {
+  background: #F0F4EC;
 }
-[data-theme="dark"] ::-webkit-scrollbar-thumb {
-  background: #254734;
+::-webkit-scrollbar-thumb {
+  background: #C7D3C1;
   border-radius: 9999px;
 }
-[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
-  background: #3B6B50;
+::-webkit-scrollbar-thumb:hover {
+  background: #A8B5A0;
 }

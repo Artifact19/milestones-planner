@@ -14,19 +14,15 @@ import {
   LogOut,
   Loader2,
   Printer,
-  HelpCircle,
-  Sun,
-  Moon
+  HelpCircle
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useAnalytics } from '../hooks/useAnalytics'
-import { useTheme } from '../context/ThemeContext'
 import { formatDuration } from '../utils/dateUtils'
 import { compileReportData, printExecutiveReport } from '../utils/reportGenerator'
 
 export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
   const { user, signOut, updateAvatar } = useAuth()
-  const { theme, toggleTheme } = useTheme()
   const {
     milestones,
     monthlyList,
@@ -660,24 +656,6 @@ export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
                 <span>Feature Tour</span>
               </button>
             )}
-
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FAF8F5] hover:bg-white border border-[#E5E0D8] text-[#57534E] hover:text-[#1C1917] text-xs font-medium transition-colors cursor-pointer"
-            >
-              {theme === 'dark' ? (
-                <>
-                  <Sun className="w-3.5 h-3.5 text-[#DEB47E]" />
-                  <span>Light Mode</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="w-3.5 h-3.5 text-[#173324]" />
-                  <span>Forest Dark</span>
-                </>
-              )}
-            </button>
           </div>
 
           <button
