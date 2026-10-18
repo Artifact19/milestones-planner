@@ -38,15 +38,15 @@ export default function TopBar({
   }
 
   return (
-    <header className="sticky top-0 z-20 backdrop-blur-md bg-[#F2EFE9]/90 border-b border-[#E5E0D8]/80 transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-y-3 gap-x-4">
-        {/* Left: Mobile menu toggle + Monogram Brand */}
-        <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-20 backdrop-blur-md bg-[#F2EFE9]/95 border-b border-[#E5E0D8]/80 transition-colors">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 lg:gap-4 flex-nowrap overflow-x-auto no-scrollbar">
+        {/* Left: Mobile menu toggle + Brand Logo */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             type="button"
             onClick={onToggleSidebar}
             aria-label="Toggle navigation menu"
-            className="md:hidden p-2 rounded-full bg-white border border-[#E5E0D8] text-[#57534E] hover:text-[#1C1917] shadow-sm cursor-pointer"
+            className="md:hidden p-1.5 rounded-full bg-white border border-[#E5E0D8] text-[#57534E] hover:text-[#1C1917] shadow-sm cursor-pointer"
           >
             <Menu className="w-4 h-4" />
           </button>
@@ -55,29 +55,29 @@ export default function TopBar({
             type="button"
             onClick={onGoHome}
             title="Go to Homepage (Today)"
-            className="flex items-center gap-3 text-left group cursor-pointer"
+            className="flex items-center gap-2.5 text-left group cursor-pointer"
           >
             {/* Website Icon */}
-            <div className="w-9 h-9 rounded-xl bg-white border border-[#E5E0D8] p-1 flex items-center justify-center shadow-sm group-hover:border-[#1C1917] transition-all overflow-hidden shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-white border border-[#E5E0D8] p-1 flex items-center justify-center shadow-sm group-hover:border-[#1C1917] transition-all overflow-hidden shrink-0">
               <img
                 src="/favicon.png"
                 alt="Milestones Website Icon"
                 className="w-full h-full object-contain [image-rendering:pixelated]"
               />
             </div>
-            <div>
-              <span className="font-semibold tracking-tight text-[#1C1917] text-sm block">
+            <div className="hidden sm:block">
+              <span className="font-semibold tracking-tight text-[#1C1917] text-xs font-sans block leading-none">
                 MILESTONES
               </span>
-              <span className="text-[10px] uppercase tracking-widest text-[#78716C] block -mt-0.5 font-medium">
+              <span className="text-[9px] uppercase tracking-widest text-[#78716C] block font-medium mt-0.5">
                 WEEKLY PLANNER
               </span>
             </div>
           </button>
         </div>
 
-        {/* Center: Week Switcher & Completion Pill */}
-        <div className="flex flex-wrap items-center gap-2.5 order-3 md:order-2">
+        {/* Center: Week Switcher & Unified Stats Badge */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           <WeekSwitcher
             weekStart={weekStart}
             onPrevWeek={onPrevWeek}
@@ -85,75 +85,71 @@ export default function TopBar({
             onCurrentWeek={onCurrentWeek}
           />
 
-          {/* Minimalist Completion Badge */}
+          {/* Unified Compact Completion & Time Budget Pill */}
           <div
-            className={`font-mono text-xs font-semibold px-3 py-1.5 rounded-full border shadow-sm transition-all ${badgeClasses}`}
+            className={`font-mono text-xs font-semibold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border shadow-sm transition-all whitespace-nowrap flex items-center gap-1.5 ${badgeClasses}`}
           >
-            [ {percent}% | {completed}/{total} Done ]
+            <span>[ {percent}% · {completed}/{total} ]</span>
+            {totalBudgetedMinutes > 0 && (
+              <>
+                <span className="text-stone-300">|</span>
+                <Clock className="w-3.5 h-3.5 text-[#224A32] shrink-0" />
+                <span>{formatDuration(totalBudgetedMinutes)}</span>
+              </>
+            )}
           </div>
-
-          {/* Total Weekly Time Budgeted */}
-          {totalBudgetedMinutes > 0 && (
-            <div className="hidden xl:flex items-center gap-1 font-mono text-xs px-3 py-1.5 rounded-full bg-white/80 border border-[#E5E0D8] text-[#57534E] shadow-sm">
-              <Clock className="w-3.5 h-3.5 text-[#224A32]" />
-              <span>{formatDuration(totalBudgetedMinutes)} week</span>
-            </div>
-          )}
         </div>
 
-        {/* Right: Homepage / Today pill + User + Logout */}
-        <div className="flex items-center gap-2 sm:gap-3 order-2 md:order-3">
+        {/* Right: Actions (Today, Reports, Tour, Profile, Logout) */}
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <button
             type="button"
             onClick={onGoHome}
             title="Go to Today (Homepage)"
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#1C1917] hover:bg-black text-[#FAF8F5] text-xs font-medium shadow-md shadow-stone-900/10 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-[#1C1917] hover:bg-black text-[#FAF8F5] text-xs font-medium shadow-sm transition-all cursor-pointer whitespace-nowrap"
           >
             <Home className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Today</span>
+            <span className="hidden xl:inline">Today</span>
           </button>
 
-          {/* Quick Reports Download Trigger */}
           <button
             type="button"
             onClick={onOpenReport}
             title="Download Reports (Weekly, Monthly, Yearly)"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] hover:border-[#1C1917] text-[#1C1917] text-xs font-medium transition-all shadow-sm cursor-pointer group"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] hover:border-[#1C1917] text-[#1C1917] text-xs font-medium transition-all shadow-sm cursor-pointer group whitespace-nowrap"
           >
             <Download className="w-3.5 h-3.5 text-[#57534E] group-hover:text-[#1C1917]" />
-            <span className="hidden sm:inline">Reports</span>
+            <span className="hidden xl:inline">Reports</span>
           </button>
 
-          {/* Feature Guide & Tour Trigger */}
           <button
             type="button"
             onClick={onOpenTutorial}
             title="App Tutorial & Feature Guide"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] hover:border-[#1C1917] text-[#1C1917] text-xs font-medium transition-all shadow-sm cursor-pointer group"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] hover:border-[#1C1917] text-[#1C1917] text-xs font-medium transition-all shadow-sm cursor-pointer group whitespace-nowrap"
           >
             <HelpCircle className="w-3.5 h-3.5 text-[#57534E] group-hover:text-[#1C1917]" />
-            <span className="hidden sm:inline">Tour</span>
+            <span className="hidden xl:inline">Tour</span>
           </button>
 
-          {/* Profile & Analytics Trigger Button */}
           <button
             type="button"
             onClick={onOpenProfile}
             title="Profile & Milestone Analytics"
-            className="flex items-center gap-1.5 p-1 pl-1.5 pr-2.5 rounded-full bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] hover:border-[#1C1917] text-[#1C1917] text-xs font-medium transition-all shadow-sm cursor-pointer group"
+            className="flex items-center gap-1.5 p-1 pl-1.5 pr-2 sm:pr-2.5 rounded-full bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] hover:border-[#1C1917] text-[#1C1917] text-xs font-medium transition-all shadow-sm cursor-pointer group whitespace-nowrap"
           >
             {avatarUrl ? (
               <img
                 src={avatarUrl}
                 alt="Profile"
-                className="w-6 h-6 rounded-full object-cover border border-[#E5E0D8]"
+                className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover border border-[#E5E0D8]"
               />
             ) : (
-              <div className="w-6 h-6 rounded-full bg-[#1C1917] text-[#FAF8F5] flex items-center justify-center text-[10px] font-bold font-serif shadow-sm">
+              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#1C1917] text-[#FAF8F5] flex items-center justify-center text-[10px] font-bold font-serif shadow-sm">
                 {userInitial}
               </div>
             )}
-            <span className="hidden sm:inline text-xs font-semibold text-[#44403C] group-hover:text-[#1C1917]">
+            <span className="hidden xl:inline text-xs font-semibold text-[#44403C] group-hover:text-[#1C1917]">
               Profile
             </span>
             <BarChart3 className="w-3.5 h-3.5 text-[#78716C] group-hover:text-[#1C1917] transition-colors" />
@@ -163,10 +159,11 @@ export default function TopBar({
             type="button"
             onClick={onSignOut}
             aria-label="Sign out"
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] text-[#57534E] hover:text-[#1C1917] text-xs font-medium transition-colors shadow-sm cursor-pointer"
+            title="Sign out"
+            className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-full bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] text-[#57534E] hover:text-[#1C1917] text-xs font-medium transition-colors shadow-sm cursor-pointer whitespace-nowrap"
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Log out</span>
+            <span className="hidden xl:inline">Log out</span>
           </button>
         </div>
       </div>
