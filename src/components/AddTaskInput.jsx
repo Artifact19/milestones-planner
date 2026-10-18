@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   Plus,
   Clock,
@@ -25,6 +25,34 @@ export default function AddTaskInput({
   const [isRecurring, setIsRecurring] = useState(false)
   const [selectedDays, setSelectedDays] = useState([1, 2, 3, 4, 5, 6]) // Default: Mon to Sat
   const inputRef = useRef(null)
+  const containerRef = useRef(null)
+
+  // Auto-close options popup when clicking outside in empty space or pressing Escape
+  useEffect(() => {
+    if (!showOptions) return
+
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setShowOptions(false)
+      }
+    }
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowOptions(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [showOptions])
 
   const handleDurationChange = (newDuration) => {
     setDuration(newDuration)
@@ -79,6 +107,7 @@ export default function AddTaskInput({
 
   return (
     <form
+      ref={containerRef}
       onSubmit={handleSubmit}
       className="bg-white border border-[#E5E0D8] focus-within:border-[#1C1917] rounded-3xl p-3.5 shadow-[0_10px_30px_-5px_rgba(28,25,23,0.04)] transition-all"
     >
