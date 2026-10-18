@@ -1,6 +1,7 @@
-import { LogOut, Menu, Clock, Home, BarChart3, Download, HelpCircle } from 'lucide-react'
+import { LogOut, Menu, Clock, Home, BarChart3, Download, HelpCircle, Sun, Moon } from 'lucide-react'
 import WeekSwitcher from './WeekSwitcher'
 import { formatDuration } from '../utils/dateUtils'
+import { useTheme } from '../context/ThemeContext'
 
 export default function TopBar({
   user,
@@ -16,6 +17,7 @@ export default function TopBar({
   onOpenReport,
   onOpenTutorial
 }) {
+  const { theme, toggleTheme } = useTheme()
   const { total, completed, percent, totalBudgetedMinutes } = stats
 
   const avatarUrl =
@@ -130,6 +132,31 @@ export default function TopBar({
           >
             <HelpCircle className="w-3.5 h-3.5 text-[#57534E] group-hover:text-[#1C1917]" />
             <span className="hidden xl:inline">Tour</span>
+          </button>
+
+          {/* Botanical Palette Theme Toggle */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            title={
+              theme === 'dark'
+                ? 'Switch to Warm Botanical Light mode'
+                : 'Switch to Deep Forest Dark mode'
+            }
+            aria-label="Toggle theme"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] hover:border-[#1C1917] text-[#1C1917] text-xs font-medium transition-all shadow-sm cursor-pointer group whitespace-nowrap"
+          >
+            {theme === 'dark' ? (
+              <>
+                <Sun className="w-3.5 h-3.5 text-[#DEB47E] group-hover:rotate-45 transition-transform" />
+                <span className="hidden xl:inline">Light</span>
+              </>
+            ) : (
+              <>
+                <Moon className="w-3.5 h-3.5 text-[#173324] group-hover:-rotate-12 transition-transform" />
+                <span className="hidden xl:inline">Forest</span>
+              </>
+            )}
           </button>
 
           <button
