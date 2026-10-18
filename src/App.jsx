@@ -56,6 +56,7 @@ function TrackerMain() {
     moveMilestone,
     deleteMilestone,
     deleteSeries,
+    completeSeriesInWeek,
     stats,
     getDayStats
   } = useMilestones(weekStart)
@@ -180,11 +181,13 @@ function TrackerMain() {
               selectedDay={selectedDay}
               tasks={currentTasks}
               weeklyTasks={weeklyTasks}
+              allMilestones={milestones}
               dayStats={currentDayStats}
               onToggle={toggleMilestone}
               onEdit={updateMilestone}
               onDelete={deleteMilestone}
               onDeleteSeries={deleteSeries}
+              onCompleteSeries={completeSeriesInWeek}
               onMove={moveMilestone}
               onAdd={addMilestone}
               onAddBatch={addBatchMilestones}

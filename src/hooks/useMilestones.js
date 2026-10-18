@@ -331,7 +331,43 @@ export function useMilestones(weekStart) {
     [milestones, weekStartDateString, user]
   )
 
-  // Overall stats
+  // Complete all tasks in a series for the current week (master milestone + all daily subtasks)
+  const completeSeriesInWeek = useCallback(
+    async (seriesId) => {
+      if (!seriesId || !user) return
+
+      let previousMilestones = null
+
+      setMilestones((prev) => {
+        previousMilestones = prev
+        return prev.map((item) => {
+          if (item.series_id === seriesId) {
+            return { ...item, is_completed: true }
+          }
+          return item
+        })
+      })
+      setError(null)
+
+      try {
+        const { error: updateError } = await supabase
+          .from('milestones')
+          .update({ is_completed: true })
+          .eq('series_id', seriesId)
+          .eq('week_start_date', weekStartDateString)
+
+        if (updateError) {
+          if (previousMilestones) setMilestones(previousMilestones)
+          setError(`Could not complete series tasks: ${updateError.message}`)
+        }
+      } catch (err) {
+        if (previousMilestones) setMilestones(previousMilestones)
+        setError(`Could not complete series tasks: ${err.message || 'Network error'}`)
+      }
+    },
+    [user, weekStartDateString]
+  )
+
   const stats = useMemo(() => {
     const total = milestones.length
     const completed = milestones.filter((m) => m.is_completed).length
@@ -410,6 +446,7 @@ export function useMilestones(weekStart) {
     moveMilestone,
     deleteMilestone,
     deleteSeries,
+    completeSeriesInWeek,
     stats,
     getDayStats
   }

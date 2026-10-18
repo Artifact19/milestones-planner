@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Clock,
   Coffee,
@@ -17,6 +17,7 @@ import {
 import TaskItem from './TaskItem'
 import AddTaskInput from './AddTaskInput'
 import SundayCard from './SundayCard'
+import MasterCompletionModal from './MasterCompletionModal'
 import {
   DAY_NAMES,
   addDays,
@@ -32,11 +33,13 @@ export default function FocusedDayView({
   selectedDay,
   tasks = [],
   weeklyTasks = [],
+  allMilestones = [],
   dayStats,
   onToggle,
   onEdit,
   onDelete,
   onDeleteSeries,
+  onCompleteSeries,
   onMove,
   onAdd,
   onAddBatch,
@@ -63,6 +66,48 @@ export default function FocusedDayView({
   const isOverSundayStudy = careerFocusMins > 240
 
   const completedWeeklyCount = weeklyTasks.filter((t) => t.is_completed).length
+
+  // Sub-tasks handling for master milestones
+  const [pendingMasterCompletion, setPendingMasterCompletion] = useState(null)
+
+  const getSubTasksForTask = (task) => {
+    if (!task?.series_id || task.day_of_week !== 0) return []
+    return allMilestones
+      .filter((m) => m.series_id === task.series_id && m.day_of_week > 0)
+      .sort((a, b) => a.day_of_week - b.day_of_week)
+  }
+
+  const handleMasterToggleRequest = (task, subTasks) => {
+    if (task.is_completed) {
+      onToggle(task.id)
+      return
+    }
+
+    const hasIncomplete = subTasks && subTasks.some((st) => !st.is_completed)
+    if (hasIncomplete) {
+      setPendingMasterCompletion({ task, subTasks })
+    } else {
+      onToggle(task.id)
+    }
+  }
+
+  const handlePreserveHistory = () => {
+    if (pendingMasterCompletion?.task) {
+      onToggle(pendingMasterCompletion.task.id)
+    }
+    setPendingMasterCompletion(null)
+  }
+
+  const handleCompleteAll = () => {
+    if (pendingMasterCompletion?.task) {
+      if (onCompleteSeries && pendingMasterCompletion.task.series_id) {
+        onCompleteSeries(pendingMasterCompletion.task.series_id)
+      } else {
+        onToggle(pendingMasterCompletion.task.id)
+      }
+    }
+    setPendingMasterCompletion(null)
+  }
 
   return (
     <div className="flex-1 flex flex-col gap-6 min-w-0 pb-16">
@@ -294,7 +339,10 @@ export default function FocusedDayView({
             <TaskItem
               key={task.id}
               task={task}
+              subTasks={getSubTasksForTask(task)}
               onToggle={onToggle}
+              onMasterToggleRequest={handleMasterToggleRequest}
+              onToggleSubTask={onToggle}
               onEdit={onEdit}
               onDelete={onDelete}
               onDeleteSeries={onDeleteSeries}
@@ -339,7 +387,10 @@ export default function FocusedDayView({
                 <TaskItem
                   key={task.id}
                   task={task}
+                  subTasks={getSubTasksForTask(task)}
                   onToggle={onToggle}
+                  onMasterToggleRequest={handleMasterToggleRequest}
+                  onToggleSubTask={onToggle}
                   onEdit={onEdit}
                   onDelete={onDelete}
                   onDeleteSeries={onDeleteSeries}
@@ -374,6 +425,16 @@ export default function FocusedDayView({
           }
         />
       </div>
+
+      {/* Option 1: Confirmation Prompt for Master Milestone Completion */}
+      <MasterCompletionModal
+        isOpen={Boolean(pendingMasterCompletion)}
+        onClose={() => setPendingMasterCompletion(null)}
+        task={pendingMasterCompletion?.task}
+        subTasks={pendingMasterCompletion?.subTasks}
+        onPreserveHistory={handlePreserveHistory}
+        onCompleteAll={handleCompleteAll}
+      />
     </div>
   )
 }
