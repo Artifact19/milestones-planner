@@ -13,6 +13,7 @@ import {
 import { formatDuration, getDefaultBreakMinutes, TAG_OPTIONS } from '../utils/dateUtils'
 
 export default function AddTaskInput({
+  selectedDay = null,
   onAdd,
   onAddBatch,
   placeholder = 'Add a task… (press Enter)'
@@ -23,9 +24,18 @@ export default function AddTaskInput({
   const [selectedTag, setSelectedTag] = useState('career')
   const [showOptions, setShowOptions] = useState(false)
   const [isRecurring, setIsRecurring] = useState(false)
-  const [selectedDays, setSelectedDays] = useState([1, 2, 3, 4, 5, 6]) // Default: Mon to Sat
+  const [selectedDays, setSelectedDays] = useState(() =>
+    selectedDay === 0 ? [0, 1, 2, 3, 4, 5, 6] : [1, 2, 3, 4, 5, 6]
+  )
   const inputRef = useRef(null)
   const containerRef = useRef(null)
+
+  // When viewing Weekly Master (day 0), ensure day 0 is selected for recurring additions
+  useEffect(() => {
+    if (selectedDay === 0) {
+      setSelectedDays((prev) => (prev.includes(0) ? prev : [0, ...prev]))
+    }
+  }, [selectedDay])
 
   // Auto-close options popup when clicking outside in empty space or pressing Escape
   useEffect(() => {
@@ -70,7 +80,11 @@ export default function AddTaskInput({
   }
 
   const handleApplyPreset = (presetDays) => {
-    setSelectedDays(presetDays)
+    if (selectedDay === 0 && !presetDays.includes(0)) {
+      setSelectedDays([0, ...presetDays])
+    } else {
+      setSelectedDays(presetDays)
+    }
   }
 
   const handleSubmit = (e) => {
@@ -96,6 +110,7 @@ export default function AddTaskInput({
   const totalTime = duration + breakMinutes
 
   const dayButtons = [
+    { num: 0, label: 'Wk', name: 'Weekly Master' },
     { num: 1, label: 'M', name: 'Mon' },
     { num: 2, label: 'T', name: 'Tue' },
     { num: 3, label: 'W', name: 'Wed' },
@@ -214,9 +229,18 @@ export default function AddTaskInput({
                   >
                     All 7 Days
                   </button>
+                  {selectedDay === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDays([0])}
+                      className="px-2.5 py-0.5 rounded-full bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] text-[#57534E] text-[11px] cursor-pointer shadow-sm"
+                    >
+                      Master Only
+                    </button>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex flex-wrap items-center gap-1">
                   {dayButtons.map((d) => {
                     const isChecked = selectedDays.includes(d.num)
                     return (

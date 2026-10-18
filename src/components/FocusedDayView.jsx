@@ -362,6 +362,7 @@ export default function FocusedDayView({
       {/* Floating Bottom Add Task Dock */}
       <div className="sticky bottom-4 z-20 mt-auto pt-2 drop-shadow-xl">
         <AddTaskInput
+          selectedDay={selectedDay}
           onAdd={(title, duration, breakMins, tag) =>
             onAdd(selectedDay, title, duration, breakMins, tag)
           }
