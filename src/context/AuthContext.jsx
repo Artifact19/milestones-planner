@@ -8,8 +8,15 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false)
+
   useEffect(() => {
     let mounted = true
+
+    // Check if user landed on the page with a recovery hash
+    if (typeof window !== 'undefined' && window.location.hash.includes('type=recovery')) {
+      setIsPasswordRecovery(true)
+    }
 
     // Restore existing session from storage
     async function initSession() {
@@ -32,7 +39,10 @@ export function AuthProvider({ children }) {
     initSession()
 
     // Listen to real-time auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsPasswordRecovery(true)
+      }
       setSession(newSession)
       setUser(newSession?.user ?? null)
       setLoading(false)
@@ -53,7 +63,25 @@ export function AuthProvider({ children }) {
   }
 
   const signOut = async () => {
+    setIsPasswordRecovery(false)
     return await supabase.auth.signOut()
+  }
+
+  const resetPassword = async (email) => {
+    return await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/` : undefined
+    })
+  }
+
+  const updatePassword = async (newPassword) => {
+    const res = await supabase.auth.updateUser({ password: newPassword })
+    if (!res.error) {
+      setIsPasswordRecovery(false)
+      if (typeof window !== 'undefined' && window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname)
+      }
+    }
+    return res
   }
 
   const updateAvatar = async (avatarUrl) => {
@@ -95,7 +123,19 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut, updateAvatar }}>
+    <AuthContext.Provider value={{
+      user,
+      session,
+      loading,
+      signUp,
+      signIn,
+      signOut,
+      updateAvatar,
+      resetPassword,
+      updatePassword,
+      isPasswordRecovery,
+      setIsPasswordRecovery
+    }}>
       {children}
     </AuthContext.Provider>
   )

@@ -13,7 +13,7 @@ import { getMonday, addWeeks, getTodayDayNumber } from './utils/dateUtils'
 import { X, AlertTriangle, Loader2 } from 'lucide-react'
 
 function TrackerMain() {
-  const { user, signOut } = useAuth()
+  const { user, signOut, isPasswordRecovery } = useAuth()
   const [weekStart, setWeekStart] = useState(() => getMonday(new Date()))
   const [selectedDay, setSelectedDay] = useState(() => getTodayDayNumber())
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -115,7 +115,7 @@ function TrackerMain() {
     return getDayStats(selectedDay)
   }, [getDayStats, selectedDay])
 
-  if (!user) {
+  if (!user || isPasswordRecovery) {
     return <AuthPage />
   }
 
