@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { Analytics } from '@vercel/analytics/react'
 import AuthPage from './components/AuthPage'
 import TopBar from './components/TopBar'
 import DaySidebar from './components/DaySidebar'
@@ -228,6 +229,7 @@ export default function App() {
   return (
     <AuthProvider>
       <TrackerMain />
+      <Analytics />
     </AuthProvider>
   )
 }
