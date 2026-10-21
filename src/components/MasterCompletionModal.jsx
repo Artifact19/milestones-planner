@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { CheckCircle2, History, CheckCheck, X, Sparkles } from 'lucide-react'
+import { History, CheckCheck, X, Sparkles } from 'lucide-react'
 import { DAY_NAMES } from '../utils/dateUtils'
 
 const DAY_LETTERS = ['', 'M', 'T', 'W', 'T', 'F', 'S', 'S']
