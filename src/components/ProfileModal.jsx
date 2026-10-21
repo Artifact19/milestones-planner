@@ -272,7 +272,7 @@ export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
                   <span className="font-semibold text-[#1C1917]">
                     {formatDuration(totalFocusMinutes)}
                   </span>
-                  <span>focused</span>
+                  <span>completed focus</span>
                 </span>
                 <span className="text-stone-300">•</span>
                 <span className="flex items-center gap-1 text-[#57534E]">
@@ -547,7 +547,7 @@ export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
                     <div className="flex items-center justify-between text-xs text-[#78716C]">
                       <span>{y.completed} completed of {y.total} milestones</span>
                       {y.focusMinutes > 0 && (
-                        <span>{formatDuration(y.focusMinutes)} focus logged</span>
+                        <span>{formatDuration(y.focusMinutes)} completed focus logged</span>
                       )}
                     </div>
 
@@ -611,7 +611,7 @@ export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
               <span className="text-xl sm:text-2xl font-bold font-mono text-[#695431] block mt-1">
                 {formatDuration(totalFocusMinutes)}
               </span>
-              <span className="text-[10px] text-stone-400">Dedicated study/work</span>
+              <span className="text-[10px] text-stone-400">Completed study/work</span>
             </div>
 
             <div className="bg-white border border-[#E5E0D8] rounded-2xl p-3.5 shadow-sm">

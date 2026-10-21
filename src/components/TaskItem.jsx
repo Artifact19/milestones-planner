@@ -11,7 +11,36 @@ import {
   Sparkles,
   Repeat
 } from 'lucide-react'
-import { formatDuration, TAG_OPTIONS, DAY_NAMES } from '../utils/dateUtils'
+import { formatDuration, getDefaultBreakMinutes, TAG_OPTIONS, DAY_NAMES } from '../utils/dateUtils'
+
+const DURATION_PRESETS = [
+  { value: 15, label: '15m focus' },
+  { value: 30, label: '30m focus' },
+  { value: 45, label: '45m focus' },
+  { value: 60, label: '1h focus' },
+  { value: 90, label: '1.5h focus' },
+  { value: 120, label: '2h focus' },
+  { value: 150, label: '2.5h focus' },
+  { value: 180, label: '3h focus' },
+  { value: 240, label: '4h focus' },
+  { value: 300, label: '5h focus' },
+  { value: 360, label: '6h focus' },
+  { value: 420, label: '7h focus' },
+  { value: 480, label: '8h focus' },
+  { value: 600, label: '10h focus' },
+  { value: 720, label: '12h focus' }
+]
+
+const BREAK_PRESETS = [
+  { value: 0, label: 'No break' },
+  { value: 5, label: '5m break' },
+  { value: 10, label: '10m break' },
+  { value: 15, label: '15m break' },
+  { value: 20, label: '20m break' },
+  { value: 30, label: '30m break' },
+  { value: 45, label: '45m break' },
+  { value: 60, label: '1h break' }
+]
 
 const DAY_LETTERS = ['', 'M', 'T', 'W', 'T', 'F', 'S', 'S']
 
@@ -29,6 +58,7 @@ export default function TaskItem({
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState(task.title)
   const [editDuration, setEditDuration] = useState(task.duration_minutes ?? 30)
+  const [isCustomDuration, setIsCustomDuration] = useState(false)
   const [editBreak, setEditBreak] = useState(task.break_minutes ?? 5)
   const [editTag, setEditTag] = useState(task.tag || 'career')
   const inputRef = useRef(null)
@@ -79,6 +109,7 @@ export default function TaskItem({
   }, [isEditing])
 
   const handleStartEdit = () => {
+    setIsCustomDuration(!DURATION_PRESETS.some((p) => p.value === (task.duration_minutes ?? 30)))
     setIsEditing(true)
   }
 
@@ -93,6 +124,7 @@ export default function TaskItem({
       })
     }
     setIsEditing(false)
+    setIsCustomDuration(false)
   }
 
   const handleKeyDown = (e) => {
@@ -103,6 +135,7 @@ export default function TaskItem({
       e.preventDefault()
       setEditText(task.title)
       setIsEditing(false)
+      setIsCustomDuration(false)
     }
   }
 
@@ -164,31 +197,67 @@ export default function TaskItem({
                   ))}
                 </select>
 
-                <select
-                  value={editDuration}
-                  onChange={(e) => setEditDuration(Number(e.target.value))}
-                  className="bg-white border border-[#E5E0D8] rounded-lg px-2.5 py-1 text-[#44403C] focus:outline-none"
-                >
-                  <option value={15}>15m focus</option>
-                  <option value={30}>30m focus</option>
-                  <option value={45}>45m focus</option>
-                  <option value={60}>1h focus</option>
-                  <option value={90}>1.5h focus</option>
-                  <option value={120}>2h focus</option>
-                  <option value={180}>3h focus</option>
-                </select>
+                {isCustomDuration ? (
+                  <div className="flex items-center gap-1 bg-white border border-[#E5E0D8] rounded-lg px-2 py-0.5">
+                    <input
+                      type="number"
+                      min={1}
+                      max={1440}
+                      step={5}
+                      value={editDuration}
+                      onChange={(e) => {
+                        const val = Math.max(1, Math.min(1440, Number(e.target.value) || 1))
+                        setEditDuration(val)
+                      }}
+                      className="w-14 text-[#44403C] font-mono text-xs focus:outline-none"
+                    />
+                    <span className="text-[11px] text-[#78716C] font-mono">min</span>
+                    <button
+                      type="button"
+                      onClick={() => setIsCustomDuration(false)}
+                      title="Switch back to presets"
+                      className="text-stone-400 hover:text-stone-700 text-xs px-1 cursor-pointer font-bold"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <select
+                    value={DURATION_PRESETS.some((p) => p.value === editDuration) ? editDuration : 'custom'}
+                    onChange={(e) => {
+                      if (e.target.value === 'custom') {
+                        setIsCustomDuration(true)
+                      } else {
+                        const val = Number(e.target.value)
+                        setEditDuration(val)
+                        setEditBreak(getDefaultBreakMinutes(val))
+                      }
+                    }}
+                    className="bg-white border border-[#E5E0D8] rounded-lg px-2.5 py-1 text-[#44403C] focus:outline-none cursor-pointer"
+                  >
+                    {DURATION_PRESETS.map((p) => (
+                      <option key={p.value} value={p.value}>
+                        {p.label}
+                      </option>
+                    ))}
+                    <option value="custom">
+                      {DURATION_PRESETS.some((p) => p.value === editDuration)
+                        ? '✏️ Custom…'
+                        : `✏️ Custom (${formatDuration(editDuration)})`}
+                    </option>
+                  </select>
+                )}
 
                 <select
-                  value={editBreak}
+                  value={BREAK_PRESETS.some((p) => p.value === editBreak) ? editBreak : 5}
                   onChange={(e) => setEditBreak(Number(e.target.value))}
-                  className="bg-white border border-[#E5E0D8] rounded-lg px-2.5 py-1 text-[#44403C] focus:outline-none"
+                  className="bg-white border border-[#E5E0D8] rounded-lg px-2.5 py-1 text-[#44403C] focus:outline-none cursor-pointer"
                 >
-                  <option value={0}>No break</option>
-                  <option value={5}>5m break</option>
-                  <option value={10}>10m break</option>
-                  <option value={15}>15m break</option>
-                  <option value={20}>20m break</option>
-                  <option value={30}>30m break</option>
+                  {BREAK_PRESETS.map((b) => (
+                    <option key={b.value} value={b.value}>
+                      {b.label}
+                    </option>
+                  ))}
                 </select>
 
                 <button

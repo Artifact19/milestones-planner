@@ -87,8 +87,10 @@ export function useAnalytics() {
       // Add to current year months
       if (y === currentYear && monthsMap[mon]) {
         monthsMap[mon].total += 1
-        if (isComp) monthsMap[mon].completed += 1
-        monthsMap[mon].focusMinutes += dur
+        if (isComp) {
+          monthsMap[mon].completed += 1
+          monthsMap[mon].focusMinutes += dur
+        }
       }
 
       // Add to years map
@@ -108,15 +110,19 @@ export function useAnalytics() {
       }
 
       yearsMap[y].total += 1
-      if (isComp) yearsMap[y].completed += 1
-      yearsMap[y].focusMinutes += dur
+      if (isComp) {
+        yearsMap[y].completed += 1
+        yearsMap[y].focusMinutes += dur
+      }
 
       // Assign to quarter
       const qNum = Math.floor(mon / 3) + 1
       const qKey = 'Q' + qNum
       yearsMap[y].quarters[qKey].total += 1
-      if (isComp) yearsMap[y].quarters[qKey].completed += 1
-      yearsMap[y].quarters[qKey].focusMinutes += dur
+      if (isComp) {
+        yearsMap[y].quarters[qKey].completed += 1
+        yearsMap[y].quarters[qKey].focusMinutes += dur
+      }
     })
 
     // Compute percentages for monthly
@@ -164,7 +170,9 @@ export function useAnalytics() {
     const totalAll = milestones.length
     const completedAll = milestones.filter((m) => m.is_completed).length
     const overallPercent = totalAll > 0 ? Math.round((completedAll / totalAll) * 100) : 0
-    const totalFocusMinutes = milestones.reduce((acc, m) => acc + (m.duration_minutes ?? 30), 0)
+    const totalFocusMinutes = milestones
+      .filter((m) => m.is_completed)
+      .reduce((acc, m) => acc + (m.duration_minutes ?? 30), 0)
 
     // Best month calculation
     const activeMonths = monthlyList.filter((m) => m.total > 0)

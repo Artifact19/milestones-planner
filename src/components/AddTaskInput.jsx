@@ -303,7 +303,7 @@ export default function AddTaskInput({
                 <span>Focus Time</span>
               </div>
               <div className="flex flex-wrap gap-1">
-                {[15, 30, 45, 60, 90, 120, 180].map((mins) => (
+                {[15, 30, 45, 60, 90, 120, 180, 240, 300, 360, 480].map((mins) => (
                   <button
                     key={mins}
                     type="button"
@@ -318,6 +318,22 @@ export default function AddTaskInput({
                   </button>
                 ))}
               </div>
+              <div className="flex items-center gap-1.5 mt-2 pt-1 border-t border-[#E5E0D8]/60">
+                <span className="text-[11px] font-medium text-[#78716C]">Custom:</span>
+                <input
+                  type="number"
+                  min="1"
+                  max="1440"
+                  step="5"
+                  value={duration}
+                  onChange={(e) => {
+                    const val = Math.max(1, Math.min(1440, Number(e.target.value) || 1))
+                    handleDurationChange(val)
+                  }}
+                  className="w-16 px-2 py-0.5 text-xs font-mono bg-white border border-[#E5E0D8] rounded-lg text-[#1C1917] focus:outline-none focus:border-[#1C1917]"
+                />
+                <span className="text-[11px] text-[#78716C] font-mono">min ({formatDuration(duration)})</span>
+              </div>
             </div>
 
             {/* Break Time */}
@@ -327,7 +343,7 @@ export default function AddTaskInput({
                 <span>Rest Break</span>
               </div>
               <div className="flex flex-wrap gap-1">
-                {[0, 5, 10, 15, 20, 30].map((mins) => (
+                {[0, 5, 10, 15, 20, 30, 45, 60].map((mins) => (
                   <button
                     key={mins}
                     type="button"
@@ -341,6 +357,22 @@ export default function AddTaskInput({
                     {mins === 0 ? 'None' : `${mins}m`}
                   </button>
                 ))}
+              </div>
+              <div className="flex items-center gap-1.5 mt-2 pt-1 border-t border-[#E5E0D8]/60">
+                <span className="text-[11px] font-medium text-[#78716C]">Custom:</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="240"
+                  step="5"
+                  value={breakMinutes}
+                  onChange={(e) => {
+                    const val = Math.max(0, Math.min(240, Number(e.target.value) || 0))
+                    setBreakMinutes(val)
+                  }}
+                  className="w-16 px-2 py-0.5 text-xs font-mono bg-white border border-[#E5E0D8] rounded-lg text-[#1C1917] focus:outline-none focus:border-[#1C1917]"
+                />
+                <span className="text-[11px] text-[#78716C] font-mono">min ({breakMinutes === 0 ? 'None' : `${breakMinutes}m`})</span>
               </div>
             </div>
           </div>

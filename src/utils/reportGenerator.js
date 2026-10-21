@@ -87,8 +87,13 @@ export function compileReportData({
   let personalCount = 0
 
   filteredMilestones.forEach((m) => {
-    focusMinutes += m.duration_minutes ?? 30
-    breakMinutes += m.break_minutes ?? 5
+    const isComp = Boolean(m.is_completed)
+    const dur = m.duration_minutes ?? 30
+    const brk = m.break_minutes ?? 5
+    if (isComp) {
+      focusMinutes += dur
+      breakMinutes += brk
+    }
     const tag = m.tag || 'career'
     if (tag === 'career') careerCount++
     else if (tag === 'college') collegeCount++
@@ -119,7 +124,9 @@ export function compileReportData({
         total: mTotal,
         completed: mComp,
         percent: mPercent,
-        focusMinutes: monthTasks.reduce((acc, t) => acc + (t.duration_minutes ?? 30), 0)
+        focusMinutes: monthTasks
+          .filter((t) => t.is_completed)
+          .reduce((acc, t) => acc + (t.duration_minutes ?? 30), 0)
       })
     }
   }
@@ -555,7 +562,7 @@ export function printExecutiveReport(reportData) {
       <div class="kpi-value">${percent}%</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">Focus Time</div>
+      <div class="kpi-label">Completed Focus Time</div>
       <div class="kpi-value">${formatDuration(focusMinutes)}</div>
     </div>
     <div class="kpi-card">

@@ -84,7 +84,10 @@ export function getDefaultBreakMinutes(durationMinutes = 30) {
   if (durationMinutes <= 50) return 10
   if (durationMinutes <= 75) return 15
   if (durationMinutes <= 110) return 20
-  return 30
+  if (durationMinutes <= 180) return 30
+  if (durationMinutes <= 240) return 40
+  if (durationMinutes <= 360) return 50
+  return 60
 }
 
 // Curated luxury architectural tags matching the reference design

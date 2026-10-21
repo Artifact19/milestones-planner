@@ -7,11 +7,8 @@ import {
   Calendar,
   Clock,
   Repeat,
-  Download,
   BarChart3,
   Sparkles,
-  HelpCircle,
-  Home,
   FileText,
   ListTodo
 } from 'lucide-react'

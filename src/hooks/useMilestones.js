@@ -374,10 +374,15 @@ export function useMilestones(weekStart) {
     const percent = total === 0 ? 0 : Math.round((completed / total) * 100)
 
     let totalFocusMinutes = 0
+    let completedFocusMinutes = 0
     let totalBreakMinutes = 0
 
     milestones.forEach((m) => {
-      totalFocusMinutes += m.duration_minutes ?? 30
+      const dur = m.duration_minutes ?? 30
+      totalFocusMinutes += dur
+      if (m.is_completed) {
+        completedFocusMinutes += dur
+      }
       totalBreakMinutes += m.break_minutes ?? 5
     })
 
@@ -386,6 +391,7 @@ export function useMilestones(weekStart) {
       completed,
       percent,
       totalFocusMinutes,
+      completedFocusMinutes,
       totalBreakMinutes,
       totalBudgetedMinutes: totalFocusMinutes + totalBreakMinutes
     }
@@ -399,6 +405,7 @@ export function useMilestones(weekStart) {
       const completedCount = dayTasks.filter((m) => m.is_completed).length
 
       let focusMinutes = 0
+      let completedFocusMinutes = 0
       let breakMinutes = 0
       let careerFocusMinutes = 0
       let collegeFocusMinutes = 0
@@ -408,6 +415,9 @@ export function useMilestones(weekStart) {
         const dur = t.duration_minutes ?? 30
         const brk = t.break_minutes ?? 5
         focusMinutes += dur
+        if (t.is_completed) {
+          completedFocusMinutes += dur
+        }
         breakMinutes += brk
 
         const tag = t.tag || 'career'
@@ -424,6 +434,7 @@ export function useMilestones(weekStart) {
         taskCount,
         completedCount,
         focusMinutes,
+        completedFocusMinutes,
         breakMinutes,
         totalMinutes: focusMinutes + breakMinutes,
         careerFocusMinutes,
