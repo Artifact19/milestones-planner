@@ -1,8 +1,7 @@
+# Milestones Planner
 <p align="center">
   <img src="public/favicon.png" alt="Milestones Planner Icon" width="120" />
 </p>
-
-# Milestones Planner
 
 A weekly planner designed around 7-day cycles (Monday to Sunday). It helps you define high-level weekly goals, schedule daily tasks, maintain recurring routines, and review your progress without the clutter of heavyweight project management software.
 
