@@ -33,6 +33,7 @@ export function useMilestones(weekStart) {
         const { data, error: fetchError } = await supabase
           .from('milestones')
           .select('*')
+          .eq('user_id', user.id)
           .eq('week_start_date', weekStartDateString)
           .order('created_at', { ascending: true })
 
@@ -179,79 +180,87 @@ export function useMilestones(weekStart) {
   )
 
   // Toggle milestone with optimistic update
-  const toggleMilestone = useCallback(async (id) => {
-    if (String(id).startsWith('temp-')) return
+  const toggleMilestone = useCallback(
+    async (id) => {
+      if (!user || String(id).startsWith('temp-')) return
 
-    let previousItem = null
+      let previousItem = null
 
-    setMilestones((prev) => {
-      return prev.map((item) => {
-        if (item.id === id) {
-          previousItem = item
-          return { ...item, is_completed: !item.is_completed }
-        }
-        return item
+      setMilestones((prev) => {
+        return prev.map((item) => {
+          if (item.id === id) {
+            previousItem = item
+            return { ...item, is_completed: !item.is_completed }
+          }
+          return item
+        })
       })
-    })
 
-    if (!previousItem) return
-    const newStatus = !previousItem.is_completed
+      if (!previousItem) return
+      const newStatus = !previousItem.is_completed
 
-    try {
-      const { error: updateError } = await supabase
-        .from('milestones')
-        .update({ is_completed: newStatus })
-        .eq('id', id)
+      try {
+        const { error: updateError } = await supabase
+          .from('milestones')
+          .update({ is_completed: newStatus })
+          .eq('id', id)
+          .eq('user_id', user.id)
 
-      if (updateError) {
+        if (updateError) {
+          setMilestones((prev) =>
+            prev.map((m) => (m.id === id ? previousItem : m))
+          )
+          setError(`Could not update task: ${updateError.message}`)
+        }
+      } catch (err) {
         setMilestones((prev) =>
           prev.map((m) => (m.id === id ? previousItem : m))
         )
-        setError(`Could not update task: ${updateError.message}`)
+        setError(`Could not update task: ${err.message || 'Network error'}`)
       }
-    } catch (err) {
-      setMilestones((prev) =>
-        prev.map((m) => (m.id === id ? previousItem : m))
-      )
-      setError(`Could not update task: ${err.message || 'Network error'}`)
-    }
-  }, [])
+    },
+    [user]
+  )
 
   // Update milestone fields
-  const updateMilestone = useCallback(async (id, updates) => {
-    if (String(id).startsWith('temp-')) return
+  const updateMilestone = useCallback(
+    async (id, updates) => {
+      if (!user || String(id).startsWith('temp-')) return
 
-    let previousItem = null
+      let previousItem = null
 
-    setMilestones((prev) => {
-      return prev.map((item) => {
-        if (item.id === id) {
-          previousItem = item
-          return { ...item, ...updates }
-        }
-        return item
+      setMilestones((prev) => {
+        return prev.map((item) => {
+          if (item.id === id) {
+            previousItem = item
+            return { ...item, ...updates }
+          }
+          return item
+        })
       })
-    })
 
-    try {
-      const { error: updateError } = await supabase
-        .from('milestones')
-        .update(updates)
-        .eq('id', id)
+      try {
+        const { error: updateError } = await supabase
+          .from('milestones')
+          .update(updates)
+          .eq('id', id)
+          .eq('user_id', user.id)
 
-      if (updateError) {
+        if (updateError) {
+          setMilestones((prev) =>
+            prev.map((m) => (m.id === id ? previousItem : m))
+          )
+          setError(`Could not save edit: ${updateError.message}`)
+        }
+      } catch (err) {
         setMilestones((prev) =>
           prev.map((m) => (m.id === id ? previousItem : m))
         )
-        setError(`Could not save edit: ${updateError.message}`)
+        setError(`Could not save edit: ${err.message || 'Network error'}`)
       }
-    } catch (err) {
-      setMilestones((prev) =>
-        prev.map((m) => (m.id === id ? previousItem : m))
-      )
-      setError(`Could not save edit: ${err.message || 'Network error'}`)
-    }
-  }, [])
+    },
+    [user]
+  )
 
   // Move milestone to a different day
   const moveMilestone = useCallback(async (id, newDayOfWeek) => {
@@ -277,6 +286,7 @@ export function useMilestones(weekStart) {
           .from('milestones')
           .delete()
           .eq('id', id)
+          .eq('user_id', user.id)
           .select()
 
         if (deleteError) {
@@ -313,6 +323,7 @@ export function useMilestones(weekStart) {
           .from('milestones')
           .delete()
           .eq('series_id', seriesId)
+          .eq('user_id', user.id)
           .eq('week_start_date', weekStartDateString)
           .gte('day_of_week', fromDay)
           .select()
@@ -354,6 +365,7 @@ export function useMilestones(weekStart) {
           .from('milestones')
           .update({ is_completed: true })
           .eq('series_id', seriesId)
+          .eq('user_id', user.id)
           .eq('week_start_date', weekStartDateString)
 
         if (updateError) {

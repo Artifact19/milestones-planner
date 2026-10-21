@@ -33,6 +33,7 @@ export function useAnalytics() {
       const { data, error: fetchErr } = await supabase
         .from('milestones')
         .select('id, week_start_date, day_of_week, title, is_completed, duration_minutes, break_minutes, tag, created_at')
+        .eq('user_id', user.id)
         .order('week_start_date', { ascending: true })
 
       if (fetchErr) throw fetchErr

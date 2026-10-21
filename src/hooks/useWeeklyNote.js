@@ -28,6 +28,7 @@ export function useWeeklyNote(weekStart) {
         const { data, error } = await supabase
           .from('weekly_notes')
           .select('note')
+          .eq('user_id', user.id)
           .eq('week_start_date', weekStartDateString)
           .maybeSingle()
 

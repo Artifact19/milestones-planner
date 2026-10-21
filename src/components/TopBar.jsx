@@ -18,9 +18,13 @@ export default function TopBar({
 }) {
   const { total, completed, percent, totalBudgetedMinutes } = stats
 
-  const avatarUrl =
+  const rawAvatar =
     user?.user_metadata?.avatar_url ||
     (user?.id ? localStorage.getItem('user_avatar_' + user.id) : null)
+  const isSafeAvatar =
+    typeof rawAvatar === 'string' &&
+    (rawAvatar.startsWith('data:image/') || rawAvatar.startsWith('https://') || rawAvatar.startsWith('http://'))
+  const avatarUrl = isSafeAvatar ? rawAvatar : null
   const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : 'U'
 
   // Architectural pill completion badge style

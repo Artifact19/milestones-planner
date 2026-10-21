@@ -46,9 +46,13 @@ export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
   if (!isOpen) return null
 
   // User avatar URL from metadata or localStorage
-  const avatarUrl =
+  const rawAvatar =
     user?.user_metadata?.avatar_url ||
     (user?.id ? localStorage.getItem('user_avatar_' + user.id) : null)
+  const isSafeAvatar =
+    typeof rawAvatar === 'string' &&
+    (rawAvatar.startsWith('data:image/') || rawAvatar.startsWith('https://') || rawAvatar.startsWith('http://'))
+  const avatarUrl = isSafeAvatar ? rawAvatar : null
 
   const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : 'U'
 

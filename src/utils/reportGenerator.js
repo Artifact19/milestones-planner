@@ -158,6 +158,27 @@ export function compileReportData({
   }
 }
 
+// Sanitize string to prevent XSS injection in HTML reports
+export function escapeHtml(str) {
+  if (str === null || str === undefined) return ''
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+// Mitigate CSV Formula Injection (CWE-1236)
+export function sanitizeCsvCell(value) {
+  if (value === null || value === undefined) return '""'
+  let str = String(value)
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = "'" + str
+  }
+  return `"${str.replace(/"/g, '""')}"`
+}
+
 // Download report as CSV spreadsheet
 export function exportToCSV(reportData) {
   const { periodTitle, subtitle, milestones } = reportData
@@ -186,16 +207,16 @@ export function exportToCSV(reportData) {
     const brk = m.break_minutes ?? 5
 
     return [
-      m.id,
-      `"${(m.title || '').replace(/"/g, '""')}"`,
-      status,
-      dayName,
-      dateFormatted,
-      `"${tagLabel}"`,
+      sanitizeCsvCell(m.id),
+      sanitizeCsvCell(m.title),
+      sanitizeCsvCell(status),
+      sanitizeCsvCell(dayName),
+      sanitizeCsvCell(dateFormatted),
+      sanitizeCsvCell(tagLabel),
       dur,
       brk,
       dur + brk,
-      m.week_start_date
+      sanitizeCsvCell(m.week_start_date)
     ]
   })
 
@@ -535,15 +556,15 @@ export function printExecutiveReport(reportData) {
       </div>
     </div>
     <div class="meta-box">
-      <strong>${userEmail}</strong>
-      <span>Report Date: ${generatedAt}</span>
+      <strong>${escapeHtml(userEmail)}</strong>
+      <span>Report Date: ${escapeHtml(generatedAt)}</span>
     </div>
   </header>
 
   <div class="report-title-card">
     <div>
-      <h1 class="report-title">${periodTitle}</h1>
-      <div class="report-subtitle">${subtitle}</div>
+      <h1 class="report-title">${escapeHtml(periodTitle)}</h1>
+      <div class="report-subtitle">${escapeHtml(subtitle)}</div>
     </div>
     <div class="badge-percent">${percent}% Completed</div>
   </div>
@@ -591,7 +612,7 @@ export function printExecutiveReport(reportData) {
           .map(
             (mb) => `
           <tr>
-            <td><strong>${mb.monthName}</strong></td>
+            <td><strong>${escapeHtml(mb.monthName)}</strong></td>
             <td>${mb.completed}</td>
             <td>${mb.total}</td>
             <td><strong>${mb.percent}%</strong></td>
@@ -639,12 +660,12 @@ export function printExecutiveReport(reportData) {
                 return `
               <tr>
                 <td style="font-size: 15px;">${checkIcon}</td>
-                <td><strong>${m.title}</strong></td>
-                <td>${dayName}</td>
-                <td><span class="tag-pill">${tagObj.label}</span></td>
+                <td><strong>${escapeHtml(m.title)}</strong></td>
+                <td>${escapeHtml(dayName)}</td>
+                <td><span class="tag-pill">${escapeHtml(tagObj.label)}</span></td>
                 <td>${formatDuration(m.duration_minutes ?? 30)}</td>
                 <td>${formatDuration(m.break_minutes ?? 5)}</td>
-                <td class="${statusClass}">${statusText}</td>
+                <td class="${statusClass}">${escapeHtml(statusText)}</td>
               </tr>
             `
               })
@@ -658,7 +679,7 @@ export function printExecutiveReport(reportData) {
       ? `
     <h2 class="section-heading">Sunday Reflection & Architecture Note</h2>
     <div class="reflection-box">
-      "${weeklyNote}"
+      "${escapeHtml(weeklyNote)}"
     </div>
     `
       : ''
