@@ -290,7 +290,7 @@ export default function FocusedDayView({
 
                 <div className="flex items-center gap-1.5">
                   <BookOpen className="w-3.5 h-3.5 text-[#3E364E]" />
-                  <span className="text-[#78716C]">College Assignments:</span>
+                  <span className="text-[#78716C]">College/Assignment:</span>
                   <span className="font-mono font-semibold text-[#3E364E]">
                     {formatDuration(dayStats.collegeFocusMinutes || 0)}
                   </span>

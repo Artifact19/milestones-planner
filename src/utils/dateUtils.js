@@ -101,7 +101,7 @@ export const TAG_OPTIONS = [
   },
   {
     id: 'college',
-    label: 'College Assignment',
+    label: 'College/Assignment',
     shortLabel: 'College',
     color: 'basalt',
     badgeClass: 'bg-[#ECEAF0] text-[#3E364E] border-[#DBD6E3]'
@@ -138,7 +138,7 @@ export const FOCUS_CATEGORY_OPTIONS = [
   },
   {
     id: 'college',
-    label: 'College Assignment',
+    label: 'College/Assignment',
     shortLabel: 'College',
     color: '#3E364E',
     badgeClass: 'bg-[#ECEAF0] text-[#3E364E] border-[#DBD6E3]'
