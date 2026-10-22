@@ -324,7 +324,7 @@ export default function AddTaskInput({
                   type="number"
                   min="1"
                   max="1440"
-                  step="5"
+                  step="1"
                   value={duration}
                   onChange={(e) => {
                     const val = Math.max(1, Math.min(1440, Number(e.target.value) || 1))
@@ -364,7 +364,7 @@ export default function AddTaskInput({
                   type="number"
                   min="0"
                   max="240"
-                  step="5"
+                  step="1"
                   value={breakMinutes}
                   onChange={(e) => {
                     const val = Math.max(0, Math.min(240, Number(e.target.value) || 0))

@@ -5,7 +5,8 @@ import {
   formatDuration,
   formatWeekRange,
   DAY_NAMES,
-  TAG_OPTIONS
+  TAG_OPTIONS,
+  normalizeCategory
 } from './dateUtils'
 
 const MONTH_NAMES = [
@@ -30,7 +31,8 @@ export function compileReportData({
   targetYear = new Date().getFullYear(),
   targetMonthIndex = new Date().getMonth(), // 0-indexed
   userEmail = 'User',
-  weeklyNote = ''
+  weeklyNote = '',
+  selectedCategory = 'all'
 }) {
   let filteredMilestones = []
   let periodTitle = ''
@@ -85,18 +87,24 @@ export function compileReportData({
   let careerCount = 0
   let collegeCount = 0
   let personalCount = 0
+  let careerFocusMinutes = 0
+  let collegeFocusMinutes = 0
+  let personalFocusMinutes = 0
 
   filteredMilestones.forEach((m) => {
     const isComp = Boolean(m.is_completed)
     const dur = m.duration_minutes ?? 30
     const brk = m.break_minutes ?? 5
+    const cat = normalizeCategory(m.tag)
     if (isComp) {
       focusMinutes += dur
       breakMinutes += brk
+      if (cat === 'career') careerFocusMinutes += dur
+      else if (cat === 'college') collegeFocusMinutes += dur
+      else personalFocusMinutes += dur
     }
-    const tag = m.tag || 'career'
-    if (tag === 'career') careerCount++
-    else if (tag === 'college') collegeCount++
+    if (cat === 'career') careerCount++
+    else if (cat === 'college') collegeCount++
     else personalCount++
   })
 
@@ -151,6 +159,15 @@ export function compileReportData({
     careerCount,
     collegeCount,
     personalCount,
+    careerFocusMinutes,
+    collegeFocusMinutes,
+    personalFocusMinutes,
+    focusByCategory: {
+      career: careerFocusMinutes,
+      college: collegeFocusMinutes,
+      personal: personalFocusMinutes
+    },
+    selectedCategory,
     milestones: filteredMilestones,
     dayGroups,
     monthBreakdown,

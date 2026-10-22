@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { parseDateString, addDays } from '../utils/dateUtils'
+import { parseDateString, addDays, normalizeCategory } from '../utils/dateUtils'
 import { useAuth } from '../context/AuthContext'
 
 const MONTH_NAMES = [
@@ -65,6 +65,11 @@ export function useAnalytics() {
         total: 0,
         completed: 0,
         focusMinutes: 0,
+        focusByCategory: {
+          career: 0,
+          college: 0,
+          personal: 0
+        },
         percent: 0,
         isCurrent: m === currentMonth
       }
@@ -84,6 +89,7 @@ export function useAnalytics() {
       const mon = taskDate.getMonth()
       const isComp = Boolean(m.is_completed)
       const dur = m.duration_minutes ?? 30
+      const cat = normalizeCategory(m.tag)
 
       // Add to current year months
       if (y === currentYear && monthsMap[mon]) {
@@ -91,6 +97,7 @@ export function useAnalytics() {
         if (isComp) {
           monthsMap[mon].completed += 1
           monthsMap[mon].focusMinutes += dur
+          monthsMap[mon].focusByCategory[cat] = (monthsMap[mon].focusByCategory[cat] || 0) + dur
         }
       }
 
@@ -101,11 +108,16 @@ export function useAnalytics() {
           total: 0,
           completed: 0,
           focusMinutes: 0,
+          focusByCategory: {
+            career: 0,
+            college: 0,
+            personal: 0
+          },
           quarters: {
-            Q1: { total: 0, completed: 0, focusMinutes: 0 },
-            Q2: { total: 0, completed: 0, focusMinutes: 0 },
-            Q3: { total: 0, completed: 0, focusMinutes: 0 },
-            Q4: { total: 0, completed: 0, focusMinutes: 0 }
+            Q1: { total: 0, completed: 0, focusMinutes: 0, focusByCategory: { career: 0, college: 0, personal: 0 } },
+            Q2: { total: 0, completed: 0, focusMinutes: 0, focusByCategory: { career: 0, college: 0, personal: 0 } },
+            Q3: { total: 0, completed: 0, focusMinutes: 0, focusByCategory: { career: 0, college: 0, personal: 0 } },
+            Q4: { total: 0, completed: 0, focusMinutes: 0, focusByCategory: { career: 0, college: 0, personal: 0 } }
           }
         }
       }
@@ -114,6 +126,7 @@ export function useAnalytics() {
       if (isComp) {
         yearsMap[y].completed += 1
         yearsMap[y].focusMinutes += dur
+        yearsMap[y].focusByCategory[cat] = (yearsMap[y].focusByCategory[cat] || 0) + dur
       }
 
       // Assign to quarter
@@ -123,6 +136,7 @@ export function useAnalytics() {
       if (isComp) {
         yearsMap[y].quarters[qKey].completed += 1
         yearsMap[y].quarters[qKey].focusMinutes += dur
+        yearsMap[y].quarters[qKey].focusByCategory[cat] = (yearsMap[y].quarters[qKey].focusByCategory[cat] || 0) + dur
       }
     })
 
@@ -139,11 +153,16 @@ export function useAnalytics() {
         total: 0,
         completed: 0,
         focusMinutes: 0,
+        focusByCategory: {
+          career: 0,
+          college: 0,
+          personal: 0
+        },
         quarters: {
-          Q1: { total: 0, completed: 0, focusMinutes: 0 },
-          Q2: { total: 0, completed: 0, focusMinutes: 0 },
-          Q3: { total: 0, completed: 0, focusMinutes: 0 },
-          Q4: { total: 0, completed: 0, focusMinutes: 0 }
+          Q1: { total: 0, completed: 0, focusMinutes: 0, focusByCategory: { career: 0, college: 0, personal: 0 } },
+          Q2: { total: 0, completed: 0, focusMinutes: 0, focusByCategory: { career: 0, college: 0, personal: 0 } },
+          Q3: { total: 0, completed: 0, focusMinutes: 0, focusByCategory: { career: 0, college: 0, personal: 0 } },
+          Q4: { total: 0, completed: 0, focusMinutes: 0, focusByCategory: { career: 0, college: 0, personal: 0 } }
         }
       }
     }
@@ -157,7 +176,8 @@ export function useAnalytics() {
           total: qData.total,
           completed: qData.completed,
           percent: qData.total > 0 ? Math.round((qData.completed / qData.total) * 100) : 0,
-          focusMinutes: qData.focusMinutes
+          focusMinutes: qData.focusMinutes,
+          focusByCategory: qData.focusByCategory
         }))
 
         return {
@@ -175,6 +195,20 @@ export function useAnalytics() {
       .filter((m) => m.is_completed)
       .reduce((acc, m) => acc + (m.duration_minutes ?? 30), 0)
 
+    const totalFocusByCategory = {
+      career: 0,
+      college: 0,
+      personal: 0
+    }
+
+    milestones.forEach((m) => {
+      if (m.is_completed) {
+        const cat = normalizeCategory(m.tag)
+        const dur = m.duration_minutes ?? 30
+        totalFocusByCategory[cat] = (totalFocusByCategory[cat] || 0) + dur
+      }
+    })
+
     // Best month calculation
     const activeMonths = monthlyList.filter((m) => m.total > 0)
     let bestMonth = null
@@ -189,6 +223,7 @@ export function useAnalytics() {
       completedAll,
       overallPercent,
       totalFocusMinutes,
+      totalFocusByCategory,
       bestMonth,
       currentYear
     }

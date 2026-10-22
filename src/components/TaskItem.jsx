@@ -203,7 +203,7 @@ export default function TaskItem({
                       type="number"
                       min={1}
                       max={1440}
-                      step={5}
+                      step={1}
                       value={editDuration}
                       onChange={(e) => {
                         const val = Math.max(1, Math.min(1440, Number(e.target.value) || 1))

@@ -14,11 +14,13 @@ import {
   LogOut,
   Loader2,
   Printer,
-  HelpCircle
+  HelpCircle,
+  Layers,
+  Filter
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useAnalytics } from '../hooks/useAnalytics'
-import { formatDuration } from '../utils/dateUtils'
+import { formatDuration, FOCUS_CATEGORY_OPTIONS } from '../utils/dateUtils'
 import { compileReportData, printExecutiveReport } from '../utils/reportGenerator'
 
 export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
@@ -31,6 +33,7 @@ export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
     completedAll,
     overallPercent,
     totalFocusMinutes,
+    totalFocusByCategory,
     bestMonth,
     currentYear,
     loading: analyticsLoading
@@ -38,6 +41,33 @@ export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
 
   const [activeTab, setActiveTab] = useState('monthly') // 'monthly' | 'yearly'
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(() => new Date().getMonth())
+  const [focusCategory, setFocusCategory] = useState(() => {
+    try {
+      return localStorage.getItem('milestones_focus_category') || 'all'
+    } catch {
+      return 'all'
+    }
+  })
+
+  const handleCategoryChange = (catId) => {
+    setFocusCategory(catId)
+    try {
+      localStorage.setItem('milestones_focus_category', catId)
+    } catch {
+      // ignore localStorage errors
+    }
+  }
+
+  // Active category configuration
+  const activeCategoryConfig =
+    FOCUS_CATEGORY_OPTIONS.find((c) => c.id === focusCategory) || FOCUS_CATEGORY_OPTIONS[0]
+
+  // Helper to extract category focus minutes
+  const getCategoryMinutes = (catMap, totalMinutes, cat = focusCategory) => {
+    if (cat === 'all') return totalMinutes || 0
+    return catMap?.[cat] || 0
+  }
+
   const [isUploading, setIsUploading] = useState(false)
   const [uploadSuccess, setUploadSuccess] = useState(false)
   const [uploadError, setUploadError] = useState(null)
@@ -274,9 +304,13 @@ export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
                 <span className="flex items-center gap-1 text-[#57534E]">
                   <Clock className="w-3.5 h-3.5 text-[#695431]" />
                   <span className="font-semibold text-[#1C1917]">
-                    {formatDuration(totalFocusMinutes)}
+                    {formatDuration(getCategoryMinutes(totalFocusByCategory, totalFocusMinutes))}
                   </span>
-                  <span>completed focus</span>
+                  <span>
+                    {focusCategory === 'all'
+                      ? 'completed focus'
+                      : `${activeCategoryConfig.shortLabel} focus`}
+                  </span>
                 </span>
                 <span className="text-stone-300">•</span>
                 <span className="flex items-center gap-1 text-[#57534E]">
@@ -326,7 +360,8 @@ export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
                   milestones,
                   targetYear: currentYear,
                   targetMonthIndex: selectedMonthIndex,
-                  userEmail: user?.email || 'User'
+                  userEmail: user?.email || 'User',
+                  selectedCategory: focusCategory
                 })
                 printExecutiveReport(report)
               }}
@@ -474,29 +509,119 @@ export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
 
               {/* Selected Month Detail Highlight Box */}
               {activeMonthData && (
-                <div className="bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
-                  <div>
-                    <span className="font-bold text-[#1C1917] text-sm">
-                      {activeMonthData.monthFull} {currentYear}
-                    </span>
-                    <span className="text-[#78716C] ml-2">
-                      {activeMonthData.total > 0
-                        ? `${activeMonthData.completed} of ${activeMonthData.total} tasks completed`
-                        : 'No milestones recorded for this month'}
-                    </span>
+                <div className="bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl p-3.5 space-y-3 text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <span className="font-bold text-[#1C1917] text-sm">
+                        {activeMonthData.monthFull} {currentYear}
+                      </span>
+                      <span className="text-[#78716C] ml-2">
+                        {activeMonthData.total > 0
+                          ? `${activeMonthData.completed} of ${activeMonthData.total} tasks completed`
+                          : 'No milestones recorded for this month'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 font-mono">
+                      <span className="px-2.5 py-1 rounded-full bg-white border border-[#E5E0D8] text-[#1C1917] font-bold">
+                        Completion: {activeMonthData.percent}%
+                      </span>
+                      {activeMonthData.focusMinutes > 0 && (
+                        <span
+                          className={`px-2.5 py-1 rounded-full border font-semibold flex items-center gap-1.5 shadow-xs transition-all ${
+                            focusCategory === 'career'
+                              ? 'bg-[#EBF2EC] border-[#CFE1D3] text-[#224A32]'
+                              : focusCategory === 'college'
+                              ? 'bg-[#ECEAF0] border-[#DBD6E3] text-[#3E364E]'
+                              : focusCategory === 'personal'
+                              ? 'bg-[#F4ECE1] border-[#E8DAC5] text-[#635032]'
+                              : 'bg-[#EBF2EC] border-[#CFE1D3] text-[#224A32]'
+                          }`}
+                          title={`${activeCategoryConfig.label}: ${formatDuration(
+                            getCategoryMinutes(activeMonthData.focusByCategory, activeMonthData.focusMinutes)
+                          )} completed in ${activeMonthData.monthFull}`}
+                        >
+                          <Clock className="w-3 h-3" />
+                          <span>
+                            {formatDuration(
+                              getCategoryMinutes(activeMonthData.focusByCategory, activeMonthData.focusMinutes)
+                            )}
+                          </span>
+                          <span className="text-[10px] font-sans font-bold opacity-80 uppercase tracking-wider">
+                            {activeCategoryConfig.shortLabel}
+                          </span>
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-3 font-mono">
-                    <span className="px-2.5 py-1 rounded-full bg-white border border-[#E5E0D8] text-[#1C1917] font-bold">
-                      Completion: {activeMonthData.percent}%
-                    </span>
-                    {activeMonthData.focusMinutes > 0 && (
-                      <span className="px-2.5 py-1 rounded-full bg-[#EBF2EC] border border-[#CFE1D3] text-[#224A32] font-semibold flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {formatDuration(activeMonthData.focusMinutes)}
-                      </span>
-                    )}
-                  </div>
+                  {/* Per-Category Focus Breakdown & Switcher for Selected Month */}
+                  {activeMonthData.focusMinutes > 0 && (
+                    <div className="pt-2.5 border-t border-[#E5E0D8]/80 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 text-[#78716C]">
+                        <Layers className="w-3.5 h-3.5 text-stone-400" />
+                        <span className="text-[11px] font-medium">Focus by category:</span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-1.5 font-mono text-xs">
+                        <button
+                          type="button"
+                          onClick={() => handleCategoryChange('all')}
+                          title="Show total focus time across all categories"
+                          className={`px-2 py-0.5 rounded-lg text-[11px] font-medium transition-all cursor-pointer flex items-center gap-1 ${
+                            focusCategory === 'all'
+                              ? 'bg-[#1C1917] text-white font-bold shadow-xs'
+                              : 'bg-white border border-[#E5E0D8] text-[#57534E] hover:text-[#1C1917] hover:border-stone-400'
+                          }`}
+                        >
+                          <span>All:</span>
+                          <strong>{formatDuration(activeMonthData.focusMinutes)}</strong>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleCategoryChange('career')}
+                          title="Show Career / Study focus time"
+                          className={`px-2 py-0.5 rounded-lg text-[11px] font-medium transition-all cursor-pointer flex items-center gap-1 ${
+                            focusCategory === 'career'
+                              ? 'bg-[#224A32] text-white font-bold shadow-xs ring-1 ring-[#224A32]'
+                              : 'bg-[#EBF2EC] text-[#244E35] border border-[#D2E4D6] hover:bg-[#DDECE0]'
+                          }`}
+                        >
+                          <span>Career:</span>
+                          <strong>{formatDuration(activeMonthData.focusByCategory?.career || 0)}</strong>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleCategoryChange('college')}
+                          title="Show College Assignment focus time"
+                          className={`px-2 py-0.5 rounded-lg text-[11px] font-medium transition-all cursor-pointer flex items-center gap-1 ${
+                            focusCategory === 'college'
+                              ? 'bg-[#3E364E] text-white font-bold shadow-xs ring-1 ring-[#3E364E]'
+                              : 'bg-[#ECEAF0] text-[#3E364E] border border-[#DBD6E3] hover:bg-[#DFDBE8]'
+                          }`}
+                        >
+                          <span>College:</span>
+                          <strong>{formatDuration(activeMonthData.focusByCategory?.college || 0)}</strong>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleCategoryChange('personal')}
+                          title="Show Personal / Other focus time"
+                          className={`px-2 py-0.5 rounded-lg text-[11px] font-medium transition-all cursor-pointer flex items-center gap-1 ${
+                            focusCategory === 'personal'
+                              ? 'bg-[#635032] text-white font-bold shadow-xs ring-1 ring-[#635032]'
+                              : 'bg-[#F4ECE1] text-[#635032] border-[#E8DAC5] hover:bg-[#EFE3D4]'
+                          }`}
+                        >
+                          <span>Personal:</span>
+                          <strong>{formatDuration(activeMonthData.focusByCategory?.personal || 0)}</strong>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -551,7 +676,17 @@ export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
                     <div className="flex items-center justify-between text-xs text-[#78716C]">
                       <span>{y.completed} completed of {y.total} milestones</span>
                       {y.focusMinutes > 0 && (
-                        <span>{formatDuration(y.focusMinutes)} completed focus logged</span>
+                        <span className="flex items-center gap-1 font-mono">
+                          <Clock className="w-3 h-3 text-[#224A32]" />
+                          <strong className="text-[#1C1917]">
+                            {formatDuration(getCategoryMinutes(y.focusByCategory, y.focusMinutes))}
+                          </strong>
+                          <span>
+                            {focusCategory === 'all'
+                              ? 'completed focus logged'
+                              : `${activeCategoryConfig.shortLabel} focus logged`}
+                          </span>
+                        </span>
                       )}
                     </div>
 
@@ -574,9 +709,14 @@ export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
                               className="bg-[#224A32] h-full rounded-full"
                             />
                           </div>
-                          <span className="text-[10px] text-stone-400 font-mono">
-                            {q.completed}/{q.total} tasks
-                          </span>
+                          <div className="flex items-center justify-between text-[10px] text-stone-400 font-mono">
+                            <span>{q.completed}/{q.total} tasks</span>
+                            {q.focusMinutes > 0 && (
+                              <span className="font-semibold text-stone-600">
+                                {formatDuration(getCategoryMinutes(q.focusByCategory, q.focusMinutes))}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -608,14 +748,112 @@ export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
               <span className="text-[10px] text-stone-400">Out of {totalAll} planned</span>
             </div>
 
-            <div className="bg-white border border-[#E5E0D8] rounded-2xl p-3.5 shadow-sm">
-              <span className="text-[11px] font-semibold text-[#78716C] uppercase tracking-wider block">
-                Focus Time
-              </span>
-              <span className="text-xl sm:text-2xl font-bold font-mono text-[#695431] block mt-1">
-                {formatDuration(totalFocusMinutes)}
-              </span>
-              <span className="text-[10px] text-stone-400">Completed study/work</span>
+            <div className="bg-white border border-[#E5E0D8] rounded-2xl p-3.5 shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-[11px] font-semibold text-[#78716C] uppercase tracking-wider block">
+                    Focus Time
+                  </span>
+
+                  {/* Interactive Category Selector Dropdown */}
+                  <div className="relative">
+                    <select
+                      value={focusCategory}
+                      onChange={(e) => handleCategoryChange(e.target.value)}
+                      aria-label="Choose visible focus category"
+                      className="text-[10px] font-semibold bg-[#FAF8F5] hover:bg-[#F2EFE9] text-[#1C1917] border border-[#E5E0D8] rounded-md px-1.5 py-0.5 pr-4 appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-stone-400 transition-colors"
+                      style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='%2378716C' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 3px center'
+                      }}
+                    >
+                      <option value="all">All Categories</option>
+                      <option value="career">Career / Study</option>
+                      <option value="college">College Assignment</option>
+                      <option value="personal">Personal / Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-baseline gap-1.5 mt-1">
+                  <span
+                    className={`text-xl sm:text-2xl font-bold font-mono transition-colors ${
+                      focusCategory === 'career'
+                        ? 'text-[#224A32]'
+                        : focusCategory === 'college'
+                        ? 'text-[#3E364E]'
+                        : focusCategory === 'personal'
+                        ? 'text-[#635032]'
+                        : 'text-[#695431]'
+                    }`}
+                  >
+                    {formatDuration(getCategoryMinutes(totalFocusByCategory, totalFocusMinutes))}
+                  </span>
+                  {focusCategory !== 'all' && (
+                    <span className="text-[10px] uppercase font-bold text-stone-400 font-mono">
+                      ({activeCategoryConfig.shortLabel})
+                    </span>
+                  )}
+                </div>
+
+                <span className="text-[10px] text-stone-400 block truncate">
+                  {focusCategory === 'all'
+                    ? 'All completed study/work'
+                    : `${activeCategoryConfig.label} focus`}
+                </span>
+              </div>
+
+              {/* Per-Category Focus Breakdown Pills */}
+              <div className="mt-2.5 pt-2 border-t border-[#E5E0D8]/80 flex flex-wrap items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => handleCategoryChange('career')}
+                  title="Show Career / Study focus time"
+                  className={`text-[9px] font-mono px-1.5 py-0.5 rounded transition-all flex items-center gap-1 cursor-pointer ${
+                    focusCategory === 'career'
+                      ? 'bg-[#224A32] text-white font-bold ring-1 ring-[#224A32]'
+                      : 'bg-[#EBF2EC] text-[#244E35] hover:opacity-85'
+                  }`}
+                >
+                  <span>Career:</span>
+                  <span className="font-semibold">
+                    {formatDuration(totalFocusByCategory?.career || 0)}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleCategoryChange('college')}
+                  title="Show College Assignment focus time"
+                  className={`text-[9px] font-mono px-1.5 py-0.5 rounded transition-all flex items-center gap-1 cursor-pointer ${
+                    focusCategory === 'college'
+                      ? 'bg-[#3E364E] text-white font-bold ring-1 ring-[#3E364E]'
+                      : 'bg-[#ECEAF0] text-[#3E364E] hover:opacity-85'
+                  }`}
+                >
+                  <span>College:</span>
+                  <span className="font-semibold">
+                    {formatDuration(totalFocusByCategory?.college || 0)}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleCategoryChange('personal')}
+                  title="Show Personal / Other focus time"
+                  className={`text-[9px] font-mono px-1.5 py-0.5 rounded transition-all flex items-center gap-1 cursor-pointer ${
+                    focusCategory === 'personal'
+                      ? 'bg-[#635032] text-white font-bold ring-1 ring-[#635032]'
+                      : 'bg-[#F4ECE1] text-[#635032] hover:opacity-85'
+                  }`}
+                >
+                  <span>Personal:</span>
+                  <span className="font-semibold">
+                    {formatDuration(totalFocusByCategory?.personal || 0)}
+                  </span>
+                </button>
+              </div>
             </div>
 
             <div className="bg-white border border-[#E5E0D8] rounded-2xl p-3.5 shadow-sm">

@@ -422,6 +422,9 @@ export function useMilestones(weekStart) {
       let careerFocusMinutes = 0
       let collegeFocusMinutes = 0
       let otherFocusMinutes = 0
+      let completedCareerFocusMinutes = 0
+      let completedCollegeFocusMinutes = 0
+      let completedPersonalFocusMinutes = 0
 
       dayTasks.forEach((t) => {
         const dur = t.duration_minutes ?? 30
@@ -435,10 +438,13 @@ export function useMilestones(weekStart) {
         const tag = t.tag || 'career'
         if (tag === 'career') {
           careerFocusMinutes += dur
+          if (t.is_completed) completedCareerFocusMinutes += dur
         } else if (tag === 'college') {
           collegeFocusMinutes += dur
+          if (t.is_completed) completedCollegeFocusMinutes += dur
         } else {
           otherFocusMinutes += dur
+          if (t.is_completed) completedPersonalFocusMinutes += dur
         }
       })
 
@@ -451,7 +457,21 @@ export function useMilestones(weekStart) {
         totalMinutes: focusMinutes + breakMinutes,
         careerFocusMinutes,
         collegeFocusMinutes,
-        otherFocusMinutes
+        otherFocusMinutes,
+        personalFocusMinutes: otherFocusMinutes,
+        completedCareerFocusMinutes,
+        completedCollegeFocusMinutes,
+        completedPersonalFocusMinutes,
+        focusByCategory: {
+          career: careerFocusMinutes,
+          college: collegeFocusMinutes,
+          personal: otherFocusMinutes
+        },
+        completedFocusByCategory: {
+          career: completedCareerFocusMinutes,
+          college: completedCollegeFocusMinutes,
+          personal: completedPersonalFocusMinutes
+        }
       }
     },
     [milestones]

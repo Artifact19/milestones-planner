@@ -114,3 +114,41 @@ export const TAG_OPTIONS = [
     badgeClass: 'bg-[#F4ECE1] text-[#635032] border-[#E8DAC5]'
   }
 ]
+
+export const normalizeCategory = (tag) => {
+  if (tag === 'college') return 'college'
+  if (tag === 'personal' || tag === 'other') return 'personal'
+  return 'career'
+}
+
+export const FOCUS_CATEGORY_OPTIONS = [
+  {
+    id: 'all',
+    label: 'All Categories',
+    shortLabel: 'All',
+    color: '#695431',
+    badgeClass: 'bg-[#FAF4EB] text-[#695431] border-[#E8DAC5]'
+  },
+  {
+    id: 'career',
+    label: 'Career / Study',
+    shortLabel: 'Career',
+    color: '#224A32',
+    badgeClass: 'bg-[#EBF2EC] text-[#244E35] border-[#D2E4D6]'
+  },
+  {
+    id: 'college',
+    label: 'College Assignment',
+    shortLabel: 'College',
+    color: '#3E364E',
+    badgeClass: 'bg-[#ECEAF0] text-[#3E364E] border-[#DBD6E3]'
+  },
+  {
+    id: 'personal',
+    label: 'Personal / Other',
+    shortLabel: 'Personal',
+    color: '#635032',
+    badgeClass: 'bg-[#F4ECE1] text-[#635032] border-[#E8DAC5]'
+  }
+]
+
