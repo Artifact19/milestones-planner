@@ -15,8 +15,7 @@ import {
   Loader2,
   Printer,
   HelpCircle,
-  Layers,
-  Filter
+  Layers
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useAnalytics } from '../hooks/useAnalytics'
@@ -81,7 +80,8 @@ export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
     (user?.id ? localStorage.getItem('user_avatar_' + user.id) : null)
   const isSafeAvatar =
     typeof rawAvatar === 'string' &&
-    (rawAvatar.startsWith('data:image/') || rawAvatar.startsWith('https://') || rawAvatar.startsWith('http://'))
+    (/^https:\/\//i.test(rawAvatar) ||
+      /^data:image\/(png|jpe?g|webp|gif);base64,/i.test(rawAvatar))
   const avatarUrl = isSafeAvatar ? rawAvatar : null
 
   const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : 'U'

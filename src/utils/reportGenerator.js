@@ -286,7 +286,7 @@ export function printExecutiveReport(reportData) {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>${periodTitle} — ${subtitle}</title>
+  <title>${escapeHtml(periodTitle)} — ${escapeHtml(subtitle)}</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap');
 

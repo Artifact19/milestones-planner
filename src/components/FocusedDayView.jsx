@@ -12,12 +12,14 @@ import {
   Info,
   ChevronLeft,
   ChevronRight,
-  Home
+  Home,
+  CalendarDays
 } from 'lucide-react'
 import TaskItem from './TaskItem'
 import AddTaskInput from './AddTaskInput'
 import SundayCard from './SundayCard'
 import MasterCompletionModal from './MasterCompletionModal'
+import MoveToWeekModal from './MoveToWeekModal'
 import {
   DAY_NAMES,
   addDays,
@@ -41,6 +43,7 @@ export default function FocusedDayView({
   onDeleteSeries,
   onCompleteSeries,
   onMove,
+  onMoveToWeek,
   onAdd,
   onAddBatch,
   onPrevDay,
@@ -66,9 +69,15 @@ export default function FocusedDayView({
   const isOverSundayStudy = careerFocusMins > 240
 
   const completedWeeklyCount = weeklyTasks.filter((t) => t.is_completed).length
+  const incompleteWeeklyTasks = useMemo(
+    () => weeklyTasks.filter((t) => !t.is_completed),
+    [weeklyTasks]
+  )
 
   // Sub-tasks handling for master milestones
   const [pendingMasterCompletion, setPendingMasterCompletion] = useState(null)
+  // Cross-week placement modal state: null | { tasks: Task[] }
+  const [moveToWeekData, setMoveToWeekData] = useState(null)
 
   const getSubTasksForTask = (task) => {
     if (!task?.series_id || task.day_of_week !== 0) return []
@@ -309,17 +318,33 @@ export default function FocusedDayView({
 
       {/* Day Tasks List — Positioned directly beneath the Day Header Card */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between px-2">
-          <span className="text-xs font-semibold text-[#78716C] uppercase tracking-wider">
-            {isWeeklyMaster
-              ? 'Weekly Master Tasks'
-              : isSunday
-              ? 'Sunday Tasks'
-              : `${title} Tasks`}
-          </span>
-          <span className="text-xs text-[#A8A29E] font-mono">
-            {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
-          </span>
+        <div className="flex flex-wrap items-center justify-between gap-2 px-2">
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs font-semibold text-[#78716C] uppercase tracking-wider">
+              {isWeeklyMaster
+                ? 'Weekly Master Tasks'
+                : isSunday
+                ? 'Sunday Tasks'
+                : `${title} Tasks`}
+            </span>
+            <span className="text-xs text-[#A8A29E] font-mono">
+              {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
+            </span>
+          </div>
+
+          {/* Quick Option on Weekly Milestones list to move unfinished tasks to another week */}
+          {isWeeklyMaster && incompleteWeeklyTasks.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setMoveToWeekData({ tasks: incompleteWeeklyTasks })}
+              title="Move all unfinished weekly milestones to another week"
+              aria-label="Move unfinished weekly milestones to another week"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white hover:bg-[#1C1917] hover:text-white border border-[#E5E0D8] hover:border-[#1C1917] text-[#1C1917] text-xs font-semibold shadow-2xs transition-all cursor-pointer group"
+            >
+              <CalendarDays className="w-3.5 h-3.5 text-[#224A32] group-hover:text-white transition-colors" />
+              <span>Move Unfinished to Next Week ({incompleteWeeklyTasks.length})</span>
+            </button>
+          )}
         </div>
 
         {tasks.length === 0 ? (
@@ -347,6 +372,7 @@ export default function FocusedDayView({
               onDelete={onDelete}
               onDeleteSeries={onDeleteSeries}
               onMove={onMove}
+              onOpenMoveToWeek={(t) => setMoveToWeekData({ tasks: [t] })}
               currentDay={selectedDay}
             />
           ))
@@ -356,7 +382,7 @@ export default function FocusedDayView({
       {/* SUNDAY SPECIAL: WEEKLY MILESTONES REVIEW SECTION */}
       {isSunday && (
         <div className="bg-white/90 border border-[#E5E0D8] rounded-3xl p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-3.5 border-b border-[#E5E0D8]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-[#E5E0D8]">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-full bg-[#1C1917] text-white flex items-center justify-center shadow-sm">
                 <ListTodo className="w-4 h-4" />
@@ -371,9 +397,24 @@ export default function FocusedDayView({
               </div>
             </div>
 
-            <div className="text-xs font-mono px-3 py-1 rounded-full bg-[#FAF8F5] border border-[#E5E0D8] text-[#44403C] font-semibold">
-              <span className="text-[#224A32]">{completedWeeklyCount}</span>/
-              <span>{weeklyTasks.length} Done</span>
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              {incompleteWeeklyTasks.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setMoveToWeekData({ tasks: incompleteWeeklyTasks })}
+                  title="Move unfinished weekly milestones to next week"
+                  aria-label="Roll over unfinished milestones to next week"
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white hover:bg-[#1C1917] hover:text-white border border-[#E5E0D8] hover:border-[#1C1917] text-[#1C1917] text-xs font-semibold shadow-2xs transition-all cursor-pointer group"
+                >
+                  <CalendarDays className="w-3.5 h-3.5 text-[#224A32] group-hover:text-white transition-colors" />
+                  <span>Roll over {incompleteWeeklyTasks.length} to Next Week</span>
+                </button>
+              )}
+
+              <div className="text-xs font-mono px-3 py-1 rounded-full bg-[#FAF8F5] border border-[#E5E0D8] text-[#44403C] font-semibold">
+                <span className="text-[#224A32]">{completedWeeklyCount}</span>/
+                <span>{weeklyTasks.length} Done</span>
+              </div>
             </div>
           </div>
 
@@ -395,6 +436,7 @@ export default function FocusedDayView({
                   onDelete={onDelete}
                   onDeleteSeries={onDeleteSeries}
                   onMove={onMove}
+                  onOpenMoveToWeek={(t) => setMoveToWeekData({ tasks: [t] })}
                   currentDay={0}
                 />
               ))
@@ -434,6 +476,15 @@ export default function FocusedDayView({
         subTasks={pendingMasterCompletion?.subTasks}
         onPreserveHistory={handlePreserveHistory}
         onCompleteAll={handleCompleteAll}
+      />
+
+      {/* Modal for moving milestone(s) to another week's milestones list */}
+      <MoveToWeekModal
+        isOpen={Boolean(moveToWeekData)}
+        onClose={() => setMoveToWeekData(null)}
+        tasks={moveToWeekData?.tasks || []}
+        currentWeekStart={weekStart}
+        onMoveToWeek={onMoveToWeek}
       />
     </div>
   )

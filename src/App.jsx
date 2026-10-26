@@ -9,8 +9,8 @@ import ProfileModal from './components/ProfileModal'
 import ReportModal from './components/ReportModal'
 import TutorialModal from './components/TutorialModal'
 import { useMilestones } from './hooks/useMilestones'
-import { getMonday, addWeeks, getTodayDayNumber } from './utils/dateUtils'
-import { X, AlertTriangle, Loader2 } from 'lucide-react'
+import { getMonday, addWeeks, getTodayDayNumber, formatWeekRange } from './utils/dateUtils'
+import { X, AlertTriangle, Loader2, CheckCircle2, ArrowRight } from 'lucide-react'
 
 function TrackerMain() {
   const { user, signOut, isPasswordRecovery } = useAuth()
@@ -20,6 +20,15 @@ function TrackerMain() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
   const [tutorialOpen, setTutorialOpen] = useState(false)
+  const [toast, setToast] = useState(null)
+
+  // Auto-dismiss toast after 6 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 6000)
+      return () => clearTimeout(timer)
+    }
+  }, [toast])
 
   // Auto-launch tutorial on first sign-in if not yet completed or skipped
   useEffect(() => {
@@ -55,6 +64,8 @@ function TrackerMain() {
     toggleMilestone,
     updateMilestone,
     moveMilestone,
+    moveMilestoneToWeek,
+    batchMoveMilestonesToWeek,
     deleteMilestone,
     deleteSeries,
     completeSeriesInWeek,
@@ -68,6 +79,40 @@ function TrackerMain() {
     setWeekStart(getMonday(new Date()))
     setSelectedDay(getTodayDayNumber())
   }
+
+  // Cross-week placement handler for weekly milestones
+  const handleMoveToWeek = useCallback(
+    async (taskIds, targetWeekMonday, targetDayOfWeek = 0, shouldNavigate = false) => {
+      const ids = Array.isArray(taskIds) ? taskIds : [taskIds]
+      let success = false
+      if (ids.length === 1) {
+        success = await moveMilestoneToWeek(ids[0], targetWeekMonday, targetDayOfWeek)
+      } else if (ids.length > 1) {
+        success = await batchMoveMilestonesToWeek(ids, targetWeekMonday, targetDayOfWeek)
+      }
+
+      if (success) {
+        const rangeText = formatWeekRange(targetWeekMonday)
+        const countText = ids.length === 1 ? 'Milestone' : `${ids.length} milestones`
+
+        if (shouldNavigate) {
+          setWeekStart(targetWeekMonday)
+          setSelectedDay(targetDayOfWeek)
+          setToast({
+            text: `${countText} moved to week of ${rangeText}!`,
+            targetWeek: null
+          })
+        } else {
+          setToast({
+            text: `${countText} placed in week of ${rangeText}.`,
+            targetWeek: targetWeekMonday,
+            targetDay: targetDayOfWeek
+          })
+        }
+      }
+    },
+    [moveMilestoneToWeek, batchMoveMilestonesToWeek]
+  )
 
   // Homepage navigation (returns to today's date in current week)
   const handleGoHome = useCallback(() => {
@@ -190,6 +235,7 @@ function TrackerMain() {
               onDeleteSeries={deleteSeries}
               onCompleteSeries={completeSeriesInWeek}
               onMove={moveMilestone}
+              onMoveToWeek={handleMoveToWeek}
               onAdd={addMilestone}
               onAddBatch={addBatchMilestones}
               onPrevDay={handlePrevDay}
@@ -221,6 +267,40 @@ function TrackerMain() {
         onClose={() => setTutorialOpen(false)}
         onComplete={handleCompleteTutorial}
       />
+
+      {/* Feedback Toast Notification (with 1-click Jump to Week) */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-md bg-[#1C1917] text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center justify-between gap-3 text-xs animate-in slide-in-from-bottom-3 duration-200 border border-stone-800">
+          <div className="flex items-center gap-2 min-w-0">
+            <CheckCircle2 className="w-4 h-4 text-[#CFE1D3] shrink-0" />
+            <span className="font-medium truncate">{toast.text}</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {toast.targetWeek && (
+              <button
+                type="button"
+                onClick={() => {
+                  setWeekStart(toast.targetWeek)
+                  setSelectedDay(toast.targetDay ?? 0)
+                  setToast(null)
+                }}
+                className="flex items-center gap-1 font-bold text-stone-200 hover:text-white underline underline-offset-2 transition-colors cursor-pointer"
+              >
+                <span>Jump to Week</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              aria-label="Dismiss notification"
+              className="p-1 rounded-full hover:bg-stone-800 text-stone-400 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -267,6 +267,97 @@ export function useMilestones(weekStart) {
     await updateMilestone(id, { day_of_week: newDayOfWeek })
   }, [updateMilestone])
 
+  // Move milestone to another week's weekly list (or specific day)
+  const moveMilestoneToWeek = useCallback(
+    async (id, targetWeekStartDate, targetDayOfWeek = 0) => {
+      if (!id || !user || !targetWeekStartDate) return false
+
+      const targetWeekStr =
+        typeof targetWeekStartDate === 'string'
+          ? targetWeekStartDate
+          : toDateString(targetWeekStartDate)
+
+      // If target week is the same as current week:
+      if (targetWeekStr === weekStartDateString) {
+        await updateMilestone(id, { day_of_week: targetDayOfWeek })
+        return true
+      }
+
+      // Optimistic removal from current week
+      const targetItem = milestones.find((m) => m.id === id)
+      if (!targetItem) return false
+
+      setMilestones((prev) => prev.filter((m) => m.id !== id))
+      setError(null)
+
+      try {
+        const { error: updateError } = await supabase
+          .from('milestones')
+          .update({
+            week_start_date: targetWeekStr,
+            day_of_week: targetDayOfWeek
+          })
+          .eq('id', id)
+          .eq('user_id', user.id)
+
+        if (updateError) {
+          setMilestones((prev) => [...prev, targetItem])
+          setError(`Could not move task to week: ${updateError.message}`)
+          return false
+        }
+        return true
+      } catch (err) {
+        setMilestones((prev) => [...prev, targetItem])
+        setError(`Could not move task to week: ${err.message || 'Network error'}`)
+        return false
+      }
+    },
+    [milestones, user, weekStartDateString, updateMilestone]
+  )
+
+  // Batch move milestones to another week
+  const batchMoveMilestonesToWeek = useCallback(
+    async (ids, targetWeekStartDate, targetDayOfWeek = 0) => {
+      if (!ids || !ids.length || !user || !targetWeekStartDate) return false
+
+      const targetWeekStr =
+        typeof targetWeekStartDate === 'string'
+          ? targetWeekStartDate
+          : toDateString(targetWeekStartDate)
+
+      const idSet = new Set(ids)
+      const targetItems = milestones.filter((m) => idSet.has(m.id))
+      if (targetItems.length === 0) return false
+
+      // Optimistic removal from current week
+      setMilestones((prev) => prev.filter((m) => !idSet.has(m.id)))
+      setError(null)
+
+      try {
+        const { error: updateError } = await supabase
+          .from('milestones')
+          .update({
+            week_start_date: targetWeekStr,
+            day_of_week: targetDayOfWeek
+          })
+          .in('id', ids)
+          .eq('user_id', user.id)
+
+        if (updateError) {
+          setMilestones((prev) => [...prev, ...targetItems])
+          setError(`Could not move tasks: ${updateError.message}`)
+          return false
+        }
+        return true
+      } catch (err) {
+        setMilestones((prev) => [...prev, ...targetItems])
+        setError(`Could not move tasks: ${err.message || 'Network error'}`)
+        return false
+      }
+    },
+    [milestones, user]
+  )
+
   // Delete milestone with optimistic update
   const deleteMilestone = useCallback(
     async (id) => {
@@ -487,6 +578,8 @@ export function useMilestones(weekStart) {
     toggleMilestone,
     updateMilestone,
     moveMilestone,
+    moveMilestoneToWeek,
+    batchMoveMilestonesToWeek,
     deleteMilestone,
     deleteSeries,
     completeSeriesInWeek,

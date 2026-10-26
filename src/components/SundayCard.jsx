@@ -63,6 +63,7 @@ export default function SundayCard({ weekStart }) {
           onChange={(e) => updateNote(e.target.value)}
           placeholder="What went well this week? What are your top priorities for next week?"
           rows={3}
+          maxLength={5000}
           className="w-full bg-[#FAF8F5] border border-[#E5E0D8] focus:border-[#1C1917] focus:bg-white rounded-2xl p-4 text-sm text-[#1C1917] placeholder-stone-400 focus:outline-none resize-none transition-all leading-relaxed font-sans"
         />
       )}
