@@ -213,42 +213,44 @@ export default function FocusedDayView({
           </div>
         </div>
 
-        {/* Time Budget Breakdown Banner */}
-        <div className="mt-5 pt-1 flex flex-wrap items-center justify-between gap-y-3 gap-x-6 text-xs sm:text-sm">
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-            {/* Focus */}
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F5] border border-[#E5E0D8]">
-              <Clock className="w-3.5 h-3.5 text-[#224A32] shrink-0" />
-              <span className="text-[#78716C]">Focus:</span>
-              <span className="font-mono font-bold text-[#1C1917]">
-                {formatDuration(dayStats.focusMinutes)}
-              </span>
-            </div>
+        {/* Time Budget Breakdown Banner (shown on daily views Mon to Sun) */}
+        {!isWeeklyMaster ? (
+          <div className="mt-5 pt-1 flex flex-wrap items-center justify-between gap-y-3 gap-x-6 text-xs sm:text-sm">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+              {/* Focus */}
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F5] border border-[#E5E0D8]">
+                <Clock className="w-3.5 h-3.5 text-[#224A32] shrink-0" />
+                <span className="text-[#78716C]">Focus:</span>
+                <span className="font-mono font-bold text-[#1C1917]">
+                  {formatDuration(dayStats.focusMinutes)}
+                </span>
+              </div>
 
-            {/* Breaks */}
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F5] border border-[#E5E0D8]">
-              <Coffee className="w-3.5 h-3.5 text-[#695431] shrink-0" />
-              <span className="text-[#78716C]">Breaks:</span>
-              <span className="font-mono font-bold text-[#1C1917]">
-                {formatDuration(dayStats.breakMinutes)}
-              </span>
-            </div>
+              {/* Breaks */}
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F5] border border-[#E5E0D8]">
+                <Coffee className="w-3.5 h-3.5 text-[#695431] shrink-0" />
+                <span className="text-[#78716C]">Breaks:</span>
+                <span className="font-mono font-bold text-[#1C1917]">
+                  {formatDuration(dayStats.breakMinutes)}
+                </span>
+              </div>
 
-            {/* Total Budgeted */}
-            <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#1C1917] text-white shadow-sm">
-              <span className="text-stone-300">Total Budgeted:</span>
-              <span className="font-mono font-bold text-[#FAF8F5]">
-                {formatDuration(dayStats.totalMinutes)}
-              </span>
+              {/* Total Budgeted */}
+              <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#1C1917] text-white shadow-sm">
+                <span className="text-stone-300">Total Budgeted:</span>
+                <span className="font-mono font-bold text-[#FAF8F5]">
+                  {formatDuration(dayStats.totalMinutes)}
+                </span>
+              </div>
             </div>
           </div>
-
-          {isWeeklyMaster && (
-            <div className="text-xs text-[#78716C] italic font-serif">
-              Tip: Use "Assign to Day" to distribute milestones across your schedule.
-            </div>
-          )}
-        </div>
+        ) : (
+          <div className="mt-4 pt-1 flex items-center justify-between text-xs text-[#78716C]">
+            <span className="font-serif italic">
+              Weekly Master Milestones: High-level priorities for the week. Daily focus time is scheduled on Monday through Saturday.
+            </span>
+          </div>
+        )}
 
         {/* SUNDAY SPECIFIC STUDY MONITOR & ALERT */}
         {isSunday && (

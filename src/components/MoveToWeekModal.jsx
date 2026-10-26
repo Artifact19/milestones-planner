@@ -187,7 +187,7 @@ export default function MoveToWeekModal({
 
                   <span className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#FAF8F5] border border-[#E5E0D8] text-[#57534E]">
                     <Clock className="w-3 h-3 text-[#224A32]" />
-                    <span>{formatDuration(primaryTask.duration_minutes ?? 30)}</span>
+                    <span>{formatDuration(primaryTask.duration_minutes ?? 30)} / daily session</span>
                   </span>
                 </div>
               </div>

@@ -55,8 +55,10 @@ export default function TaskItem({
   onDelete,
   onDeleteSeries,
   onMove,
-  onOpenMoveToWeek
+  onOpenMoveToWeek,
+  currentDay
 }) {
+  const isWeeklyMilestone = task.day_of_week === 0 || currentDay === 0
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState(task.title)
   const [editDuration, setEditDuration] = useState(task.duration_minutes ?? 30)
@@ -324,21 +326,23 @@ export default function TaskItem({
                   </span>
                 )}
 
-                {/* Time Badge (Focus + Break) */}
-                <span
-                  className="inline-flex items-center gap-1 text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-[#FAF8F5] border border-[#E5E0D8] text-[#57534E]"
-                  title={`${formatDuration(task.duration_minutes ?? 30)} focus + ${formatDuration(task.break_minutes ?? 5)} break`}
-                >
-                  <Clock className="w-3 h-3 text-[#224A32]" />
-                  <span>{formatDuration(task.duration_minutes ?? 30)}</span>
-                  {(task.break_minutes ?? 5) > 0 && (
-                    <span className="text-stone-400 flex items-center gap-0.5">
-                      +<Coffee className="w-2.5 h-2.5" />
-                      {formatDuration(task.break_minutes ?? 5)}
-                    </span>
-                  )}
-                  <span className="text-stone-400">(= {formatDuration(totalItemMinutes)})</span>
-                </span>
+                {/* Time Badge (Focus + Break) - Only shown on daily tasks (Mon-Sun), hidden on weekly milestones */}
+                {!isWeeklyMilestone && (
+                  <span
+                    className="inline-flex items-center gap-1 text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-[#FAF8F5] border border-[#E5E0D8] text-[#57534E]"
+                    title={`${formatDuration(task.duration_minutes ?? 30)} focus + ${formatDuration(task.break_minutes ?? 5)} break`}
+                  >
+                    <Clock className="w-3 h-3 text-[#224A32]" />
+                    <span>{formatDuration(task.duration_minutes ?? 30)}</span>
+                    {(task.break_minutes ?? 5) > 0 && (
+                      <span className="text-stone-400 flex items-center gap-0.5">
+                        +<Coffee className="w-2.5 h-2.5" />
+                        {formatDuration(task.break_minutes ?? 5)}
+                      </span>
+                    )}
+                    <span className="text-stone-400">(= {formatDuration(totalItemMinutes)})</span>
+                  </span>
+                )}
               </div>
             </div>
           )}
