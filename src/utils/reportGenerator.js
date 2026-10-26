@@ -139,6 +139,47 @@ export function compileReportData({
     }
   }
 
+  // Weekly breakdown for monthly report
+  const weekBreakdown = []
+  if (type === 'monthly') {
+    const daysInMonth = new Date(targetYear, targetMonthIndex + 1, 0).getDate()
+    const monthShort = MONTH_NAMES[targetMonthIndex].slice(0, 3)
+    let currentStartDay = 1
+    let weekNum = 1
+
+    while (currentStartDay <= daysInMonth) {
+      const startDate = new Date(targetYear, targetMonthIndex, currentStartDay)
+      const dayOfWeek = startDate.getDay()
+      const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek
+      const endDay = Math.min(daysInMonth, currentStartDay + daysUntilSunday)
+
+      const weekTasks = filteredMilestones.filter((task) => {
+        const d = getTaskDate(task)
+        const dayOfMonth = d.getDate()
+        return dayOfMonth >= currentStartDay && dayOfMonth <= endDay
+      })
+
+      const wTotal = weekTasks.length
+      const wComp = weekTasks.filter((t) => t.is_completed).length
+      const wPercent = wTotal > 0 ? Math.round((wComp / wTotal) * 100) : 0
+      const wFocus = weekTasks
+        .filter((t) => t.is_completed)
+        .reduce((acc, t) => acc + (t.duration_minutes ?? 30), 0)
+
+      weekBreakdown.push({
+        weekLabel: `Week ${weekNum}`,
+        dateRange: `${monthShort} ${currentStartDay} – ${monthShort} ${endDay}`,
+        total: wTotal,
+        completed: wComp,
+        percent: wPercent,
+        focusMinutes: wFocus
+      })
+
+      currentStartDay = endDay + 1
+      weekNum++
+    }
+  }
+
   return {
     type,
     periodTitle,
@@ -171,6 +212,7 @@ export function compileReportData({
     milestones: filteredMilestones,
     dayGroups,
     monthBreakdown,
+    weekBreakdown,
     weeklyNote
   }
 }
@@ -272,6 +314,7 @@ export function printExecutiveReport(reportData) {
     type,
     dayGroups,
     monthBreakdown,
+    weekBreakdown,
     weeklyNote
   } = reportData
 
@@ -637,6 +680,48 @@ export function printExecutiveReport(reportData) {
             <td style="width: 140px;">
               <div style="background: #E5E0D8; height: 6px; border-radius: 9999px; overflow: hidden;">
                 <div style="background: #1C1917; height: 100%; width: ${mb.percent}%;"></div>
+              </div>
+            </td>
+          </tr>
+        `
+          )
+          .join('')}
+      </tbody>
+    </table>
+    `
+      : ''
+  }
+
+  ${
+    type === 'monthly' && weekBreakdown && weekBreakdown.length > 0
+      ? `
+    <h2 class="section-heading">Week-by-Week Performance Overview</h2>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Week</th>
+          <th>Date Range</th>
+          <th>Completed</th>
+          <th>Total</th>
+          <th>Rate</th>
+          <th>Focus Time</th>
+          <th>Visual Progress</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${weekBreakdown
+          .map(
+            (wb) => `
+          <tr>
+            <td><strong>${escapeHtml(wb.weekLabel)}</strong></td>
+            <td>${escapeHtml(wb.dateRange)}</td>
+            <td>${wb.completed}</td>
+            <td>${wb.total}</td>
+            <td><strong>${wb.percent}%</strong></td>
+            <td>${formatDuration(wb.focusMinutes)}</td>
+            <td style="width: 140px;">
+              <div style="background: #E5E0D8; height: 6px; border-radius: 9999px; overflow: hidden;">
+                <div style="background: #224A32; height: 100%; width: ${wb.percent}%;"></div>
               </div>
             </td>
           </tr>

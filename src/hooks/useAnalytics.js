@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { parseDateString, addDays, normalizeCategory } from '../utils/dateUtils'
+import { parseDateString, addDays, normalizeCategory, getMonday, toDateString } from '../utils/dateUtils'
 import { useAuth } from '../context/AuthContext'
 
 const MONTH_NAMES = [
@@ -12,6 +12,69 @@ const MONTH_FULL_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
 ]
+
+// Helper to partition any month into its weekly calendar segments
+function buildWeeksForMonth(year, monthIndex) {
+  const weeks = []
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate()
+  const monthShort = MONTH_NAMES[monthIndex]
+  const today = new Date()
+  const isCurrentMonth = today.getFullYear() === year && today.getMonth() === monthIndex
+  const todayDate = today.getDate()
+
+  let currentStartDay = 1
+  let weekNum = 1
+
+  while (currentStartDay <= daysInMonth) {
+    const startDate = new Date(year, monthIndex, currentStartDay)
+    const dayOfWeek = startDate.getDay() // 0=Sun, 1=Mon, ..., 6=Sat
+    // Sunday ends the week in our ISO-based system
+    const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek
+    const endDay = Math.min(daysInMonth, currentStartDay + daysUntilSunday)
+
+    const isCurrentWeek =
+      isCurrentMonth && todayDate >= currentStartDay && todayDate <= endDay
+
+    const mondayDate = getMonday(startDate)
+    const mondayStr = toDateString(mondayDate)
+
+    const dateRange =
+      currentStartDay === endDay
+        ? `${monthShort} ${currentStartDay}`
+        : `${monthShort} ${currentStartDay} – ${monthShort} ${endDay}`
+
+    const dateRangeShort =
+      currentStartDay === endDay
+        ? `${monthShort} ${currentStartDay}`
+        : `${monthShort} ${currentStartDay}–${endDay}`
+
+    weeks.push({
+      weekNumber: weekNum,
+      weekLabel: `Week ${weekNum}`,
+      dateRange,
+      dateRangeShort,
+      startDay: currentStartDay,
+      endDay,
+      mondayDate,
+      mondayStr,
+      isCurrentWeek,
+      total: 0,
+      completed: 0,
+      focusMinutes: 0,
+      focusByCategory: {
+        career: 0,
+        college: 0,
+        personal: 0
+      },
+      percent: 0
+    })
+
+    currentStartDay = endDay + 1
+    weekNum++
+  }
+
+  return weeks
+}
 
 export function useAnalytics() {
   const { user } = useAuth()
@@ -54,7 +117,7 @@ export function useAnalytics() {
     const currentYear = new Date().getFullYear()
     const currentMonth = new Date().getMonth() // 0-indexed
 
-    // Monthly data for the current year (Jan through Dec)
+    // Monthly data for the current year (Jan through Dec) with weekly breakdown
     const monthsMap = {}
     for (let m = 0; m < 12; m++) {
       monthsMap[m] = {
@@ -71,7 +134,8 @@ export function useAnalytics() {
           personal: 0
         },
         percent: 0,
-        isCurrent: m === currentMonth
+        isCurrent: m === currentMonth,
+        weeksList: buildWeeksForMonth(currentYear, m)
       }
     }
 
@@ -93,11 +157,26 @@ export function useAnalytics() {
 
       // Add to current year months
       if (y === currentYear && monthsMap[mon]) {
-        monthsMap[mon].total += 1
+        const mObj = monthsMap[mon]
+        mObj.total += 1
         if (isComp) {
-          monthsMap[mon].completed += 1
-          monthsMap[mon].focusMinutes += dur
-          monthsMap[mon].focusByCategory[cat] = (monthsMap[mon].focusByCategory[cat] || 0) + dur
+          mObj.completed += 1
+          mObj.focusMinutes += dur
+          mObj.focusByCategory[cat] = (mObj.focusByCategory[cat] || 0) + dur
+        }
+
+        // Add to corresponding week inside this month
+        const dayOfMonth = taskDate.getDate()
+        const targetWeek = mObj.weeksList.find(
+          (w) => dayOfMonth >= w.startDay && dayOfMonth <= w.endDay
+        )
+        if (targetWeek) {
+          targetWeek.total += 1
+          if (isComp) {
+            targetWeek.completed += 1
+            targetWeek.focusMinutes += dur
+            targetWeek.focusByCategory[cat] = (targetWeek.focusByCategory[cat] || 0) + dur
+          }
         }
       }
 
@@ -140,10 +219,14 @@ export function useAnalytics() {
       }
     })
 
-    // Compute percentages for monthly
+    // Compute percentages for monthly and its weeks
     const monthlyList = Object.values(monthsMap).map((item) => ({
       ...item,
-      percent: item.total > 0 ? Math.round((item.completed / item.total) * 100) : 0
+      percent: item.total > 0 ? Math.round((item.completed / item.total) * 100) : 0,
+      weeksList: item.weeksList.map((w) => ({
+        ...w,
+        percent: w.total > 0 ? Math.round((w.completed / w.total) * 100) : 0
+      }))
     }))
 
     // Compute percentages for yearly
