@@ -44,6 +44,7 @@ export default function FocusedDayView({
   onCompleteSeries,
   onMove,
   onMoveToWeek,
+  onCopyMilestones,
   onAdd,
   onAddBatch,
   onPrevDay,
@@ -478,13 +479,13 @@ export default function FocusedDayView({
         onCompleteAll={handleCompleteAll}
       />
 
-      {/* Modal for moving milestone(s) to another week's milestones list */}
+      {/* Modal for carrying / copying milestone(s) to another week with Mon-Sat schedule */}
       <MoveToWeekModal
         isOpen={Boolean(moveToWeekData)}
         onClose={() => setMoveToWeekData(null)}
         tasks={moveToWeekData?.tasks || []}
         currentWeekStart={weekStart}
-        onMoveToWeek={onMoveToWeek}
+        onCopyMilestones={onCopyMilestones || onMoveToWeek}
       />
     </div>
   )

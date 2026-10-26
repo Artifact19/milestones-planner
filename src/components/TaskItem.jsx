@@ -381,18 +381,18 @@ export default function TaskItem({
 
         {!isEditing && !confirmDelete && (
           <div className="flex items-center justify-end gap-1.5 pt-1 sm:pt-0 border-t border-[#E5E0D8]/60 sm:border-t-0 shrink-0">
-            {/* Direct 1-click option to move weekly milestone across weeks */}
+            {/* Direct 1-click option to carry forward weekly milestone to another week */}
             {onOpenMoveToWeek && task.day_of_week === 0 && (
               <button
                 type="button"
                 onClick={() => onOpenMoveToWeek(task)}
-                aria-label="Move milestone to another week"
-                title="Move this milestone into another week's weekly milestones list"
+                aria-label="Carry milestone to another week"
+                title="Carry forward this milestone to another week (schedules on Mon–Sat & preserves history)"
                 className="flex items-center gap-1 text-[11px] font-semibold bg-white hover:bg-[#1C1917] hover:text-white border border-[#E5E0D8] hover:border-[#1C1917] text-[#44403C] rounded-full px-2.5 py-1 transition-all shadow-xs cursor-pointer group"
               >
                 <CalendarDays className="w-3.5 h-3.5 text-[#224A32] group-hover:text-white transition-colors" />
-                <span className="hidden sm:inline">Move Week</span>
-                <span className="sm:hidden">Week</span>
+                <span className="hidden sm:inline">Carry to Week</span>
+                <span className="sm:hidden">Carry</span>
               </button>
             )}
 
@@ -417,7 +417,7 @@ export default function TaskItem({
               <option value={5}>Fri</option>
               <option value={6}>Sat</option>
               <option value={7}>Sun</option>
-              <option value="move-week">🗓️ Move to another week…</option>
+              <option value="move-week">🗓️ Carry to another week…</option>
             </select>
 
             <button

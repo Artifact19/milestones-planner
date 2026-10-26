@@ -66,6 +66,7 @@ function TrackerMain() {
     moveMilestone,
     moveMilestoneToWeek,
     batchMoveMilestonesToWeek,
+    copyMilestonesToWeek,
     deleteMilestone,
     deleteSeries,
     completeSeriesInWeek,
@@ -80,38 +81,36 @@ function TrackerMain() {
     setSelectedDay(getTodayDayNumber())
   }
 
-  // Cross-week placement handler for weekly milestones
-  const handleMoveToWeek = useCallback(
-    async (taskIds, targetWeekMonday, targetDayOfWeek = 0, shouldNavigate = false) => {
-      const ids = Array.isArray(taskIds) ? taskIds : [taskIds]
-      let success = false
-      if (ids.length === 1) {
-        success = await moveMilestoneToWeek(ids[0], targetWeekMonday, targetDayOfWeek)
-      } else if (ids.length > 1) {
-        success = await batchMoveMilestonesToWeek(ids, targetWeekMonday, targetDayOfWeek)
-      }
+  // Cross-week carry forward / copy handler for weekly milestones (preserves current week history)
+  const handleCopyMilestonesToWeek = useCallback(
+    async (tasks, targetWeekMonday, selectedDays = [0, 1, 2, 3, 4, 5, 6], shouldNavigate = false) => {
+      const taskList = Array.isArray(tasks) ? tasks : [tasks]
+      const success = await copyMilestonesToWeek(taskList, targetWeekMonday, selectedDays)
 
       if (success) {
         const rangeText = formatWeekRange(targetWeekMonday)
-        const countText = ids.length === 1 ? 'Milestone' : `${ids.length} milestones`
+        const countText =
+          taskList.length === 1 ? `"${taskList[0].title}"` : `${taskList.length} milestones`
+
+        const daysNote = selectedDays.length > 1 ? ' (scheduled Mon–Sat)' : ''
 
         if (shouldNavigate) {
           setWeekStart(targetWeekMonday)
-          setSelectedDay(targetDayOfWeek)
+          setSelectedDay(0) // Land on Weekly Master in the destination week
           setToast({
-            text: `${countText} moved to week of ${rangeText}!`,
+            text: `${countText} carried forward to ${rangeText}${daysNote}!`,
             targetWeek: null
           })
         } else {
           setToast({
-            text: `${countText} placed in week of ${rangeText}.`,
+            text: `${countText} carried forward to ${rangeText}${daysNote}. Previous week preserved!`,
             targetWeek: targetWeekMonday,
-            targetDay: targetDayOfWeek
+            targetDay: 0
           })
         }
       }
     },
-    [moveMilestoneToWeek, batchMoveMilestonesToWeek]
+    [copyMilestonesToWeek]
   )
 
   // Homepage navigation (returns to today's date in current week)
@@ -235,7 +234,7 @@ function TrackerMain() {
               onDeleteSeries={deleteSeries}
               onCompleteSeries={completeSeriesInWeek}
               onMove={moveMilestone}
-              onMoveToWeek={handleMoveToWeek}
+              onCopyMilestones={handleCopyMilestonesToWeek}
               onAdd={addMilestone}
               onAddBatch={addBatchMilestones}
               onPrevDay={handlePrevDay}

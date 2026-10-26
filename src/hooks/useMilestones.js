@@ -267,6 +267,95 @@ export function useMilestones(weekStart) {
     await updateMilestone(id, { day_of_week: newDayOfWeek })
   }, [updateMilestone])
 
+  // Copy / carry forward milestones to another week (preserves original week intact)
+  // By default, schedules on Weekly Master (0) + Monday to Saturday ([1, 2, 3, 4, 5, 6])
+  const copyMilestonesToWeek = useCallback(
+    async (tasksOrIds, targetWeekStartDate, daysArray = [0, 1, 2, 3, 4, 5, 6]) => {
+      if (!user || !tasksOrIds || !targetWeekStartDate) return false
+
+      const targetWeekStr =
+        typeof targetWeekStartDate === 'string'
+          ? targetWeekStartDate
+          : toDateString(targetWeekStartDate)
+
+      const rawItems = Array.isArray(tasksOrIds) ? tasksOrIds : [tasksOrIds]
+      const itemsToCopy = rawItems
+        .map((item) => (typeof item === 'object' ? item : milestones.find((m) => m.id === item)))
+        .filter(Boolean)
+
+      if (itemsToCopy.length === 0) return false
+
+      const days = daysArray && daysArray.length > 0 ? daysArray : [0, 1, 2, 3, 4, 5, 6]
+
+      // Build payload for insertion into destination week
+      // When scheduling across multiple days, link them via a fresh series_id
+      const payload = []
+      itemsToCopy.forEach((task) => {
+        const seriesId = days.length > 1 ? newUuid() : null
+        days.forEach((day) => {
+          payload.push({
+            user_id: user.id,
+            week_start_date: targetWeekStr,
+            day_of_week: day,
+            title: task.title,
+            duration_minutes: task.duration_minutes ?? 30,
+            break_minutes: task.break_minutes ?? 5,
+            tag: task.tag || 'career',
+            series_id: seriesId,
+            is_completed: false
+          })
+        })
+      })
+
+      // NOTE: We do NOT remove or alter anything in current week's milestones.
+      // The original history and completed status in the originating week remain 100% intact!
+      const isCurrentView = targetWeekStr === weekStartDateString
+      const tempRows = isCurrentView
+        ? payload.map((r) => ({
+            ...r,
+            id: 'temp-' + newUuid(),
+            created_at: new Date().toISOString()
+          }))
+        : []
+
+      if (isCurrentView) {
+        setMilestones((prev) => [...prev, ...tempRows])
+      }
+      setError(null)
+
+      try {
+        const { data, error: insertError } = await supabase
+          .from('milestones')
+          .insert(payload)
+          .select()
+
+        if (insertError) {
+          if (isCurrentView) {
+            const tempIds = new Set(tempRows.map((t) => t.id))
+            setMilestones((prev) => prev.filter((m) => !tempIds.has(m.id)))
+          }
+          setError(`Could not carry forward milestone: ${insertError.message}`)
+          return false
+        } else if (isCurrentView && data) {
+          const tempIds = new Set(tempRows.map((t) => t.id))
+          setMilestones((prev) => {
+            const preserved = prev.filter((m) => !tempIds.has(m.id))
+            return [...preserved, ...data]
+          })
+        }
+        return true
+      } catch (err) {
+        if (isCurrentView) {
+          const tempIds = new Set(tempRows.map((t) => t.id))
+          setMilestones((prev) => prev.filter((m) => !tempIds.has(m.id)))
+        }
+        setError(`Could not carry forward milestone: ${err.message || 'Network error'}`)
+        return false
+      }
+    },
+    [milestones, user, weekStartDateString]
+  )
+
   // Move milestone to another week's weekly list (or specific day)
   const moveMilestoneToWeek = useCallback(
     async (id, targetWeekStartDate, targetDayOfWeek = 0) => {
@@ -580,6 +669,7 @@ export function useMilestones(weekStart) {
     moveMilestone,
     moveMilestoneToWeek,
     batchMoveMilestonesToWeek,
+    copyMilestonesToWeek,
     deleteMilestone,
     deleteSeries,
     completeSeriesInWeek,
