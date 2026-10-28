@@ -562,7 +562,7 @@ export function useMilestones(weekStart) {
 
   const stats = useMemo(() => {
     const total = milestones.length
-    const completed = milestones.filter((m) => m.is_completed).length
+    const completed = milestones.filter((m) => Boolean(m.is_completed)).length
     const percent = total === 0 ? 0 : Math.round((completed / total) * 100)
 
     let totalFocusMinutes = 0
@@ -572,7 +572,7 @@ export function useMilestones(weekStart) {
     milestones.forEach((m) => {
       const dur = m.duration_minutes ?? 30
       totalFocusMinutes += dur
-      if (m.is_completed) {
+      if (Boolean(m.is_completed)) {
         completedFocusMinutes += dur
       }
       totalBreakMinutes += m.break_minutes ?? 5
@@ -592,9 +592,9 @@ export function useMilestones(weekStart) {
   // Helper for computing detailed metrics for any day_of_week (0..7)
   const getDayStats = useCallback(
     (targetDay) => {
-      const dayTasks = milestones.filter((m) => m.day_of_week === targetDay)
+      const dayTasks = milestones.filter((m) => Number(m.day_of_week) === Number(targetDay))
       const taskCount = dayTasks.length
-      const completedCount = dayTasks.filter((m) => m.is_completed).length
+      const completedCount = dayTasks.filter((m) => Boolean(m.is_completed)).length
 
       let focusMinutes = 0
       let completedFocusMinutes = 0

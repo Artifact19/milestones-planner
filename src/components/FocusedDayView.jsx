@@ -207,9 +207,11 @@ export default function FocusedDayView({
           {/* Quick completion count */}
           <div className="flex items-center gap-2 self-start sm:self-auto font-mono text-xs px-3.5 py-1.5 rounded-full bg-[#FAF8F5] border border-[#E5E0D8] text-[#57534E] shadow-sm">
             <span className="text-stone-400">Tasks:</span>
-            <span className="text-[#1C1917] font-bold">{dayStats.completedCount}</span>
+            <span className="text-[#1C1917] font-bold">
+              {tasks.filter((t) => Boolean(t.is_completed)).length}
+            </span>
             <span className="text-stone-300">/</span>
-            <span className="text-[#78716C] font-semibold">{dayStats.taskCount}</span>
+            <span className="text-[#78716C] font-semibold">{tasks.length}</span>
           </div>
         </div>
 
