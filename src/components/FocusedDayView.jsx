@@ -13,7 +13,6 @@ import {
   Info,
   ChevronLeft,
   ChevronRight,
-  Home,
   CalendarDays
 } from 'lucide-react'
 import TaskItem from './TaskItem'
@@ -56,6 +55,7 @@ function reorderTaskList(list, sourceId, targetId, position) {
 export default function FocusedDayView({
   weekStart,
   selectedDay,
+  onSelectDay,
   tasks = [],
   weeklyTasks = [],
   allMilestones = [],
@@ -232,42 +232,75 @@ export default function FocusedDayView({
 
   return (
     <div className="flex-1 flex flex-col gap-6 min-w-0 pb-16">
-      {/* Top Day Stepper & Home Navigation Pill */}
-      <div className="flex items-center justify-between gap-2 bg-white border-2 border-[#1C1917] rounded-2xl px-3 py-1.5 shadow-[2.5px_2.5px_0px_#1C1917] text-xs">
-        <button
-          type="button"
-          onClick={onPrevDay}
-          aria-label="Previous day"
-          className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white hover:bg-[#FEF08A] border border-[#1C1917] text-[#1C1917] font-bold shadow-[1px_1px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
-        >
-          <ChevronLeft className="w-3.5 h-3.5 stroke-[2.5]" />
-          <span className="hidden sm:inline">Previous Day</span>
-        </button>
+      {/* Neo-Brutalist Segmented Days Strip & Stepper */}
+      <div className="flex flex-wrap items-center justify-between gap-2 bg-white border-2 border-[#1C1917] rounded-2xl p-1.5 shadow-[2.5px_2.5px_0px_#1C1917]">
+        {/* Direct Day Selector Tabs */}
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
+          {[
+            { num: 0, label: 'Wk', name: 'Weekly Master' },
+            { num: 1, label: 'Mon', name: 'Monday' },
+            { num: 2, label: 'Tue', name: 'Tuesday' },
+            { num: 3, label: 'Wed', name: 'Wednesday' },
+            { num: 4, label: 'Thu', name: 'Thursday' },
+            { num: 5, label: 'Fri', name: 'Friday' },
+            { num: 6, label: 'Sat', name: 'Saturday' },
+            { num: 7, label: 'Sun', name: 'Sunday' }
+          ].map((d) => {
+            const isSelected = selectedDay === d.num
+            const isTodayDay = isCurrentWeek && d.num === todayDayNumber
+            return (
+              <button
+                key={d.num}
+                type="button"
+                onClick={() => onSelectDay?.(d.num)}
+                title={d.name}
+                className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                  isSelected
+                    ? 'bg-[#FEF08A] text-[#1C1917] border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] font-black'
+                    : 'bg-white hover:bg-stone-50 text-[#57534E] hover:text-[#1C1917] border border-[#1C1917]/30'
+                }`}
+              >
+                {d.num === 0 && <ListTodo className="w-3 h-3 stroke-[2.5]" />}
+                <span>{d.label}</span>
+                {isTodayDay && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" title="Today" />
+                )}
+              </button>
+            )
+          })}
+        </div>
 
-        <button
-          type="button"
-          onClick={onGoHome}
-          title="Go to Today (Homepage)"
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-xl border-2 border-[#1C1917] transition-all cursor-pointer font-bold ${
-            isToday
-              ? 'bg-[#FEF08A] text-[#1C1917] shadow-[2px_2px_0px_#1C1917] font-black'
-              : 'bg-white hover:bg-[#FEF08A] text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
-          }`}
-        >
-          <Home className="w-3.5 h-3.5" />
-          <span>Today</span>
-          <span className="hidden sm:inline"> (Homepage)</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={onNextDay}
-          aria-label="Next day"
-          className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white hover:bg-[#FEF08A] border border-[#1C1917] text-[#1C1917] font-bold shadow-[1px_1px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
-        >
-          <span className="hidden sm:inline">Next Day</span>
-          <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />
-        </button>
+        {/* Stepper Controls: Previous / Today / Next */}
+        <div className="flex items-center gap-1 shrink-0 ml-auto">
+          <button
+            type="button"
+            onClick={onPrevDay}
+            aria-label="Previous day"
+            title="Previous day"
+            className="p-1 rounded-lg bg-white hover:bg-[#FEF08A] border border-[#1C1917] text-[#1C1917] shadow-[1px_1px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+          >
+            <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
+          </button>
+          <button
+            type="button"
+            onClick={onGoHome}
+            title="Go to Today"
+            className={`px-2.5 py-1 rounded-lg border border-[#1C1917] text-xs font-bold shadow-[1px_1px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer ${
+              isToday ? 'bg-[#FEF08A] text-[#1C1917] font-black' : 'bg-white hover:bg-[#FEF08A] text-[#1C1917]'
+            }`}
+          >
+            Today
+          </button>
+          <button
+            type="button"
+            onClick={onNextDay}
+            aria-label="Next day"
+            title="Next day"
+            className="p-1 rounded-lg bg-white hover:bg-[#FEF08A] border border-[#1C1917] text-[#1C1917] shadow-[1px_1px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+          >
+            <ChevronRight className="w-4 h-4 stroke-[2.5]" />
+          </button>
+        </div>
       </div>
 
       {/* Main Architectural Workspace Card */}

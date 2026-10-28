@@ -3,7 +3,6 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { Analytics } from '@vercel/analytics/react'
 import AuthPage from './components/AuthPage'
 import TopBar from './components/TopBar'
-import DaySidebar from './components/DaySidebar'
 import FocusedDayView from './components/FocusedDayView'
 import ProfileModal from './components/ProfileModal'
 import ReportModal from './components/ReportModal'
@@ -13,10 +12,9 @@ import { getMonday, addWeeks, getTodayDayNumber, formatWeekRange } from './utils
 import { X, AlertTriangle, Loader2, CheckCircle2, ArrowRight } from 'lucide-react'
 
 function TrackerMain() {
-  const { user, signOut, isPasswordRecovery } = useAuth()
+  const { user, isPasswordRecovery } = useAuth()
   const [weekStart, setWeekStart] = useState(() => getMonday(new Date()))
   const [selectedDay, setSelectedDay] = useState(() => getTodayDayNumber())
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
   const [tutorialOpen, setTutorialOpen] = useState(false)
@@ -172,24 +170,13 @@ function TrackerMain() {
         onPrevWeek={handlePrevWeek}
         onNextWeek={handleNextWeek}
         onCurrentWeek={handleCurrentWeek}
-        onSignOut={signOut}
-        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-        sidebarOpen={sidebarOpen}
         onGoHome={handleGoHome}
         onOpenProfile={() => setProfileOpen(true)}
         onOpenReport={() => setReportOpen(true)}
         onOpenTutorial={handleOpenTutorial}
       />
 
-      {/* Navigation Drawer (Weekly Milestones & Mon–Sun Days) */}
-      <DaySidebar
-        weekStart={weekStart}
-        selectedDay={selectedDay}
-        onSelectDay={(day) => setSelectedDay(day)}
-        getDayStats={getDayStats}
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-      />
+      
 
       {/* Main Container: Focused Workspace with Spacious Breathing Room */}
       <div className="flex-1 max-w-4xl lg:max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col items-center">
@@ -223,6 +210,7 @@ function TrackerMain() {
             <FocusedDayView
               weekStart={weekStart}
               selectedDay={selectedDay}
+              onSelectDay={setSelectedDay}
               tasks={currentTasks}
               weeklyTasks={weeklyTasks}
               allMilestones={milestones}

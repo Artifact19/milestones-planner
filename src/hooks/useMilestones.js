@@ -98,7 +98,7 @@ export function useMilestones(weekStart) {
         const { data, error: fetchError } = await supabase
           .from('milestones')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .eq('week_start_date', weekStartDateString)
           .order('created_at', { ascending: true })
 

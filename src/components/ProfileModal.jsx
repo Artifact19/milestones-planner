@@ -259,15 +259,27 @@ export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
                   <p className="text-xs text-[#78716C] truncate mt-0.5">{user?.email}</p>
                 </div>
 
-                <div className="flex items-center justify-center sm:justify-start gap-2 pt-1 sm:pt-0">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1 sm:pt-0">
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1C1917] hover:bg-black text-white text-xs font-medium shadow-sm transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#FEF08A] border-2 border-[#1C1917] text-[#1C1917] text-xs font-bold shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
                   >
-                    <Upload className="w-3.5 h-3.5" />
+                    <Upload className="w-3.5 h-3.5 stroke-[2]" />
                     <span>{avatarUrl ? 'Change Photo' : 'Upload Photo'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose()
+                      signOut()
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FECDD3] hover:bg-[#FDA4AF] border-2 border-[#1C1917] text-[#9F1239] text-xs font-black shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <span>Log Out</span>
                   </button>
 
                   {avatarUrl && (
@@ -1063,7 +1075,7 @@ export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
                 onClose()
                 signOut()
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FAF8F5] hover:bg-rose-50 border border-[#E5E0D8] hover:border-rose-200 text-[#57534E] hover:text-rose-700 text-xs font-medium transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#FECDD3] hover:bg-[#FDA4AF] border-2 border-[#1C1917] text-[#9F1239] text-xs font-black shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Sign Out</span>

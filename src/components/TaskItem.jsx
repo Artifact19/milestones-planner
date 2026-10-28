@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import {
   Check,
+  CheckCircle2,
   Pencil,
   Trash2,
   Clock,

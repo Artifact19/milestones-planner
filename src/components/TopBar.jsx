@@ -1,4 +1,4 @@
-import { LogOut, Menu, Clock, Home, BarChart3, Download, HelpCircle } from 'lucide-react'
+import { Clock, Home, Download, HelpCircle, BarChart3 } from 'lucide-react'
 import WeekSwitcher from './WeekSwitcher'
 import { formatDuration } from '../utils/dateUtils'
 
@@ -9,9 +9,6 @@ export default function TopBar({
   onPrevWeek,
   onNextWeek,
   onCurrentWeek,
-  onSignOut,
-  onToggleSidebar,
-  sidebarOpen = false,
   onGoHome,
   onOpenProfile,
   onOpenReport,
@@ -29,31 +26,11 @@ export default function TopBar({
   const avatarUrl = isSafeAvatar ? rawAvatar : null
   const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : 'U'
 
-  
-
   return (
     <header className="sticky top-0 z-20 bg-[#F8F6F0] border-b-2 border-[#1C1917] transition-colors">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 lg:gap-4 flex-nowrap overflow-x-auto no-scrollbar">
-        {/* Left: Navigation sidebar toggle (all screens) + Brand Logo */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <button
-            type="button"
-            onClick={onToggleSidebar}
-            aria-label="Toggle Milestones & Days navigation"
-            aria-expanded={sidebarOpen}
-            title="Toggle Weekly Milestones & Days menu"
-            className={`p-1.5 sm:px-3 sm:py-1.5 rounded-xl border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center gap-1.5 font-bold ${
-              sidebarOpen
-                ? 'bg-[#1C1917] text-white border-[#1C1917]'
-                : 'bg-white hover:bg-[#FAF8F5] border-[#E5E0D8] text-[#57534E] hover:text-[#1C1917] hover:border-[#1C1917]'
-            }`}
-          >
-            <Menu className="w-4 h-4 shrink-0" />
-            <span className="hidden sm:inline text-xs font-semibold">
-              Days
-            </span>
-          </button>
-
+        {/* Left: Brand Logo */}
+        <div className="flex items-center gap-2.5 shrink-0">
           <button
             type="button"
             onClick={onGoHome}
@@ -118,7 +95,7 @@ export default function TopBar({
           </div>
         </div>
 
-        {/* Right: Actions (Today, Reports, Tour, Profile, Logout) */}
+        {/* Right: Actions (Today, Reports, Tour, Profile) */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <button
             type="button"
@@ -172,20 +149,8 @@ export default function TopBar({
             </span>
             <BarChart3 className="w-3.5 h-3.5 text-[#78716C] group-hover:text-[#1C1917] transition-colors" />
           </button>
-
-          <button
-            type="button"
-            onClick={onSignOut}
-            aria-label="Sign out"
-            title="Sign out"
-            className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white hover:bg-[#FECDD3] border-2 border-[#1C1917] text-[#1C1917] text-xs font-bold shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer whitespace-nowrap"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden xl:inline">Log out</span>
-          </button>
         </div>
       </div>
-
     </header>
   )
 }

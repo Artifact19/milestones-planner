@@ -124,7 +124,6 @@ milestones-planner/
 │   ├── components/
 │   │   ├── AddTaskInput.jsx          # Task creation dock with batch recurrence options
 │   │   ├── AuthPage.jsx              # Sign-in, registration, and password recovery
-│   │   ├── DaySidebar.jsx            # Day selector navigation drawer with time budgets
 │   │   ├── FocusedDayView.jsx        # Main daily and weekly workspace with task lists
 │   │   ├── MasterCompletionModal.jsx # Completion handler for master milestones
 │   │   ├── MoveToWeekModal.jsx       # Cross-week milestone rollover modal
