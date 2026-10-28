@@ -316,13 +316,33 @@ export default function FocusedDayView({
           </div>
 
           {/* Quick completion count */}
-          <div className="flex items-center gap-2 self-start sm:self-auto font-mono text-xs px-3.5 py-1.5 rounded-xl bg-[#BBF7D0] border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] text-[#1C1917] font-bold">
-            <span className="opacity-70">Tasks:</span>
-            <span className="font-black">
-              {tasks.filter((t) => Boolean(t.is_completed)).length}
-            </span>
-            <span className="opacity-50">/</span>
-            <span className="font-semibold">{tasks.length}</span>
+          <div
+            title={`Day Progress: ${tasks.filter((t) => Boolean(t.is_completed)).length} of ${tasks.length} tasks completed (${tasks.length > 0 ? Math.round((tasks.filter((t) => Boolean(t.is_completed)).length / tasks.length) * 100) : 0}%)`}
+            className="flex items-center gap-2.5 self-start sm:self-auto font-mono text-xs px-3.5 py-1.5 rounded-xl bg-[#BBF7D0] border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] text-[#1C1917] font-bold"
+          >
+            <div className="flex items-center gap-1.5">
+              <span className="opacity-70 font-sans text-[11px] font-bold uppercase tracking-wider">Progress:</span>
+              <span className="font-black">
+                {tasks.filter((t) => Boolean(t.is_completed)).length}/{tasks.length}
+              </span>
+              {tasks.length > 0 && (
+                <span className="text-[11px] opacity-75 font-mono">
+                  ({Math.round((tasks.filter((t) => Boolean(t.is_completed)).length / tasks.length) * 100)}%)
+                </span>
+              )}
+            </div>
+
+            {/* Capsule Progress Bar */}
+            {tasks.length > 0 && (
+              <div className="w-16 sm:w-20 h-2.5 rounded-full border border-[#1C1917] bg-white overflow-hidden p-[1px] shadow-[0.5px_0.5px_0px_#1C1917]">
+                <div
+                  className="h-full rounded-full bg-[#16A34A] transition-all duration-500 ease-out"
+                  style={{
+                    width: `${Math.round((tasks.filter((t) => Boolean(t.is_completed)).length / tasks.length) * 100)}%`
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
 

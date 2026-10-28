@@ -90,13 +90,28 @@ export default function TopBar({
 
           {/* Unified Compact Completion & Time Budget Pill */}
           <div
-            className="font-mono text-xs font-bold px-3 py-1.5 rounded-xl border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] bg-[#BBF7D0] text-[#1C1917] whitespace-nowrap flex items-center gap-1.5"
+            title={`Week Progress: ${completed} of ${total} tasks completed (${percent}%)`}
+            className="font-mono text-xs font-bold px-3 py-1.5 rounded-xl border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] bg-[#BBF7D0] text-[#1C1917] whitespace-nowrap flex items-center gap-2"
           >
-            <span>[ {percent}% · {completed}/{total} ]</span>
+            <span className="flex items-center gap-1">
+              <span>{percent}%</span>
+              <span className="text-[#1C1917]/60 font-medium">({completed}/{total})</span>
+            </span>
+
+            {/* Authentic Neo-Brutalist Capsule Progress Bar */}
+            {total > 0 && (
+              <div className="w-12 sm:w-16 h-2.5 rounded-full border border-[#1C1917] bg-white overflow-hidden p-[1px] shadow-[0.5px_0.5px_0px_#1C1917]">
+                <div
+                  className="h-full rounded-full bg-[#16A34A] transition-all duration-500 ease-out"
+                  style={{ width: `${percent}%` }}
+                />
+              </div>
+            )}
+
             {totalBudgetedMinutes > 0 && (
               <>
-                <span className="text-stone-300">|</span>
-                <Clock className="w-3.5 h-3.5 text-[#224A32] shrink-0" />
+                <span className="text-[#1C1917]/30 font-normal">|</span>
+                <Clock className="w-3.5 h-3.5 text-[#1C1917] stroke-[2] shrink-0" />
                 <span>{formatDuration(totalBudgetedMinutes)}</span>
               </>
             )}
@@ -171,13 +186,6 @@ export default function TopBar({
         </div>
       </div>
 
-      {/* Thin Architectural Progress Indicator */}
-      <div className="w-full bg-[#1C1917]/15 h-1 overflow-hidden">
-        <div
-          className={`h-full transition-all duration-700 ease-out bg-[#1C1917]`}
-          style={{ width: `${percent}%` }}
-        />
-      </div>
     </header>
   )
 }
