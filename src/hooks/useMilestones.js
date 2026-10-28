@@ -12,6 +12,63 @@ function newUuid() {
   })
 }
 
+const ORDER_STORAGE_PREFIX = 'milestones_task_order_v1_';
+
+function getStoredOrder(userId, weekStartDateStr) {
+  if (!userId || !weekStartDateStr) return {};
+  try {
+    const raw = localStorage.getItem(ORDER_STORAGE_PREFIX + userId + '_' + weekStartDateStr);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveStoredOrder(userId, weekStartDateStr, orderMap) {
+  if (!userId || !weekStartDateStr) return;
+  try {
+    localStorage.setItem(
+      ORDER_STORAGE_PREFIX + userId + '_' + weekStartDateStr,
+      JSON.stringify(orderMap)
+    );
+  } catch {
+    // ignore quota errors
+  }
+}
+
+function sortMilestonesBySavedOrder(items, orderMap) {
+  if (!items || !items.length) return [];
+  const byDay = {};
+  items.forEach((item) => {
+    const day = item.day_of_week ?? 0;
+    if (!byDay[day]) byDay[day] = [];
+    byDay[day].push(item);
+  });
+
+  const result = [];
+  const dayKeys = Object.keys(byDay).sort((a, b) => Number(a) - Number(b));
+  dayKeys.forEach((dayKey) => {
+    const dayTasks = byDay[dayKey];
+    const savedIds = orderMap[dayKey] || [];
+    const idToOrder = new Map();
+    savedIds.forEach((id, index) => idToOrder.set(id, index));
+
+    dayTasks.sort((a, b) => {
+      const orderA = idToOrder.has(a.id) ? idToOrder.get(a.id) : 999999;
+      const orderB = idToOrder.has(b.id) ? idToOrder.get(b.id) : 999999;
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+    });
+
+    result.push(...dayTasks);
+  });
+
+  return result;
+}
+
+
 export function useMilestones(weekStart) {
   const { user } = useAuth()
   const [milestones, setMilestones] = useState([])
@@ -42,7 +99,9 @@ export function useMilestones(weekStart) {
         if (fetchError) {
           setError(fetchError.message)
         } else {
-          setMilestones(data || [])
+          const savedOrder = getStoredOrder(user.id, weekStartDateString);
+          const sorted = sortMilestonesBySavedOrder(data || [], savedOrder);
+          setMilestones(sorted);
         }
       } catch (err) {
         if (!ignore) {
@@ -560,6 +619,26 @@ export function useMilestones(weekStart) {
     [user, weekStartDateString]
   )
 
+  
+  // Reorder milestones for a day and persist to local storage
+  const reorderMilestones = useCallback(
+    (dayOfWeek, newOrderedTasks) => {
+      if (!user || !Array.isArray(newOrderedTasks)) return;
+
+      const targetDay = Number(dayOfWeek);
+      const orderedIds = newOrderedTasks.map((t) => t.id);
+      const currentOrder = getStoredOrder(user.id, weekStartDateString);
+      currentOrder[targetDay] = orderedIds;
+      saveStoredOrder(user.id, weekStartDateString, currentOrder);
+
+      setMilestones((prev) => {
+        const otherTasks = prev.filter((m) => Number(m.day_of_week) !== targetDay);
+        return [...otherTasks, ...newOrderedTasks];
+      });
+    },
+    [user, weekStartDateString]
+  );
+
   const stats = useMemo(() => {
     const total = milestones.length
     const completed = milestones.filter((m) => Boolean(m.is_completed)).length
@@ -673,6 +752,7 @@ export function useMilestones(weekStart) {
     deleteMilestone,
     deleteSeries,
     completeSeriesInWeek,
+    reorderMilestones,
     stats,
     getDayStats
   }

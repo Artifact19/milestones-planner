@@ -70,6 +70,7 @@ function TrackerMain() {
     deleteMilestone,
     deleteSeries,
     completeSeriesInWeek,
+    reorderMilestones,
     stats,
     getDayStats
   } = useMilestones(weekStart)
@@ -234,6 +235,7 @@ function TrackerMain() {
               onDeleteSeries={deleteSeries}
               onCompleteSeries={completeSeriesInWeek}
               onMove={moveMilestone}
+              onReorderTasks={reorderMilestones}
               onCopyMilestones={handleCopyMilestonesToWeek}
               onAdd={addMilestone}
               onAddBatch={addBatchMilestones}

@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from 'react'
 import {
   Clock,
@@ -30,6 +31,28 @@ import {
   isSameWeek
 } from '../utils/dateUtils'
 
+
+function reorderTaskList(list, sourceId, targetId, position) {
+  if (!sourceId || !targetId || sourceId === targetId) return list;
+
+  const sourceIndex = list.findIndex((t) => t.id === sourceId);
+  const targetIndex = list.findIndex((t) => t.id === targetId);
+  if (sourceIndex === -1 || targetIndex === -1) return list;
+
+  const itemToMove = list[sourceIndex];
+  const listWithoutItem = list.filter((_, idx) => idx !== sourceIndex);
+
+  const newTargetIndex = listWithoutItem.findIndex((t) => t.id === targetId);
+  if (newTargetIndex === -1) return list;
+
+  const insertIndex = position === 'below' ? newTargetIndex + 1 : newTargetIndex;
+
+  const nextList = [...listWithoutItem];
+  nextList.splice(insertIndex, 0, itemToMove);
+  return nextList;
+}
+
+
 export default function FocusedDayView({
   weekStart,
   selectedDay,
@@ -43,6 +66,7 @@ export default function FocusedDayView({
   onDeleteSeries,
   onCompleteSeries,
   onMove,
+  onReorderTasks,
   onMoveToWeek,
   onCopyMilestones,
   onAdd,
@@ -51,6 +75,72 @@ export default function FocusedDayView({
   onNextDay,
   onGoHome
 }) {
+  
+  // Drag and drop reordering state
+  const [draggedItem, setDraggedItem] = useState(null); // { id: string, listType: 'day' | 'weekly' } | null
+  const [dropTarget, setDropTarget] = useState(null); // { id: string, position: 'above' | 'below', listType: 'day' | 'weekly' } | null
+
+  const handleDragStart = (id, listType) => {
+    setDraggedItem({ id, listType });
+  };
+
+  const handleDragOver = (id, position, listType) => {
+    if (!draggedItem || draggedItem.listType !== listType || draggedItem.id === id) {
+      return;
+    }
+    setDropTarget({ id, position, listType });
+  };
+
+  const handleDragLeave = (id, listType) => {
+    if (dropTarget?.id === id && dropTarget?.listType === listType) {
+      setDropTarget(null);
+    }
+  };
+
+  const handleDrop = (targetId, position, listType) => {
+    const finalTargetId = targetId || dropTarget?.id;
+    const finalPosition = position || dropTarget?.position || 'above';
+    const finalType = listType || dropTarget?.listType || 'day';
+
+    if (draggedItem && finalTargetId && draggedItem.id !== finalTargetId && draggedItem.listType === finalType) {
+      const isWeeklyList = finalType === 'weekly';
+      const targetList = isWeeklyList ? weeklyTasks : tasks;
+      const targetDay = isWeeklyList ? 0 : selectedDay;
+
+      const updatedList = reorderTaskList(targetList, draggedItem.id, finalTargetId, finalPosition);
+      if (onReorderTasks) {
+        onReorderTasks(targetDay, updatedList);
+      }
+    }
+
+    setDraggedItem(null);
+    setDropTarget(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+    setDropTarget(null);
+  };
+
+  const handleMoveRelative = (taskId, direction, listType = 'day') => {
+    const isWeeklyList = listType === 'weekly';
+    const targetList = isWeeklyList ? weeklyTasks : tasks;
+    const targetDay = isWeeklyList ? 0 : selectedDay;
+
+    const currentIndex = targetList.findIndex((t) => t.id === taskId);
+    if (currentIndex === -1) return;
+    const newIndex = currentIndex + direction;
+    if (newIndex < 0 || newIndex >= targetList.length) return;
+
+    const nextList = [...targetList];
+    const [moved] = nextList.splice(currentIndex, 1);
+    nextList.splice(newIndex, 0, moved);
+
+    if (onReorderTasks) {
+      onReorderTasks(targetDay, nextList);
+    }
+  };
+
   const isWeeklyMaster = selectedDay === 0
   const isSunday = selectedDay === 7
   const todayDayNumber = getTodayDayNumber()
@@ -335,6 +425,11 @@ export default function FocusedDayView({
             <span className="text-xs text-[#A8A29E] font-mono">
               {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
             </span>
+            {tasks.length > 1 && (
+              <span className="hidden sm:inline text-[11px] text-[#A8A29E] font-normal">
+                • Hold or drag to rearrange
+              </span>
+            )}
           </div>
 
           {/* Quick Option on Weekly Milestones list to move unfinished tasks to another week */}
@@ -365,22 +460,38 @@ export default function FocusedDayView({
             </p>
           </div>
         ) : (
-          tasks.map((task) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              subTasks={getSubTasksForTask(task)}
-              onToggle={onToggle}
-              onMasterToggleRequest={handleMasterToggleRequest}
-              onToggleSubTask={onToggle}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onDeleteSeries={onDeleteSeries}
-              onMove={onMove}
-              onOpenMoveToWeek={(t) => setMoveToWeekData({ tasks: [t] })}
-              currentDay={selectedDay}
-            />
-          ))
+          tasks.map((task, index) => {
+            const isDragging = draggedItem?.id === task.id;
+            const isTarget = dropTarget?.id === task.id && dropTarget?.listType === 'day';
+
+            return (
+              <TaskItem
+                key={task.id}
+                task={task}
+                index={index}
+                totalTasks={tasks.length}
+                subTasks={getSubTasksForTask(task)}
+                onToggle={onToggle}
+                onMasterToggleRequest={handleMasterToggleRequest}
+                onToggleSubTask={onToggle}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onDeleteSeries={onDeleteSeries}
+                onMove={onMove}
+                onOpenMoveToWeek={(t) => setMoveToWeekData({ tasks: [t] })}
+                currentDay={selectedDay}
+                isDraggable={true}
+                isDragging={isDragging}
+                dropPosition={isTarget ? dropTarget.position : null}
+                onDragStart={(id) => handleDragStart(id, 'day')}
+                onDragOver={(id, pos) => handleDragOver(id, pos, 'day')}
+                onDragLeave={(id) => handleDragLeave(id, 'day')}
+                onDrop={(id, pos) => handleDrop(id, pos, 'day')}
+                onDragEnd={handleDragEnd}
+                onMoveRelative={(dir) => handleMoveRelative(task.id, dir, 'day')}
+              />
+            );
+          })
         )}
       </div>
 
@@ -429,22 +540,38 @@ export default function FocusedDayView({
                 No weekly master milestones were created for this week.
               </p>
             ) : (
-              weeklyTasks.map((task) => (
-                <TaskItem
-                  key={task.id}
-                  task={task}
-                  subTasks={getSubTasksForTask(task)}
-                  onToggle={onToggle}
-                  onMasterToggleRequest={handleMasterToggleRequest}
-                  onToggleSubTask={onToggle}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  onDeleteSeries={onDeleteSeries}
-                  onMove={onMove}
-                  onOpenMoveToWeek={(t) => setMoveToWeekData({ tasks: [t] })}
-                  currentDay={0}
-                />
-              ))
+              weeklyTasks.map((task, index) => {
+                const isDragging = draggedItem?.id === task.id;
+                const isTarget = dropTarget?.id === task.id && dropTarget?.listType === 'weekly';
+
+                return (
+                  <TaskItem
+                    key={task.id}
+                    task={task}
+                    index={index}
+                    totalTasks={weeklyTasks.length}
+                    subTasks={getSubTasksForTask(task)}
+                    onToggle={onToggle}
+                    onMasterToggleRequest={handleMasterToggleRequest}
+                    onToggleSubTask={onToggle}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onDeleteSeries={onDeleteSeries}
+                    onMove={onMove}
+                    onOpenMoveToWeek={(t) => setMoveToWeekData({ tasks: [t] })}
+                    currentDay={0}
+                    isDraggable={true}
+                    isDragging={isDragging}
+                    dropPosition={isTarget ? dropTarget.position : null}
+                    onDragStart={(id) => handleDragStart(id, 'weekly')}
+                    onDragOver={(id, pos) => handleDragOver(id, pos, 'weekly')}
+                    onDragLeave={(id) => handleDragLeave(id, 'weekly')}
+                    onDrop={(id, pos) => handleDrop(id, pos, 'weekly')}
+                    onDragEnd={handleDragEnd}
+                    onMoveRelative={(dir) => handleMoveRelative(task.id, dir, 'weekly')}
+                  />
+                );
+              })
             )}
           </div>
         </div>

@@ -10,7 +10,10 @@ import {
   BookOpen,
   Sparkles,
   Repeat,
-  CalendarDays
+  CalendarDays,
+  GripVertical,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react'
 import { formatDuration, getDefaultBreakMinutes, TAG_OPTIONS, DAY_NAMES } from '../utils/dateUtils'
 
@@ -47,6 +50,8 @@ const DAY_LETTERS = ['', 'M', 'T', 'W', 'T', 'F', 'S', 'S']
 
 export default function TaskItem({
   task,
+  index = 0,
+  totalTasks = 1,
   subTasks = [],
   onToggle,
   onMasterToggleRequest,
@@ -56,7 +61,16 @@ export default function TaskItem({
   onDeleteSeries,
   onMove,
   onOpenMoveToWeek,
-  currentDay
+  currentDay,
+  isDraggable = true,
+  isDragging = false,
+  dropPosition = null,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onDragEnd,
+  onMoveRelative
 }) {
   const isWeeklyMilestone = task.day_of_week === 0 || currentDay === 0
   const [isEditing, setIsEditing] = useState(false)
@@ -112,6 +126,16 @@ export default function TaskItem({
     }
   }, [isEditing])
 
+  
+  const handleCapsuleDoubleClick = (e) => {
+    if (isEditing) return;
+    // Don't trigger edit if user double clicked an interactive element
+    if (e.target.closest('button, select, input, textarea, a, [data-no-edit]')) {
+      return;
+    }
+    handleStartEdit();
+  };
+
   const handleStartEdit = () => {
     setIsCustomDuration(!DURATION_PRESETS.some((p) => p.value === (task.duration_minutes ?? 30)))
     setIsEditing(true)
@@ -148,16 +172,84 @@ export default function TaskItem({
   }
 
   const tagObj = TAG_OPTIONS.find((t) => t.id === (task.tag || 'career')) || TAG_OPTIONS[0]
-  const totalItemMinutes = (task.duration_minutes ?? 30) + (task.break_minutes ?? 5)
 
   return (
     <div
-      className={`group flex flex-col gap-2.5 p-3.5 rounded-2xl border transition-all duration-150 ${
-        task.is_completed
+      data-task-id={task.id}
+      draggable={isDraggable && !isEditing}
+      onDoubleClick={handleCapsuleDoubleClick}
+      onDragStart={(e) => {
+        if (isEditing) {
+          e.preventDefault();
+          return;
+        }
+        if (e.target.closest('button, select, input, textarea, a, [data-no-drag]')) {
+          e.preventDefault();
+          return;
+        }
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', task.id);
+        if (onDragStart) onDragStart(task.id);
+      }}
+      onDragOver={(e) => {
+        if (!isDraggable || isEditing) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const rect = e.currentTarget.getBoundingClientRect();
+        const isTop = e.clientY < rect.top + rect.height / 2;
+        if (onDragOver) onDragOver(task.id, isTop ? 'above' : 'below');
+      }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          if (onDragLeave) onDragLeave(task.id);
+        }
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        const rect = e.currentTarget.getBoundingClientRect();
+        const isTop = e.clientY < rect.top + rect.height / 2;
+        if (onDrop) onDrop(task.id, isTop ? 'above' : 'below');
+      }}
+      onDragEnd={() => {
+        if (onDragEnd) onDragEnd();
+      }}
+      onKeyDown={(e) => {
+        if (isEditing) return;
+        if (e.altKey && e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (onMoveRelative) onMoveRelative(-1);
+        } else if (e.altKey && e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (onMoveRelative) onMoveRelative(1);
+        }
+      }}
+      tabIndex={isEditing ? -1 : 0}
+      title={isEditing ? undefined : 'Double-click anywhere to edit • Hold to rearrange'}
+      className={`group relative flex flex-col gap-2.5 p-3.5 rounded-2xl border transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#1C1917]/20 ${
+        isDragging
+          ? 'opacity-40 scale-[0.99] border-dashed border-[#1C1917]/50 bg-[#FAF8F5]'
+          : task.is_completed
           ? 'bg-[#FAF8F5]/60 border-[#E5E0D8]/60 text-stone-400'
           : 'bg-white hover:bg-[#FAF8F5]/50 border-[#E5E0D8] text-[#1C1917] shadow-sm hover:shadow-[0_4px_16px_rgba(28,25,23,0.03)]'
       }`}
     >
+      {/* Drop slot indicator bar when dragging above */}
+      {dropPosition === 'above' && !isDragging && (
+        <div className="absolute -top-1.5 left-2 right-2 z-30 pointer-events-none flex items-center justify-between animate-in fade-in zoom-in-95 duration-100">
+          <div className="w-2 h-2 rounded-full bg-[#1C1917] ring-2 ring-white shadow-xs" />
+          <div className="h-1 flex-1 bg-[#1C1917] rounded-full mx-0.5 shadow-xs" />
+          <div className="w-2 h-2 rounded-full bg-[#1C1917] ring-2 ring-white shadow-xs" />
+        </div>
+      )}
+
+      {/* Drop slot indicator bar when dragging below */}
+      {dropPosition === 'below' && !isDragging && (
+        <div className="absolute -bottom-1.5 left-2 right-2 z-30 pointer-events-none flex items-center justify-between animate-in fade-in zoom-in-95 duration-100">
+          <div className="w-2 h-2 rounded-full bg-[#1C1917] ring-2 ring-white shadow-xs" />
+          <div className="h-1 flex-1 bg-[#1C1917] rounded-full mx-0.5 shadow-xs" />
+          <div className="w-2 h-2 rounded-full bg-[#1C1917] ring-2 ring-white shadow-xs" />
+        </div>
+      )}
       {isEditing ? (
         <div className="flex items-start gap-3 w-full">
           <button
@@ -292,8 +384,37 @@ export default function TaskItem({
         </div>
       ) : (
         <>
-          {/* Top Primary Line: Checkbox + Full Width Title */}
-          <div className="flex items-start gap-3 w-full">
+          {/* Top Primary Line: Grip Handle + Checkbox + Full Width Title */}
+          <div className="flex items-start gap-2.5 w-full">
+            {!isEditing && (
+              <div
+                data-drag-handle
+                onTouchStart={() => {
+                  if (onDragStart) onDragStart(task.id);
+                }}
+                onTouchMove={(e) => {
+                  const touch = e.touches[0];
+                  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                  const taskEl = el?.closest('[data-task-id]');
+                  if (taskEl) {
+                    const targetId = taskEl.getAttribute('data-task-id');
+                    const rect = taskEl.getBoundingClientRect();
+                    const isTop = touch.clientY < rect.top + rect.height / 2;
+                    if (onDragOver) onDragOver(targetId, isTop ? 'above' : 'below');
+                  }
+                }}
+                onTouchEnd={() => {
+                  if (onDrop) onDrop();
+                  if (onDragEnd) onDragEnd();
+                }}
+                className="shrink-0 mt-0.5 -ml-1 text-stone-300 group-hover:text-stone-600 hover:!text-[#1C1917] cursor-grab active:cursor-grabbing p-1 rounded-md hover:bg-[#FAF8F5] transition-colors flex items-center justify-center select-none touch-none"
+                title="Hold and drag to move task up or down"
+                aria-label="Drag handle to reorder task"
+              >
+                <GripVertical className="w-4 h-4" />
+              </div>
+            )}
+
             <button
               type="button"
               onClick={handleCheckboxClick}
@@ -411,6 +532,32 @@ export default function TaskItem({
               </div>
             ) : (
               <div className="flex items-center gap-1.5 shrink-0">
+                {/* Accessible / 1-click Move Up / Move Down buttons */}
+                {onMoveRelative && totalTasks > 1 && (
+                  <div className="flex items-center text-stone-400 bg-[#FAF8F5] border border-[#E5E0D8]/80 rounded-full px-1 py-0.5 shadow-2xs">
+                    <button
+                      type="button"
+                      disabled={index === 0}
+                      onClick={() => onMoveRelative(-1)}
+                      aria-label="Move task up"
+                      title="Move task up (Alt+Up)"
+                      className="p-1 rounded-full hover:text-[#1C1917] hover:bg-white disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-stone-400 transition-colors cursor-pointer disabled:cursor-default"
+                    >
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={index === totalTasks - 1}
+                      onClick={() => onMoveRelative(1)}
+                      aria-label="Move task down"
+                      title="Move task down (Alt+Down)"
+                      className="p-1 rounded-full hover:text-[#1C1917] hover:bg-white disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-stone-400 transition-colors cursor-pointer disabled:cursor-default"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
                 {/* Direct 1-click option to carry forward weekly milestone to another week */}
                 {onOpenMoveToWeek && task.day_of_week === 0 && (
                   <button
