@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, Component } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { Analytics } from '@vercel/analytics/react'
 import AuthPage from './components/AuthPage'
@@ -304,10 +304,58 @@ function TrackerMain() {
   )
 }
 
+
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('ErrorBoundary caught error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[#F2EFE9] flex items-center justify-center p-4 text-[#1C1917]">
+          <div className="max-w-md w-full bg-white border border-[#E5E0D8] rounded-3xl p-6 sm:p-8 shadow-xl text-center space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold tracking-tight">Something went wrong</h2>
+              <p className="text-xs text-[#78716C] mt-1 leading-relaxed">
+                An unexpected error occurred while rendering the workspace.
+              </p>
+            </div>
+            <div className="pt-2 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="px-5 py-2.5 bg-[#1C1917] hover:bg-black text-white font-semibold rounded-full text-xs shadow-md transition-all cursor-pointer"
+              >
+                Reload Application
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   return (
     <AuthProvider>
-      <TrackerMain />
+      <ErrorBoundary>
+        <TrackerMain />
+      </ErrorBoundary>
       <Analytics />
     </AuthProvider>
   )
