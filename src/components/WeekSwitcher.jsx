@@ -14,17 +14,17 @@ export default function WeekSwitcher({ weekStart, onPrevWeek, onNextWeek, onCurr
         type="button"
         onClick={onPrevWeek}
         aria-label="Previous week"
-        className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] text-[#57534E] hover:text-[#1C1917] text-xs transition-colors shadow-sm cursor-pointer shrink-0"
+        className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white hover:bg-[#FEF08A] border-2 border-[#1C1917] text-[#1C1917] shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none text-xs transition-all cursor-pointer shrink-0"
       >
-        <ChevronLeft className="w-4 h-4" />
+        <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
       </button>
 
       {/* Date Range Badge */}
-      <div className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-white border border-[#E5E0D8] text-[#292524] text-xs font-medium tracking-tight shadow-sm shrink-0">
-        <Calendar className="w-3.5 h-3.5 text-[#78716C] shrink-0" />
+      <div className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-xl bg-white border-2 border-[#1C1917] text-[#1C1917] text-xs font-bold tracking-tight shadow-[2px_2px_0px_#1C1917] shrink-0">
+        <Calendar className="w-3.5 h-3.5 text-[#1C1917] shrink-0" />
         <span className="whitespace-nowrap font-sans">{rangeLabel}</span>
         {isViewingCurrentWeek && (
-          <span className="hidden sm:inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-[#1C1917] text-white">
+          <span className="hidden sm:inline-block text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-[#FEF08A] text-[#1C1917] border border-[#1C1917]">
             Current
           </span>
         )}
@@ -36,7 +36,7 @@ export default function WeekSwitcher({ weekStart, onPrevWeek, onNextWeek, onCurr
           type="button"
           onClick={onCurrentWeek}
           aria-label="Jump to current week"
-          className="px-2.5 py-1 rounded-full text-xs font-semibold bg-[#1C1917] hover:bg-black text-white shadow-sm transition-all cursor-pointer whitespace-nowrap shrink-0"
+          className="px-2.5 py-1 rounded-xl text-xs font-black bg-[#FEF08A] hover:bg-[#FDE047] text-[#1C1917] border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer whitespace-nowrap shrink-0"
         >
           <span>Current Week</span>
         </button>
@@ -47,9 +47,9 @@ export default function WeekSwitcher({ weekStart, onPrevWeek, onNextWeek, onCurr
         type="button"
         onClick={onNextWeek}
         aria-label="Next week"
-        className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] text-[#57534E] hover:text-[#1C1917] text-xs transition-colors shadow-sm cursor-pointer shrink-0"
+        className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white hover:bg-[#FEF08A] border-2 border-[#1C1917] text-[#1C1917] shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none text-xs transition-all cursor-pointer shrink-0"
       >
-        <ChevronRight className="w-4 h-4" />
+        <ChevronRight className="w-4 h-4 stroke-[2.5]" />
       </button>
     </div>
   )

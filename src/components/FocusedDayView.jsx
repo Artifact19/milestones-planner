@@ -233,14 +233,14 @@ export default function FocusedDayView({
   return (
     <div className="flex-1 flex flex-col gap-6 min-w-0 pb-16">
       {/* Top Day Stepper & Home Navigation Pill */}
-      <div className="flex items-center justify-between gap-2 bg-white/75 backdrop-blur-md border border-[#E5E0D8] rounded-full px-3 py-1.5 shadow-[0_4px_16px_rgba(28,25,23,0.03)] text-xs">
+      <div className="flex items-center justify-between gap-2 bg-white border-2 border-[#1C1917] rounded-2xl px-3 py-1.5 shadow-[2.5px_2.5px_0px_#1C1917] text-xs">
         <button
           type="button"
           onClick={onPrevDay}
           aria-label="Previous day"
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F5] hover:bg-white border border-[#E5E0D8] text-[#57534E] hover:text-[#1C1917] transition-all cursor-pointer font-medium shadow-sm"
+          className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white hover:bg-[#FEF08A] border border-[#1C1917] text-[#1C1917] font-bold shadow-[1px_1px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
         >
-          <ChevronLeft className="w-3.5 h-3.5" />
+          <ChevronLeft className="w-3.5 h-3.5 stroke-[2.5]" />
           <span className="hidden sm:inline">Previous Day</span>
         </button>
 
@@ -248,10 +248,10 @@ export default function FocusedDayView({
           type="button"
           onClick={onGoHome}
           title="Go to Today (Homepage)"
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-medium border transition-all cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-xl border-2 border-[#1C1917] transition-all cursor-pointer font-bold ${
             isToday
-              ? 'bg-[#1C1917] border-[#1C1917] text-white font-semibold shadow-sm'
-              : 'bg-white hover:bg-[#FAF8F5] border-[#E5E0D8] text-[#57534E] hover:text-[#1C1917] shadow-sm'
+              ? 'bg-[#FEF08A] text-[#1C1917] shadow-[2px_2px_0px_#1C1917] font-black'
+              : 'bg-white hover:bg-[#FEF08A] text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
           }`}
         >
           <Home className="w-3.5 h-3.5" />
@@ -263,48 +263,48 @@ export default function FocusedDayView({
           type="button"
           onClick={onNextDay}
           aria-label="Next day"
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F5] hover:bg-white border border-[#E5E0D8] text-[#57534E] hover:text-[#1C1917] transition-all cursor-pointer font-medium shadow-sm"
+          className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white hover:bg-[#FEF08A] border border-[#1C1917] text-[#1C1917] font-bold shadow-[1px_1px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
         >
           <span className="hidden sm:inline">Next Day</span>
-          <ChevronRight className="w-3.5 h-3.5" />
+          <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />
         </button>
       </div>
 
       {/* Main Architectural Workspace Card */}
-      <div className="bg-white/90 backdrop-blur-md border border-[#E5E0D8] rounded-3xl p-5 sm:p-8 shadow-[0_12px_36px_-6px_rgba(28,25,23,0.04)]">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E5E0D8]">
+      <div className="bg-white border-2 border-[#1C1917] rounded-3xl p-5 sm:p-7 shadow-[4px_4px_0px_#1C1917]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b-2 border-[#1C1917]/15">
           <div>
             <div className="flex items-center gap-3">
               <div
-                className={`w-11 h-11 rounded-2xl flex items-center justify-center border shadow-sm ${
+                className={`w-11 h-11 rounded-2xl flex items-center justify-center border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] ${
                   isSunday
-                    ? 'bg-[#F4ECE1] border-[#E8DAC5] text-[#695431]'
+                    ? 'bg-[#FECDD3] text-[#9F1239]'
                     : isWeeklyMaster
-                    ? 'bg-[#1C1917] border-[#1C1917] text-white'
-                    : 'bg-[#FAF8F5] border-[#E5E0D8] text-[#1C1917]'
+                    ? 'bg-[#1C1917] text-white'
+                    : 'bg-[#FEF08A] text-[#1C1917]'
                 }`}
               >
                 {isSunday ? (
-                  <Sun className="w-5 h-5" />
+                  <Sun className="w-5 h-5 stroke-[2.5]" />
                 ) : isWeeklyMaster ? (
-                  <ListTodo className="w-5 h-5" />
+                  <ListTodo className="w-5 h-5 stroke-[2.5]" />
                 ) : (
-                  <Calendar className="w-5 h-5 text-[#1C1917]" />
+                  <Calendar className="w-5 h-5 stroke-[2.5] text-[#1C1917]" />
                 )}
               </div>
 
               <div>
                 <div className="flex items-center gap-2.5">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-[#1C1917] tracking-tight">
+                  <h1 className="text-2xl sm:text-3xl font-black text-[#1C1917] tracking-tight">
                     {title}
                   </h1>
                   {isToday && (
-                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-[#EBF2EC] text-[#224A32] border border-[#CFE1D3] rounded-full">
+                    <span className="text-[10px] uppercase font-black tracking-wider px-2 py-0.5 bg-[#FEF08A] text-[#1C1917] border-2 border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg">
                       Today
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-[#78716C] mt-1 font-medium">
+                <p className="text-xs text-[#78716C] mt-1 font-semibold">
                   {isWeeklyMaster
                     ? 'Master goals for the entire week. Assign to any day when you are ready.'
                     : dayDate
@@ -316,42 +316,42 @@ export default function FocusedDayView({
           </div>
 
           {/* Quick completion count */}
-          <div className="flex items-center gap-2 self-start sm:self-auto font-mono text-xs px-3.5 py-1.5 rounded-full bg-[#FAF8F5] border border-[#E5E0D8] text-[#57534E] shadow-sm">
-            <span className="text-stone-400">Tasks:</span>
-            <span className="text-[#1C1917] font-bold">
+          <div className="flex items-center gap-2 self-start sm:self-auto font-mono text-xs px-3.5 py-1.5 rounded-xl bg-[#BBF7D0] border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] text-[#1C1917] font-bold">
+            <span className="opacity-70">Tasks:</span>
+            <span className="font-black">
               {tasks.filter((t) => Boolean(t.is_completed)).length}
             </span>
-            <span className="text-stone-300">/</span>
-            <span className="text-[#78716C] font-semibold">{tasks.length}</span>
+            <span className="opacity-50">/</span>
+            <span className="font-semibold">{tasks.length}</span>
           </div>
         </div>
 
         {/* Time Budget Breakdown Banner (shown on daily views Mon to Sun) */}
         {!isWeeklyMaster ? (
           <div className="mt-5 pt-1 flex flex-wrap items-center justify-between gap-y-3 gap-x-6 text-xs sm:text-sm">
-            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3.5">
               {/* Focus */}
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F5] border border-[#E5E0D8]">
-                <Clock className="w-3.5 h-3.5 text-[#224A32] shrink-0" />
-                <span className="text-[#78716C]">Focus:</span>
-                <span className="font-mono font-bold text-[#1C1917]">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917]">
+                <Clock className="w-3.5 h-3.5 text-[#1C1917] shrink-0" />
+                <span className="text-[#78716C] font-medium">Focus:</span>
+                <span className="font-mono font-black text-[#1C1917]">
                   {formatDuration(dayStats.focusMinutes)}
                 </span>
               </div>
 
               {/* Breaks */}
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F5] border border-[#E5E0D8]">
-                <Coffee className="w-3.5 h-3.5 text-[#695431] shrink-0" />
-                <span className="text-[#78716C]">Breaks:</span>
-                <span className="font-mono font-bold text-[#1C1917]">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917]">
+                <Coffee className="w-3.5 h-3.5 text-[#1C1917] shrink-0" />
+                <span className="text-[#78716C] font-medium">Breaks:</span>
+                <span className="font-mono font-black text-[#1C1917]">
                   {formatDuration(dayStats.breakMinutes)}
                 </span>
               </div>
 
               {/* Total Budgeted */}
-              <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#1C1917] text-white shadow-sm">
-                <span className="text-stone-300">Total Budgeted:</span>
-                <span className="font-mono font-bold text-[#FAF8F5]">
+              <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1C1917] text-[#FAF7F0] border-2 border-[#1C1917] shadow-[2px_2px_0px_#78716C]">
+                <span className="text-stone-300 font-medium">Total Budgeted:</span>
+                <span className="font-mono font-black text-[#FEF08A]">
                   {formatDuration(dayStats.totalMinutes)}
                 </span>
               </div>
@@ -359,7 +359,7 @@ export default function FocusedDayView({
           </div>
         ) : (
           <div className="mt-4 pt-1 flex items-center justify-between text-xs text-[#78716C]">
-            <span className="font-serif italic">
+            <span className="font-semibold italic">
               Weekly Master Milestones: High-level priorities for the week. Daily focus time is scheduled on Monday through Saturday.
             </span>
           </div>
@@ -436,18 +436,18 @@ export default function FocusedDayView({
       <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2 px-2">
           <div className="flex items-center gap-2.5">
-            <span className="text-xs font-semibold text-[#78716C] uppercase tracking-wider">
+            <span className="text-xs font-black text-[#1C1917] uppercase tracking-wider">
               {isWeeklyMaster
                 ? 'Weekly Master Tasks'
                 : isSunday
                 ? 'Sunday Tasks'
                 : `${title} Tasks`}
             </span>
-            <span className="text-xs text-[#A8A29E] font-mono">
+            <span className="text-xs font-mono font-bold px-2 py-0.5 bg-white border border-[#1C1917] rounded-md shadow-[1px_1px_0px_#1C1917] text-[#1C1917]">
               {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
             </span>
             {tasks.length > 1 && (
-              <span className="hidden sm:inline text-[11px] text-[#A8A29E] font-normal">
+              <span className="hidden sm:inline text-[11px] text-[#78716C] font-semibold">
                 • Hold or drag to rearrange
               </span>
             )}
@@ -460,21 +460,21 @@ export default function FocusedDayView({
               onClick={() => setMoveToWeekData({ tasks: incompleteWeeklyTasks })}
               title="Move all unfinished weekly milestones to another week"
               aria-label="Move unfinished weekly milestones to another week"
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white hover:bg-[#1C1917] hover:text-white border border-[#E5E0D8] hover:border-[#1C1917] text-[#1C1917] text-xs font-semibold shadow-2xs transition-all cursor-pointer group"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#FEF08A] hover:bg-[#FDE047] border-2 border-[#1C1917] text-[#1C1917] text-xs font-bold shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer group"
             >
-              <CalendarDays className="w-3.5 h-3.5 text-[#224A32] group-hover:text-white transition-colors" />
+              <CalendarDays className="w-3.5 h-3.5" />
               <span>Move Unfinished to Next Week ({incompleteWeeklyTasks.length})</span>
             </button>
           )}
         </div>
 
         {tasks.length === 0 ? (
-          <div className="p-10 text-center bg-white/70 border border-[#E5E0D8] rounded-3xl space-y-2.5">
-            <div className="w-10 h-10 rounded-full bg-[#FAF8F5] text-stone-400 flex items-center justify-center mx-auto border border-[#E5E0D8]">
-              <ListTodo className="w-5 h-5" />
+          <div className="p-10 text-center bg-white border-2 border-[#1C1917] rounded-3xl shadow-[3px_3px_0px_#1C1917] space-y-2.5">
+            <div className="w-12 h-12 rounded-2xl bg-[#FEF08A] text-[#1C1917] flex items-center justify-center mx-auto border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917]">
+              <ListTodo className="w-6 h-6 stroke-[2.5]" />
             </div>
-            <p className="text-sm font-semibold text-[#1C1917]">No tasks planned yet</p>
-            <p className="text-xs text-[#78716C] max-w-sm mx-auto leading-relaxed">
+            <p className="text-base font-black text-[#1C1917]">No tasks planned yet</p>
+            <p className="text-xs font-medium text-[#78716C] max-w-sm mx-auto leading-relaxed">
               {isWeeklyMaster
                 ? 'Type in your high-level milestones for the entire week using the bar below. You can assign them to specific days later.'
                 : `Plan your tasks for ${title} using the floating bar below. Choose your focus time, rest breaks, and category tags.`}
@@ -519,17 +519,17 @@ export default function FocusedDayView({
 
       {/* SUNDAY SPECIAL: WEEKLY MILESTONES REVIEW SECTION */}
       {isSunday && (
-        <div className="bg-white/90 border border-[#E5E0D8] rounded-3xl p-6 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-[#E5E0D8]">
+        <div className="bg-white border-2 border-[#1C1917] rounded-3xl p-6 shadow-[4px_4px_0px_#1C1917] space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b-2 border-[#1C1917]/15">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-[#1C1917] text-white flex items-center justify-center shadow-sm">
-                <ListTodo className="w-4 h-4" />
+              <div className="w-9 h-9 rounded-xl bg-[#FEF08A] text-[#1C1917] border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] flex items-center justify-center">
+                <ListTodo className="w-4 h-4 stroke-[2.5]" />
               </div>
               <div>
-                <h2 className="font-semibold text-[#1C1917] tracking-tight text-sm sm:text-base">
+                <h2 className="font-black text-[#1C1917] tracking-tight text-sm sm:text-base">
                   Sunday Review: Weekly Milestones
                 </h2>
-                <p className="text-xs text-[#78716C]">
+                <p className="text-xs text-[#78716C] font-semibold">
                   Check off the big weekly goals you accomplished this week!
                 </p>
               </div>
@@ -542,15 +542,15 @@ export default function FocusedDayView({
                   onClick={() => setMoveToWeekData({ tasks: incompleteWeeklyTasks })}
                   title="Move unfinished weekly milestones to next week"
                   aria-label="Roll over unfinished milestones to next week"
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white hover:bg-[#1C1917] hover:text-white border border-[#E5E0D8] hover:border-[#1C1917] text-[#1C1917] text-xs font-semibold shadow-2xs transition-all cursor-pointer group"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FEF08A] hover:bg-[#FDE047] border-2 border-[#1C1917] text-[#1C1917] text-xs font-bold shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer group"
                 >
-                  <CalendarDays className="w-3.5 h-3.5 text-[#224A32] group-hover:text-white transition-colors" />
+                  <CalendarDays className="w-3.5 h-3.5" />
                   <span>Roll over {incompleteWeeklyTasks.length} to Next Week</span>
                 </button>
               )}
 
-              <div className="text-xs font-mono px-3 py-1 rounded-full bg-[#FAF8F5] border border-[#E5E0D8] text-[#44403C] font-semibold">
-                <span className="text-[#224A32]">{completedWeeklyCount}</span>/
+              <div className="text-xs font-mono font-bold px-3 py-1.5 rounded-xl bg-[#BBF7D0] border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] text-[#1C1917]">
+                <span className="font-black">{completedWeeklyCount}</span>/
                 <span>{weeklyTasks.length} Done</span>
               </div>
             </div>

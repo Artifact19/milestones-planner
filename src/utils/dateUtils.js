@@ -90,28 +90,28 @@ export function getDefaultBreakMinutes(durationMinutes = 30) {
   return 60
 }
 
-// Curated luxury architectural tags matching the reference design
+// Curated neo-brutalist tags with high-contrast pastel fills and crisp borders
 export const TAG_OPTIONS = [
   {
     id: 'career',
     label: 'Career / Study',
     shortLabel: 'Career',
     color: 'forest',
-    badgeClass: 'bg-[#EBF2EC] text-[#244E35] border-[#D2E4D6]'
+    badgeClass: 'bg-[#DCFCE7] text-[#166534] border-[#1C1917]'
   },
   {
     id: 'college',
     label: 'College/Assignment',
     shortLabel: 'College',
     color: 'basalt',
-    badgeClass: 'bg-[#ECEAF0] text-[#3E364E] border-[#DBD6E3]'
+    badgeClass: 'bg-[#EDE9FE] text-[#5B21B6] border-[#1C1917]'
   },
   {
     id: 'personal',
     label: 'Personal / Other',
     shortLabel: 'Personal',
     color: 'sand',
-    badgeClass: 'bg-[#F4ECE1] text-[#635032] border-[#E8DAC5]'
+    badgeClass: 'bg-[#FFE4E6] text-[#9F1239] border-[#1C1917]'
   }
 ]
 

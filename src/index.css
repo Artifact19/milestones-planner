@@ -4,8 +4,8 @@
   html, body, #root {
     min-height: 100%;
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    background-color: #F0F4EC;
-    color: #1C291D;
+    background-color: #F8F6F0;
+    color: #1C1917;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -19,163 +19,65 @@
 }
 
 /* ============================================================
-   SAGE + CREAM THEME (NATURÉLLE PALETTE)
-   #A8B5A0 (Sage Green)
-   #C7D3C1 (Pale Celadon)
-   #F2F5EF (Tinted Sage Cream)
-   #FAFAF7 (Warm Linen / Soft Off-White)
-   
-   Gentle on the eyes, warm paper-matte feel, zero harsh white glare.
+   REFINED NEO-BRUTALISM DESIGN SYSTEM
+   - Bold, crisp 2px solid borders (#1C1917)
+   - Hard offset shadows without blurry smudges (2px/3px/4px)
+   - Tactile physical press states (translate-x-0.5 + translate-y-0.5)
+   - Warm paper linen canvas (#F8F6F0) with pure white cards (#FFFFFF)
+   - High-contrast, playful yet readable pastels (Yellow, Mint, Lavender, Coral)
    ============================================================ */
 
-/* Main Canvas Background */
-.bg-\[\#F2EFE9\],
-.bg-\[\#F2EFE9\]\/90,
-.bg-\[\#F2EFE9\]\/95 {
-  background-color: #F0F4EC !important;
+/* Neo-Brutalist Button Utility */
+.neo-btn {
+  border: 2px solid #1C1917;
+  box-shadow: 2px 2px 0px #1C1917;
+  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Sticky Header Bar (Frosted Tinted Cream) */
-header {
-  background-color: rgba(240, 244, 236, 0.95) !important;
-  border-color: #C7D3C1 !important;
+.neo-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px #1C1917;
 }
 
-/* Cards & Raised Surfaces (Warm Linen #FAFAF7 - never pure blinding #FFF) */
-.bg-white,
-.bg-white\/75,
-.bg-white\/80,
-.bg-white\/90,
-.bg-white\/92,
-.bg-white\/95 {
-  background-color: #FAFAF7 !important;
-  border-color: #CBD8C5 !important;
-  color: #1C291D !important;
-  box-shadow: 0 4px 20px -4px rgba(44, 62, 45, 0.05), 0 1px 3px rgba(44, 62, 45, 0.03) !important;
+.neo-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px #1C1917;
 }
 
-/* Inset Panels & Sub-Pills (Soft Celadon Cream #E7EEE3) */
-.bg-\[\#FAF8F5\],
-.bg-\[\#FAF7F2\] {
-  background-color: #E7EEE3 !important;
-  border-color: #C7D3C1 !important;
+.neo-card {
+  border: 2px solid #1C1917;
+  box-shadow: 3px 3px 0px #1C1917;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Primary Action Buttons & Dark Badges (Deep Sage Forest #3D5640) */
-.bg-\[\#1C1917\] {
-  background-color: #3D5640 !important;
-  border-color: #3D5640 !important;
-  color: #FAFAF7 !important;
+.neo-card:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #1C1917;
 }
 
-.hover\:bg-black:hover,
-.bg-\[\#1C1917\]:hover {
-  background-color: #304432 !important;
-}
-
-/* Borders across the app */
-.border-\[\#E5E0D8\],
-.border-\[\#E5E0D8\]\/80,
-.border-\[\#E5E0D8\]\/60 {
-  border-color: #CBD8C5 !important;
-}
-
-/* Text Hierarchy */
-.text-\[\#1C1917\] {
-  color: #1C291D !important;
-}
-
-.text-\[\#44403C\],
-.text-\[\#57534E\] {
-  color: #354937 !important;
-}
-
-.text-\[\#78716C\] {
-  color: #556B57 !important;
-}
-
-.text-stone-500,
-.text-stone-400 {
-  color: #6C816E !important;
-}
-
-.text-stone-300 {
-  color: #B4C5B2 !important;
-}
-
-/* Inputs, Textareas & Form Selects */
-input, textarea, select {
-  background-color: #F4F7F1 !important;
-  border-color: #C7D3C1 !important;
-  color: #1C291D !important;
-}
-
-input::placeholder, textarea::placeholder {
-  color: #7D927E !important;
-}
-
-/* Completion Badges (Soothing Sage Tone #A8B5A0) */
-.bg-\[\#EBF2EC\] {
-  background-color: #DEE8DA !important;
-  border-color: #B2C7AE !important;
-}
-
-.border-\[\#CFE1D3\] {
-  border-color: #B2C7AE !important;
-}
-
-.text-\[\#224A32\] {
-  color: #2D4830 !important;
-}
-
-/* Sunday & Retro Intentions (Warm Sand Ochre from palette balance) */
-.bg-\[\#FAF4EB\],
-.bg-\[\#F4ECE1\] {
-  background-color: #F2EDE2 !important;
-  border-color: #DACDBE !important;
-}
-
-.border-\[\#E8DAC5\] {
-  border-color: #DACDBE !important;
-}
-
-.text-\[\#695431\] {
-  color: #6B4E26 !important;
-}
-
-/* Button & Pill Hover States */
-.hover\:bg-\[\#FAF8F5\]:hover,
-.hover\:bg-white:hover {
-  background-color: #E2ECE0 !important;
-}
-
-.hover\:border-\[\#1C1917\]:hover {
-  border-color: #3D5640 !important;
-}
-
-/* Architectural Progress bar */
-.bg-\[\#224A32\] {
-  background-color: #4A6B4E !important;
+.neo-pill {
+  border: 1.5px solid #1C1917;
+  box-shadow: 1.5px 1.5px 0px #1C1917;
 }
 
 /* Selection */
 ::selection {
-  background-color: #C7D3C1 !important;
-  color: #1C291D !important;
+  background-color: #FEF08A;
+  color: #1C1917;
 }
 
 /* Smooth custom scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: #F0F4EC;
+  background: #F8F6F0;
 }
 ::-webkit-scrollbar-thumb {
-  background: #C7D3C1;
-  border-radius: 9999px;
+  background: #1C1917;
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #A8B5A0;
+  background: #44403C;
 }

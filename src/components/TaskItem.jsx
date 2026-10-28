@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import {
-  Circle,
-  CheckCircle2,
+  Check,
   Pencil,
   Trash2,
   Clock,
@@ -236,12 +235,12 @@ export default function TaskItem({
       }}
       tabIndex={isEditing ? -1 : 0}
       title={isEditing ? undefined : 'Double-click anywhere to edit • Hold to rearrange'}
-      className={`group relative flex flex-col gap-2.5 p-3.5 rounded-2xl border transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#1C1917]/20 ${
+      className={`group relative flex flex-col gap-2 p-3 sm:p-3.5 rounded-2xl border-2 border-[#1C1917] transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#1C1917] ${
         isDragging
-          ? 'opacity-40 scale-[0.99] border-dashed border-[#1C1917]/50 bg-[#FAF8F5]'
+          ? 'opacity-40 scale-[0.99] border-dashed bg-[#FEF08A]/30 shadow-none'
           : task.is_completed
-          ? 'bg-[#FAF8F5]/60 border-[#E5E0D8]/60 text-stone-400'
-          : 'bg-white hover:bg-[#FAF8F5]/50 border-[#E5E0D8] text-[#1C1917] shadow-sm hover:shadow-[0_4px_16px_rgba(28,25,23,0.03)]'
+          ? 'bg-[#F5F5F0] border-[#1C1917]/30 text-stone-400 shadow-[1.5px_1.5px_0px_#1C1917]/20'
+          : 'bg-white text-[#1C1917] shadow-[3px_3px_0px_#1C1917] hover:shadow-[4px_4px_0px_#1C1917] hover:-translate-x-0.5 hover:-translate-y-0.5'
       }`}
     >
       {/* Drop slot indicator bar when dragging above */}
@@ -263,13 +262,7 @@ export default function TaskItem({
       )}
       {isEditing ? (
         <div className="flex items-start gap-3 w-full">
-          <button
-            type="button"
-            disabled
-            className="shrink-0 mt-1 text-[#A8A29E] cursor-default rounded-full p-0.5 opacity-40"
-          >
-            <Circle className="w-5 h-5" />
-          </button>
+          <div className="shrink-0 mt-1 w-5 h-5 rounded-md border-2 border-[#1C1917]/30 bg-stone-100 opacity-50" />
           <div className="flex flex-col gap-2.5 flex-1 min-w-0">
             <input
               ref={inputRef}
@@ -278,7 +271,7 @@ export default function TaskItem({
               onChange={(e) => setEditText(e.target.value)}
               onKeyDown={handleKeyDown}
               maxLength={200}
-              className="w-full bg-white border border-[#1C1917] rounded-xl px-3 py-1.5 text-sm text-[#1C1917] focus:outline-none"
+              className="w-full bg-[#F8F6F0] border-2 border-[#1C1917] rounded-xl px-3 py-1.5 text-sm font-bold text-[#1C1917] focus:outline-none focus:bg-white shadow-[2px_2px_0px_#1C1917]"
             />
             {/* Quick inline edit for Tag, Duration, Break */}
             <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -286,7 +279,7 @@ export default function TaskItem({
                 value={editTag}
                 onChange={(e) => setEditTag(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="bg-white border border-[#E5E0D8] rounded-lg px-2.5 py-1 text-[#44403C] focus:outline-none cursor-pointer"
+                className="bg-white border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg px-2.5 py-1 text-xs font-bold text-[#1C1917] focus:outline-none cursor-pointer"
               >
                 {TAG_OPTIONS.map((tag) => (
                   <option key={tag.id} value={tag.id}>
@@ -296,7 +289,7 @@ export default function TaskItem({
               </select>
 
               {isCustomDuration ? (
-                <div className="flex items-center gap-1 bg-white border border-[#E5E0D8] rounded-lg px-2 py-0.5">
+                <div className="flex items-center gap-1 bg-white border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg px-2 py-0.5">
                   <input
                     type="number"
                     min={1}
@@ -320,7 +313,7 @@ export default function TaskItem({
                     onKeyDown={handleKeyDown}
                     autoFocus
                     onFocus={(e) => e.target.select()}
-                    className="w-14 text-[#44403C] font-mono text-xs focus:outline-none"
+                    className="w-14 text-[#1C1917] font-mono text-xs font-bold focus:outline-none"
                   />
                   <span className="text-[11px] text-[#78716C] font-mono">min</span>
                   <button
@@ -348,7 +341,7 @@ export default function TaskItem({
                     }
                   }}
                   onKeyDown={handleKeyDown}
-                  className="bg-white border border-[#E5E0D8] rounded-lg px-2.5 py-1 text-[#44403C] focus:outline-none cursor-pointer"
+                  className="bg-white border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg px-2.5 py-1 text-xs font-bold text-[#1C1917] focus:outline-none cursor-pointer"
                 >
                   {DURATION_PRESETS.map((p) => (
                     <option key={p.value} value={p.value}>
@@ -367,7 +360,7 @@ export default function TaskItem({
                 value={BREAK_PRESETS.some((p) => p.value === editBreak) ? editBreak : 5}
                 onChange={(e) => setEditBreak(Number(e.target.value))}
                 onKeyDown={handleKeyDown}
-                className="bg-white border border-[#E5E0D8] rounded-lg px-2.5 py-1 text-[#44403C] focus:outline-none cursor-pointer"
+                className="bg-white border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg px-2.5 py-1 text-xs font-bold text-[#1C1917] focus:outline-none cursor-pointer"
               >
                 {BREAK_PRESETS.map((b) => (
                   <option key={b.value} value={b.value}>
@@ -379,14 +372,14 @@ export default function TaskItem({
               <button
                 type="button"
                 onClick={handleSaveEdit}
-                className="px-3 py-1 bg-[#1C1917] hover:bg-black text-white font-medium rounded-lg text-xs transition-colors cursor-pointer"
+                className="px-3.5 py-1 bg-[#FEF08A] hover:bg-[#FDE047] text-[#1C1917] border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] font-bold rounded-lg text-xs active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
               >
                 Save
               </button>
               <button
                 type="button"
                 onClick={() => setIsEditing(false)}
-                className="px-2.5 py-1 text-stone-500 hover:text-stone-800 text-xs cursor-pointer"
+                className="px-3 py-1 bg-white hover:bg-stone-100 text-[#1C1917] border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] font-bold rounded-lg text-xs active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -394,13 +387,13 @@ export default function TaskItem({
 
             {/* Option to sync edit across entire week */}
             {isConnectedSeries && (
-              <div className="flex items-center gap-2 pt-1 border-t border-[#E5E0D8]/60">
-                <label className="flex items-center gap-1.5 text-xs text-[#57534E] hover:text-[#1C1917] cursor-pointer select-none">
+              <div className="flex items-center gap-2 pt-1.5 border-t-2 border-[#1C1917]/10">
+                <label className="flex items-center gap-2 text-xs font-bold text-[#1C1917] cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={updateEntireWeek}
                     onChange={(e) => setUpdateEntireWeek(e.target.checked)}
-                    className="w-3.5 h-3.5 rounded text-[#1C1917] accent-[#1C1917] cursor-pointer"
+                    className="w-4 h-4 rounded border-2 border-[#1C1917] text-[#1C1917] accent-[#1C1917] cursor-pointer"
                   />
                   <span>
                     {task.day_of_week === 0
@@ -450,24 +443,20 @@ export default function TaskItem({
               onClick={handleCheckboxClick}
               aria-label={task.is_completed ? `Mark "${task.title}" incomplete` : `Mark "${task.title}" complete`}
               aria-pressed={task.is_completed}
-              className={`shrink-0 mt-0.5 transition-colors cursor-pointer rounded-full p-0.5 focus:outline-none focus:ring-2 focus:ring-stone-400 ${
+              className={`shrink-0 mt-0.5 w-5 h-5 rounded-md border-2 border-[#1C1917] flex items-center justify-center transition-all cursor-pointer ${
                 task.is_completed
-                  ? 'text-[#224A32]'
-                  : 'text-[#A8A29E] hover:text-[#1C1917]'
+                  ? 'bg-[#22C55E] text-white shadow-[1px_1px_0px_#1C1917]'
+                  : 'bg-white hover:bg-[#FEF08A] shadow-[2px_2px_0px_#1C1917] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none'
               }`}
             >
-              {task.is_completed ? (
-                <CheckCircle2 className="w-5 h-5 fill-[#224A32]/10" />
-              ) : (
-                <Circle className="w-5 h-5" />
-              )}
+              {task.is_completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
             </button>
 
             <span
               onDoubleClick={handleStartEdit}
               title="Double-click to edit"
-              className={`text-sm select-none cursor-pointer font-medium leading-relaxed break-words flex-1 min-w-0 ${
-                task.is_completed ? 'line-through text-stone-400' : 'text-[#1C1917]'
+              className={`text-sm select-none cursor-pointer font-bold leading-relaxed break-words flex-1 min-w-0 ${
+                task.is_completed ? 'line-through text-stone-400 font-medium' : 'text-[#1C1917]'
               }`}
             >
               {task.title}
@@ -475,12 +464,12 @@ export default function TaskItem({
           </div>
 
           {/* Bottom Secondary Line: Badges (Left) + Actions (Right) */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 pl-8 pt-0.5">
+          <div className="flex flex-wrap items-center justify-between gap-2 pl-7.5 pt-0.5">
             {/* Left section: Metadata Badges */}
             <div className="flex flex-wrap items-center gap-1.5">
               {/* Tag Badge */}
               <span
-                className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${tagObj.badgeClass}`}
+                className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md border border-[#1C1917] shadow-[1px_1px_0px_#1C1917] ${tagObj.badgeClass}`}
               >
                 {tagObj.id === 'career' && <Briefcase className="w-3 h-3" />}
                 {tagObj.id === 'college' && <BookOpen className="w-3 h-3" />}
@@ -492,9 +481,9 @@ export default function TaskItem({
               {isRepeating && !hasSubTasks && (
                 <span
                   title="Daily session of a repeating weekly routine"
-                  className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-white border border-[#E5E0D8] text-[#57534E]"
+                  className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-[#FEF08A] border border-[#1C1917] shadow-[1px_1px_0px_#1C1917] text-[#1C1917]"
                 >
-                  <Repeat className="w-3 h-3 text-[#224A32]" />
+                  <Repeat className="w-3 h-3" />
                   <span>Weekly Routine</span>
                 </span>
               )}
@@ -503,23 +492,23 @@ export default function TaskItem({
               {hasSubTasks && (
                 <span
                   title={`Master milestone with ${totalSubTasks} daily execution sessions`}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#EBF2EC] border border-[#CFE1D3] text-[#224A32]"
+                  className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-[#BBF7D0] border border-[#1C1917] shadow-[1px_1px_0px_#1C1917] text-[#166534]"
                 >
-                  <Repeat className="w-3 h-3 text-[#224A32]" />
+                  <Repeat className="w-3 h-3" />
                   <span>{completedSubTasks}/{totalSubTasks} sessions ({percentSubTasks}%)</span>
                 </span>
               )}
 
-              {/* Time Badge (Clean & Concise: no redundant '(= 15m)') */}
+              {/* Time Badge */}
               {!isWeeklyMilestone && (
                 <span
-                  className="inline-flex items-center gap-1 text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-[#FAF8F5] border border-[#E5E0D8] text-[#57534E]"
+                  className="inline-flex items-center gap-1 text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-white border border-[#1C1917] shadow-[1px_1px_0px_#1C1917] text-[#1C1917]"
                   title={`${formatDuration(task.duration_minutes ?? 30)} focus${(task.break_minutes ?? 0) > 0 ? ` + ${formatDuration(task.break_minutes)} rest` : ''}`}
                 >
-                  <Clock className="w-3 h-3 text-[#224A32] shrink-0" />
+                  <Clock className="w-3 h-3 text-[#1C1917] shrink-0" />
                   <span>{formatDuration(task.duration_minutes ?? 30)}</span>
                   {(task.break_minutes ?? 0) > 0 && (
-                    <span className="text-stone-400 flex items-center gap-0.5">
+                    <span className="text-[#78716C] flex items-center gap-0.5">
                       +<Coffee className="w-2.5 h-2.5 shrink-0" />
                       {formatDuration(task.break_minutes)}
                     </span>
@@ -531,14 +520,14 @@ export default function TaskItem({
             {/* Right section: Move to Day / Edit / Delete */}
             {confirmDelete ? (
               <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <span className="text-[#78716C] mr-1 font-medium">Delete repeating task:</span>
+                <span className="text-[#1C1917] mr-1 font-bold">Delete repeating task:</span>
                 <button
                   type="button"
                   onClick={() => {
                     setConfirmDelete(false)
                     onDelete(task.id)
                   }}
-                  className="px-2.5 py-1 rounded-full bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] text-[#1C1917] font-medium cursor-pointer shadow-sm"
+                  className="px-2.5 py-1 rounded-lg bg-white hover:bg-stone-100 border border-[#1C1917] text-[#1C1917] font-bold shadow-[1px_1px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
                 >
                   Just this one
                 </button>
@@ -548,14 +537,14 @@ export default function TaskItem({
                     setConfirmDelete(false)
                     onDeleteSeries(task.series_id, task.day_of_week)
                   }}
-                  className="px-2.5 py-1 rounded-full bg-[#9E362A] hover:bg-[#822419] text-white font-medium cursor-pointer shadow-sm"
+                  className="px-2.5 py-1 rounded-lg bg-[#FECDD3] hover:bg-[#FDA4AF] border border-[#1C1917] text-[#9F1239] font-bold shadow-[1px_1px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
                 >
-                  This & all following days
+                  This & following days
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirmDelete(false)}
-                  className="px-2 py-1 text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+                  className="px-2 py-1 text-stone-500 hover:text-[#1C1917] font-bold cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -564,26 +553,27 @@ export default function TaskItem({
               <div className="flex items-center gap-1.5 shrink-0">
                 {/* Accessible / 1-click Move Up / Move Down buttons */}
                 {onMoveRelative && totalTasks > 1 && (
-                  <div className="flex items-center text-stone-400 bg-[#FAF8F5] border border-[#E5E0D8]/80 rounded-full px-1 py-0.5 shadow-2xs">
+                  <div className="flex items-center border border-[#1C1917] bg-white rounded-lg shadow-[1px_1px_0px_#1C1917] overflow-hidden">
                     <button
                       type="button"
                       disabled={index === 0}
                       onClick={() => onMoveRelative(-1)}
                       aria-label="Move task up"
                       title="Move task up (Alt+Up)"
-                      className="p-1 rounded-full hover:text-[#1C1917] hover:bg-white disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-stone-400 transition-colors cursor-pointer disabled:cursor-default"
+                      className="p-1 text-stone-500 hover:text-[#1C1917] hover:bg-[#FEF08A] disabled:opacity-20 disabled:hover:bg-transparent transition-colors cursor-pointer disabled:cursor-default"
                     >
-                      <ChevronUp className="w-3.5 h-3.5" />
+                      <ChevronUp className="w-3 h-3 stroke-[2.5]" />
                     </button>
+                    <div className="w-[1px] h-3 bg-[#1C1917]/20" />
                     <button
                       type="button"
                       disabled={index === totalTasks - 1}
                       onClick={() => onMoveRelative(1)}
                       aria-label="Move task down"
                       title="Move task down (Alt+Down)"
-                      className="p-1 rounded-full hover:text-[#1C1917] hover:bg-white disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-stone-400 transition-colors cursor-pointer disabled:cursor-default"
+                      className="p-1 text-stone-500 hover:text-[#1C1917] hover:bg-[#FEF08A] disabled:opacity-20 disabled:hover:bg-transparent transition-colors cursor-pointer disabled:cursor-default"
                     >
-                      <ChevronDown className="w-3.5 h-3.5" />
+                      <ChevronDown className="w-3 h-3 stroke-[2.5]" />
                     </button>
                   </div>
                 )}
@@ -595,11 +585,10 @@ export default function TaskItem({
                     onClick={() => onOpenMoveToWeek(task)}
                     aria-label="Carry milestone to another week"
                     title="Carry forward this milestone to another week (schedules on Mon–Sat & preserves history)"
-                    className="flex items-center gap-1 text-[11px] font-semibold bg-white hover:bg-[#1C1917] hover:text-white border border-[#E5E0D8] hover:border-[#1C1917] text-[#44403C] rounded-full px-2.5 py-1 transition-all shadow-xs cursor-pointer group"
+                    className="flex items-center gap-1 text-[11px] font-bold bg-[#FEF08A] hover:bg-[#FDE047] border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] text-[#1C1917] rounded-lg px-2 py-0.5 transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
                   >
-                    <CalendarDays className="w-3.5 h-3.5 text-[#224A32] group-hover:text-white transition-colors" />
-                    <span className="hidden sm:inline">Carry to Week</span>
-                    <span className="sm:hidden">Carry</span>
+                    <CalendarDays className="w-3 h-3" />
+                    <span>Carry</span>
                   </button>
                 )}
 
@@ -614,9 +603,9 @@ export default function TaskItem({
                   }}
                   aria-label="Assign to day"
                   title="Move or assign this task"
-                  className="text-[11px] bg-white border border-[#E5E0D8] hover:border-[#1C1917] rounded-full px-2.5 py-1 text-[#44403C] focus:outline-none cursor-pointer shadow-sm transition-colors"
+                  className="text-[11px] font-bold bg-white border border-[#1C1917] hover:bg-[#FEF08A] shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg px-1.5 py-0.5 text-[#1C1917] focus:outline-none cursor-pointer transition-all"
                 >
-                  <option value={0}>📋 Weekly List</option>
+                  <option value={0}>📋 Wk</option>
                   <option value={1}>Mon</option>
                   <option value={2}>Tue</option>
                   <option value={3}>Wed</option>
@@ -624,7 +613,7 @@ export default function TaskItem({
                   <option value={5}>Fri</option>
                   <option value={6}>Sat</option>
                   <option value={7}>Sun</option>
-                  <option value="move-week">🗓️ Carry to another week…</option>
+                  <option value="move-week">🗓️ Carry…</option>
                 </select>
 
                 <button
@@ -632,18 +621,18 @@ export default function TaskItem({
                   onClick={handleStartEdit}
                   aria-label="Edit task"
                   title="Edit task (double-click also works)"
-                  className="p-1.5 rounded-full text-stone-400 hover:text-[#1C1917] hover:bg-white transition-colors cursor-pointer"
+                  className="p-1 rounded-lg border border-[#1C1917] bg-white text-[#1C1917] hover:bg-[#FEF08A] shadow-[1.5px_1.5px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
                 >
-                  <Pencil className="w-3.5 h-3.5" />
+                  <Pencil className="w-3 h-3" />
                 </button>
                 <button
                   type="button"
                   onClick={handleDeleteClick}
                   aria-label="Delete task"
                   title="Delete task"
-                  className="p-1.5 rounded-full text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                  className="p-1 rounded-lg border border-[#1C1917] bg-white text-[#1C1917] hover:bg-[#FECDD3] shadow-[1.5px_1.5px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-3 h-3" />
                 </button>
               </div>
             )}

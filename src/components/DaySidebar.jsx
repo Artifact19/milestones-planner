@@ -63,7 +63,7 @@ export default function DaySidebar({
 
       {/* Slide-over Drawer Panel */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] bg-[#F2EFE9] border-r border-[#E5E0D8] shadow-2xl flex flex-col justify-between transition-transform duration-300 ease-out transform ${
+        className={`fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] bg-[#F8F6F0] border-r-2 border-[#1C1917] shadow-[8px_0px_0px_#1C1917]/20 flex flex-col justify-between transition-transform duration-300 ease-out transform ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         role="dialog"
@@ -71,9 +71,9 @@ export default function DaySidebar({
         aria-label="Weekly Milestones and Days Navigation"
       >
         {/* Drawer Header */}
-        <div className="p-4 sm:p-5 border-b border-[#E5E0D8] bg-white/80 backdrop-blur-md flex items-center justify-between gap-3 shrink-0">
+        <div className="p-4 sm:p-5 border-b-2 border-[#1C1917] bg-[#F8F6F0] flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-[#1C1917] text-white flex items-center justify-center shrink-0 shadow-sm">
+            <div className="w-8 h-8 rounded-xl bg-[#FEF08A] text-[#1C1917] border-2 border-[#1C1917] flex items-center justify-center shrink-0 shadow-[1.5px_1.5px_0px_#1C1917]">
               <Calendar className="w-4 h-4" />
             </div>
             <div className="min-w-0">
@@ -90,7 +90,7 @@ export default function DaySidebar({
             type="button"
             onClick={onClose}
             aria-label="Close navigation menu"
-            className="p-1.5 rounded-full hover:bg-stone-200/70 text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
+            className="p-1.5 rounded-xl border border-[#1C1917] bg-white hover:bg-[#FECDD3] text-[#1C1917] shadow-[1px_1px_0px_#1C1917] transition-all cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -115,8 +115,8 @@ export default function DaySidebar({
                 }}
                 className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer group text-left ${
                   isSelected
-                    ? 'bg-[#1C1917] text-white shadow-md shadow-stone-900/15'
-                    : 'bg-white/90 hover:bg-white text-[#44403C] hover:text-[#1C1917] border border-[#E5E0D8] hover:border-[#1C1917]/30 shadow-xs'
+                    ? 'bg-[#FEF08A] text-[#1C1917] border-2 border-[#1C1917] shadow-[2.5px_2.5px_0px_#1C1917] font-bold'
+                    : 'bg-white hover:bg-stone-50 text-[#1C1917] border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
@@ -124,12 +124,12 @@ export default function DaySidebar({
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border transition-colors ${
                       isSelected
-                        ? 'bg-white/10 border-white/20 text-[#FAF8F5]'
+                        ? 'bg-white border border-[#1C1917] text-[#1C1917] shadow-[1px_1px_0px_#1C1917]'
                         : item.isSunday
-                        ? 'bg-[#F4ECE1] border-[#E8DAC5] text-[#695431]'
+                        ? 'bg-[#FECDD3] border border-[#1C1917] text-[#9F1239]'
                         : item.isWeekly
-                        ? 'bg-[#FAF8F5] border-[#E5E0D8] text-[#1C1917]'
-                        : 'bg-white border-[#E5E0D8] text-[#78716C] group-hover:text-[#1C1917]'
+                        ? 'bg-[#FEF08A] border border-[#1C1917] text-[#1C1917]'
+                        : 'bg-[#F8F6F0] border border-[#1C1917] text-[#1C1917]'
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
@@ -144,8 +144,8 @@ export default function DaySidebar({
                         <span
                           className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-full border ${
                             isSelected
-                              ? 'bg-white/20 text-white border-white/30'
-                              : 'bg-[#EBF2EC] text-[#224A32] border-[#CFE1D3]'
+                              ? 'bg-white text-[#1C1917] border border-[#1C1917]'
+                              : 'bg-[#BBF7D0] text-[#166534] border border-[#1C1917]'
                           }`}
                         >
                           Today

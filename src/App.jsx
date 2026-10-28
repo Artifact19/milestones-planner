@@ -163,7 +163,7 @@ function TrackerMain() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F2EFE9] text-[#1C1917] flex flex-col font-sans selection:bg-[#1C1917] selection:text-[#FAF8F5]">
+    <div className="min-h-screen bg-[#F8F6F0] text-[#1C1917] flex flex-col font-sans selection:bg-[#FEF08A] selection:text-[#1C1917]">
       {/* Sticky Top Bar */}
       <TopBar
         user={user}
