@@ -53,6 +53,7 @@ export default function TaskItem({
   index = 0,
   totalTasks = 1,
   subTasks = [],
+  hasConnectedTasks: hasConnectedTasksProp,
   onToggle,
   onMasterToggleRequest,
   onToggleSubTask,
@@ -86,6 +87,11 @@ export default function TaskItem({
 
   // Master task and sub-tasks calculations
   const hasSubTasks = task.day_of_week === 0 && subTasks && subTasks.length > 0
+  const isConnectedSeries =
+    typeof hasConnectedTasksProp === 'boolean'
+      ? hasConnectedTasksProp
+      : isRepeating || task.day_of_week === 0 || hasSubTasks
+  const [updateEntireWeek, setUpdateEntireWeek] = useState(true)
   const completedSubTasks = hasSubTasks ? subTasks.filter((s) => s.is_completed).length : 0
   const totalSubTasks = hasSubTasks ? subTasks.length : 0
   const percentSubTasks = totalSubTasks > 0 ? Math.round((completedSubTasks / totalSubTasks) * 100) : 0
@@ -138,6 +144,7 @@ export default function TaskItem({
 
   const handleStartEdit = () => {
     setIsCustomDuration(!DURATION_PRESETS.some((p) => p.value === (task.duration_minutes ?? 30)))
+    setUpdateEntireWeek(true)
     setIsEditing(true)
   }
 
@@ -146,12 +153,16 @@ export default function TaskItem({
     if (trimmed) {
       const finalDuration = Math.max(1, Math.min(1440, Number(editDuration) || 30))
       const finalBreak = Math.max(0, Math.min(240, Number(editBreak) || 0))
-      onEdit(task.id, {
-        title: trimmed,
-        duration_minutes: finalDuration,
-        break_minutes: finalBreak,
-        tag: editTag
-      })
+      onEdit(
+        task.id,
+        {
+          title: trimmed,
+          duration_minutes: finalDuration,
+          break_minutes: finalBreak,
+          tag: editTag
+        },
+        { updateEntireWeek: isConnectedSeries && updateEntireWeek }
+      )
     }
     setIsEditing(false)
     setIsCustomDuration(false)
@@ -380,6 +391,25 @@ export default function TaskItem({
                 Cancel
               </button>
             </div>
+
+            {/* Option to sync edit across entire week */}
+            {isConnectedSeries && (
+              <div className="flex items-center gap-2 pt-1 border-t border-[#E5E0D8]/60">
+                <label className="flex items-center gap-1.5 text-xs text-[#57534E] hover:text-[#1C1917] cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={updateEntireWeek}
+                    onChange={(e) => setUpdateEntireWeek(e.target.checked)}
+                    className="w-3.5 h-3.5 rounded text-[#1C1917] accent-[#1C1917] cursor-pointer"
+                  />
+                  <span>
+                    {task.day_of_week === 0
+                      ? 'Update across entire week (all allocated daily sessions)'
+                      : 'Update across entire week (Weekly Milestone & all daily routines)'}
+                  </span>
+                </label>
+              </div>
+            )}
           </div>
         </div>
       ) : (

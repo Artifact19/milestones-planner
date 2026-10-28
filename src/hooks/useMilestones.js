@@ -281,49 +281,81 @@ export function useMilestones(weekStart) {
     [user]
   )
 
-  // Update milestone fields
+  // Update milestone fields (with optional entire-week series sync)
   const updateMilestone = useCallback(
-    async (id, updates) => {
+    async (id, updates, options = {}) => {
       if (!user || String(id).startsWith('temp-')) return
 
-      let previousItem = null
+      const previousMilestones = milestones
+      const targetItem = milestones.find((m) => m.id === id)
+      if (!targetItem) return
 
+      const shouldUpdateWeek = Boolean(options?.updateEntireWeek)
+
+      // Find all items that belong to the same series / connected weekly milestone
+      let matchingItems = [targetItem]
+      if (shouldUpdateWeek) {
+        const normTitle = targetItem.title.trim().toLowerCase()
+        matchingItems = milestones.filter((m) => {
+          if (targetItem.series_id && m.series_id === targetItem.series_id) {
+            return true
+          }
+          if (m.title && m.title.trim().toLowerCase() === normTitle) {
+            return true
+          }
+          return false
+        })
+      }
+
+      const matchingIds = new Set(matchingItems.map((m) => m.id))
+
+      // If updating as a series and no series_id exists yet across multiple tasks, link them with one
+      const payloadUpdates = { ...updates }
+      if (shouldUpdateWeek && matchingIds.size > 1 && !targetItem.series_id) {
+        payloadUpdates.series_id = newUuid()
+      }
+
+      // Optimistic state update across all matching tasks
       setMilestones((prev) => {
         return prev.map((item) => {
-          if (item.id === id) {
-            previousItem = item
-            return { ...item, ...updates }
+          if (matchingIds.has(item.id)) {
+            return { ...item, ...payloadUpdates }
           }
           return item
         })
       })
 
       try {
-        const { error: updateError } = await supabase
+        let updateQuery = supabase
           .from('milestones')
-          .update(updates)
-          .eq('id', id)
+          .update(payloadUpdates)
           .eq('user_id', user.id)
 
+        if (shouldUpdateWeek && matchingIds.size > 1) {
+          updateQuery = updateQuery
+            .in('id', Array.from(matchingIds))
+            .eq('week_start_date', weekStartDateString)
+        } else {
+          updateQuery = updateQuery.eq('id', id)
+        }
+
+        const { error: updateError } = await updateQuery
+
         if (updateError) {
-          setMilestones((prev) =>
-            prev.map((m) => (m.id === id ? previousItem : m))
-          )
+          setMilestones(previousMilestones)
           setError(`Could not save edit: ${updateError.message}`)
         }
       } catch (err) {
-        setMilestones((prev) =>
-          prev.map((m) => (m.id === id ? previousItem : m))
-        )
+        setMilestones(previousMilestones)
         setError(`Could not save edit: ${err.message || 'Network error'}`)
       }
     },
-    [user]
+    [user, milestones, weekStartDateString]
   )
 
   // Move milestone to a different day
   const moveMilestone = useCallback(async (id, newDayOfWeek) => {
-    await updateMilestone(id, { day_of_week: newDayOfWeek })
+    await updateMilestone(id, { day_of_week: newDayOfWeek }, { updateEntireWeek: false })
   }, [updateMilestone])
 
   // Copy / carry forward milestones to another week (preserves original week intact)

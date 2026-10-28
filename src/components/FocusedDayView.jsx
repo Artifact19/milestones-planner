@@ -173,10 +173,29 @@ export default function FocusedDayView({
   const [moveToWeekData, setMoveToWeekData] = useState(null)
 
   const getSubTasksForTask = (task) => {
-    if (!task?.series_id || task.day_of_week !== 0) return []
+    if (!task || task.day_of_week !== 0) return []
+    if (task.series_id) {
+      return allMilestones
+        .filter((m) => m.series_id === task.series_id && m.day_of_week > 0)
+        .sort((a, b) => a.day_of_week - b.day_of_week)
+    }
+    const norm = task.title?.trim().toLowerCase()
+    if (!norm) return []
     return allMilestones
-      .filter((m) => m.series_id === task.series_id && m.day_of_week > 0)
+      .filter((m) => m.day_of_week > 0 && m.title?.trim().toLowerCase() === norm)
       .sort((a, b) => a.day_of_week - b.day_of_week)
+  }
+
+  const getHasConnectedTasks = (task) => {
+    if (!task) return false
+    if (task.series_id) {
+      return allMilestones.some((m) => m.id !== task.id && m.series_id === task.series_id)
+    }
+    const norm = task.title?.trim().toLowerCase()
+    if (!norm) return false
+    return allMilestones.some(
+      (m) => m.id !== task.id && m.title?.trim().toLowerCase() === norm
+    )
   }
 
   const handleMasterToggleRequest = (task, subTasks) => {
@@ -473,6 +492,7 @@ export default function FocusedDayView({
                 index={index}
                 totalTasks={tasks.length}
                 subTasks={getSubTasksForTask(task)}
+                hasConnectedTasks={getHasConnectedTasks(task)}
                 onToggle={onToggle}
                 onMasterToggleRequest={handleMasterToggleRequest}
                 onToggleSubTask={onToggle}
@@ -553,6 +573,7 @@ export default function FocusedDayView({
                     index={index}
                     totalTasks={weeklyTasks.length}
                     subTasks={getSubTasksForTask(task)}
+                    hasConnectedTasks={getHasConnectedTasks(task)}
                     onToggle={onToggle}
                     onMasterToggleRequest={handleMasterToggleRequest}
                     onToggleSubTask={onToggle}
