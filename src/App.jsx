@@ -175,26 +175,26 @@ function TrackerMain() {
         onCurrentWeek={handleCurrentWeek}
         onSignOut={signOut}
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        sidebarOpen={sidebarOpen}
         onGoHome={handleGoHome}
         onOpenProfile={() => setProfileOpen(true)}
         onOpenReport={() => setReportOpen(true)}
         onOpenTutorial={handleOpenTutorial}
       />
 
-      {/* Main Container: In-Flow Sidebar + Focused Workspace */}
-      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col md:flex-row items-start gap-6">
-        {/* Navigation Sidebar */}
-        <DaySidebar
-          weekStart={weekStart}
-          selectedDay={selectedDay}
-          onSelectDay={(day) => setSelectedDay(day)}
-          getDayStats={getDayStats}
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-        />
+      {/* Navigation Drawer (Weekly Milestones & Mon–Sun Days) */}
+      <DaySidebar
+        weekStart={weekStart}
+        selectedDay={selectedDay}
+        onSelectDay={(day) => setSelectedDay(day)}
+        getDayStats={getDayStats}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
 
-        {/* Focused Main Content Area */}
-        <main className="flex-1 flex flex-col gap-5 min-w-0">
+      {/* Main Container: Focused Workspace with Spacious Breathing Room */}
+      <div className="flex-1 max-w-4xl lg:max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col items-center">
+        <main className="w-full flex-1 flex flex-col gap-5 min-w-0">
           {/* Error Notification Banner */}
           {error && (
             <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-sm shadow-sm animate-in fade-in duration-200">

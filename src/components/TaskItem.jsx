@@ -120,10 +120,12 @@ export default function TaskItem({
   const handleSaveEdit = () => {
     const trimmed = editText.trim()
     if (trimmed) {
+      const finalDuration = Math.max(1, Math.min(1440, Number(editDuration) || 30))
+      const finalBreak = Math.max(0, Math.min(240, Number(editBreak) || 0))
       onEdit(task.id, {
         title: trimmed,
-        duration_minutes: Number(editDuration),
-        break_minutes: Number(editBreak),
+        duration_minutes: finalDuration,
+        break_minutes: finalBreak,
         tag: editTag
       })
     }
@@ -138,6 +140,8 @@ export default function TaskItem({
     } else if (e.key === 'Escape') {
       e.preventDefault()
       setEditText(task.title)
+      setEditDuration(task.duration_minutes ?? 30)
+      setEditBreak(task.break_minutes ?? 5)
       setIsEditing(false)
       setIsCustomDuration(false)
     }
@@ -155,15 +159,15 @@ export default function TaskItem({
       }`}
     >
       {/* Top Primary Row: Checkbox, Title/Badges, Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 w-full">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 w-full">
         {/* Left section: Checkbox & Info */}
-        <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
+        <div className="flex items-start gap-3 flex-1 min-w-0">
           <button
             type="button"
             onClick={handleCheckboxClick}
             aria-label={task.is_completed ? `Mark "${task.title}" incomplete` : `Mark "${task.title}" complete`}
             aria-pressed={task.is_completed}
-            className={`shrink-0 mt-0.5 sm:mt-0 transition-colors cursor-pointer rounded-full p-0.5 focus:outline-none focus:ring-2 focus:ring-stone-400 ${
+            className={`shrink-0 mt-0.5 transition-colors cursor-pointer rounded-full p-0.5 focus:outline-none focus:ring-2 focus:ring-stone-400 ${
               task.is_completed
                 ? 'text-[#224A32]'
                 : 'text-[#A8A29E] hover:text-[#1C1917]'
@@ -192,7 +196,8 @@ export default function TaskItem({
                 <select
                   value={editTag}
                   onChange={(e) => setEditTag(e.target.value)}
-                  className="bg-white border border-[#E5E0D8] rounded-lg px-2.5 py-1 text-[#44403C] focus:outline-none"
+                  onKeyDown={handleKeyDown}
+                  className="bg-white border border-[#E5E0D8] rounded-lg px-2.5 py-1 text-[#44403C] focus:outline-none cursor-pointer"
                 >
                   {TAG_OPTIONS.map((tag) => (
                     <option key={tag.id} value={tag.id}>
@@ -210,15 +215,31 @@ export default function TaskItem({
                       step={1}
                       value={editDuration}
                       onChange={(e) => {
-                        const val = Math.max(1, Math.min(1440, Number(e.target.value) || 1))
-                        setEditDuration(val)
+                        const val = e.target.value
+                        if (val === '') {
+                          setEditDuration('')
+                        } else {
+                          const parsed = parseInt(val, 10)
+                          setEditDuration(isNaN(parsed) ? '' : Math.max(0, Math.min(1440, parsed)))
+                        }
                       }}
+                      onBlur={() => {
+                        if (editDuration === '' || Number(editDuration) < 1) {
+                          setEditDuration(task.duration_minutes || 30)
+                        }
+                      }}
+                      onKeyDown={handleKeyDown}
+                      autoFocus
+                      onFocus={(e) => e.target.select()}
                       className="w-14 text-[#44403C] font-mono text-xs focus:outline-none"
                     />
                     <span className="text-[11px] text-[#78716C] font-mono">min</span>
                     <button
                       type="button"
-                      onClick={() => setIsCustomDuration(false)}
+                      onClick={() => {
+                        setIsCustomDuration(false)
+                        setEditDuration(task.duration_minutes || 30)
+                      }}
                       title="Switch back to presets"
                       className="text-stone-400 hover:text-stone-700 text-xs px-1 cursor-pointer font-bold"
                     >
@@ -237,6 +258,7 @@ export default function TaskItem({
                         setEditBreak(getDefaultBreakMinutes(val))
                       }
                     }}
+                    onKeyDown={handleKeyDown}
                     className="bg-white border border-[#E5E0D8] rounded-lg px-2.5 py-1 text-[#44403C] focus:outline-none cursor-pointer"
                   >
                     {DURATION_PRESETS.map((p) => (
@@ -255,6 +277,7 @@ export default function TaskItem({
                 <select
                   value={BREAK_PRESETS.some((p) => p.value === editBreak) ? editBreak : 5}
                   onChange={(e) => setEditBreak(Number(e.target.value))}
+                  onKeyDown={handleKeyDown}
                   className="bg-white border border-[#E5E0D8] rounded-lg px-2.5 py-1 text-[#44403C] focus:outline-none cursor-pointer"
                 >
                   {BREAK_PRESETS.map((b) => (
@@ -281,11 +304,11 @@ export default function TaskItem({
               </div>
             </div>
           ) : (
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
+            <div className="flex flex-col lg:flex-row lg:items-center gap-1.5 lg:gap-3 flex-1 min-w-0">
               <span
                 onDoubleClick={handleStartEdit}
                 title="Double-click to edit"
-                className={`text-sm select-none cursor-pointer truncate font-medium ${
+                className={`text-sm select-none cursor-pointer font-medium leading-snug break-words ${
                   task.is_completed ? 'line-through text-stone-400' : 'text-[#1C1917]'
                 }`}
               >
@@ -351,7 +374,7 @@ export default function TaskItem({
         {/* Right section: Move to Day / Edit / Delete */}
         {/* Delete choice for repeating tasks */}
         {!isEditing && confirmDelete && (
-          <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0 text-[11px] pt-1 sm:pt-0">
+          <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0 text-[11px] pt-1 md:pt-0">
             <span className="text-[#78716C] mr-1 font-medium">Delete repeating task:</span>
             <button
               type="button"
@@ -384,7 +407,7 @@ export default function TaskItem({
         )}
 
         {!isEditing && !confirmDelete && (
-          <div className="flex items-center justify-end gap-1.5 pt-1 sm:pt-0 border-t border-[#E5E0D8]/60 sm:border-t-0 shrink-0">
+          <div className="flex items-center justify-end gap-1.5 pt-1 md:pt-0 border-t border-[#E5E0D8]/60 md:border-t-0 shrink-0 self-end md:self-auto">
             {/* Direct 1-click option to carry forward weekly milestone to another week */}
             {onOpenMoveToWeek && task.day_of_week === 0 && (
               <button

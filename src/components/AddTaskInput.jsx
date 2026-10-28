@@ -92,10 +92,13 @@ export default function AddTaskInput({
     const trimmed = title.trim()
     if (!trimmed) return
 
+    const finalDuration = Math.max(1, Math.min(1440, Number(duration) || 30))
+    const finalBreak = Math.max(0, Math.min(240, Number(breakMinutes) || 0))
+
     if (isRecurring && onAddBatch && selectedDays.length > 0) {
-      onAddBatch(selectedDays, trimmed, Number(duration), Number(breakMinutes), selectedTag)
+      onAddBatch(selectedDays, trimmed, finalDuration, finalBreak, selectedTag)
     } else {
-      onAdd(trimmed, Number(duration), Number(breakMinutes), selectedTag)
+      onAdd(trimmed, finalDuration, finalBreak, selectedTag)
     }
 
     setTitle('')
@@ -327,12 +330,29 @@ export default function AddTaskInput({
                   step="1"
                   value={duration}
                   onChange={(e) => {
-                    const val = Math.max(1, Math.min(1440, Number(e.target.value) || 1))
-                    handleDurationChange(val)
+                    const raw = e.target.value
+                    if (raw === '') {
+                      setDuration('')
+                    } else {
+                      const parsed = parseInt(raw, 10)
+                      setDuration(isNaN(parsed) ? '' : Math.max(0, Math.min(1440, parsed)))
+                      if (!isNaN(parsed) && parsed > 0) {
+                        setBreakMinutes(getDefaultBreakMinutes(parsed))
+                      }
+                    }
                   }}
+                  onBlur={() => {
+                    if (duration === '' || Number(duration) < 1) {
+                      setDuration(30)
+                      setBreakMinutes(5)
+                    }
+                  }}
+                  onFocus={(e) => e.target.select()}
                   className="w-16 px-2 py-0.5 text-xs font-mono bg-white border border-[#E5E0D8] rounded-lg text-[#1C1917] focus:outline-none focus:border-[#1C1917]"
                 />
-                <span className="text-[11px] text-[#78716C] font-mono">min ({formatDuration(duration)})</span>
+                <span className="text-[11px] text-[#78716C] font-mono">
+                  min ({formatDuration(Number(duration) || 0)})
+                </span>
               </div>
             </div>
 
@@ -367,12 +387,25 @@ export default function AddTaskInput({
                   step="1"
                   value={breakMinutes}
                   onChange={(e) => {
-                    const val = Math.max(0, Math.min(240, Number(e.target.value) || 0))
-                    setBreakMinutes(val)
+                    const raw = e.target.value
+                    if (raw === '') {
+                      setBreakMinutes('')
+                    } else {
+                      const parsed = parseInt(raw, 10)
+                      setBreakMinutes(isNaN(parsed) ? '' : Math.max(0, Math.min(240, parsed)))
+                    }
                   }}
+                  onBlur={() => {
+                    if (breakMinutes === '') {
+                      setBreakMinutes(0)
+                    }
+                  }}
+                  onFocus={(e) => e.target.select()}
                   className="w-16 px-2 py-0.5 text-xs font-mono bg-white border border-[#E5E0D8] rounded-lg text-[#1C1917] focus:outline-none focus:border-[#1C1917]"
                 />
-                <span className="text-[11px] text-[#78716C] font-mono">min ({breakMinutes === 0 ? 'None' : `${breakMinutes}m`})</span>
+                <span className="text-[11px] text-[#78716C] font-mono">
+                  min ({Number(breakMinutes) === 0 ? 'None' : `${breakMinutes}m`})
+                </span>
               </div>
             </div>
           </div>

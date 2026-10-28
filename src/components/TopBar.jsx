@@ -11,6 +11,7 @@ export default function TopBar({
   onCurrentWeek,
   onSignOut,
   onToggleSidebar,
+  sidebarOpen = false,
   onGoHome,
   onOpenProfile,
   onOpenReport,
@@ -45,15 +46,24 @@ export default function TopBar({
   return (
     <header className="sticky top-0 z-20 backdrop-blur-md bg-[#F2EFE9]/95 border-b border-[#E5E0D8]/80 transition-colors">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 lg:gap-4 flex-nowrap overflow-x-auto no-scrollbar">
-        {/* Left: Mobile menu toggle + Brand Logo */}
+        {/* Left: Navigation sidebar toggle (all screens) + Brand Logo */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             type="button"
             onClick={onToggleSidebar}
-            aria-label="Toggle navigation menu"
-            className="md:hidden p-1.5 rounded-full bg-white border border-[#E5E0D8] text-[#57534E] hover:text-[#1C1917] shadow-sm cursor-pointer"
+            aria-label="Toggle Milestones & Days navigation"
+            aria-expanded={sidebarOpen}
+            title="Toggle Weekly Milestones & Days menu"
+            className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-full border shadow-sm transition-all cursor-pointer flex items-center gap-1.5 ${
+              sidebarOpen
+                ? 'bg-[#1C1917] text-white border-[#1C1917]'
+                : 'bg-white hover:bg-[#FAF8F5] border-[#E5E0D8] text-[#57534E] hover:text-[#1C1917] hover:border-[#1C1917]'
+            }`}
           >
-            <Menu className="w-4 h-4" />
+            <Menu className="w-4 h-4 shrink-0" />
+            <span className="hidden sm:inline text-xs font-semibold">
+              Days
+            </span>
           </button>
 
           <button

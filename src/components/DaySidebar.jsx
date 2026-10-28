@@ -1,11 +1,13 @@
-import { Calendar, Clock, Sun, ListTodo, ChevronRight } from 'lucide-react'
+import { useEffect } from 'react'
+import { Calendar, Clock, Sun, ListTodo, ChevronRight, X } from 'lucide-react'
 import {
   addDays,
   formatShortDate,
   formatDuration,
   getTodayDayNumber,
   getMonday,
-  isSameWeek
+  isSameWeek,
+  formatWeekRange
 } from '../utils/dateUtils'
 
 export default function DaySidebar({
@@ -18,6 +20,18 @@ export default function DaySidebar({
 }) {
   const todayDayNumber = getTodayDayNumber()
   const isCurrentWeek = isSameWeek(weekStart, getMonday(new Date()))
+
+  // Keyboard accessibility: dismiss drawer on Escape key
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose?.()
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
 
   const navItems = [
     {
@@ -37,29 +51,53 @@ export default function DaySidebar({
   ]
 
   return (
-    <aside
-      className={`w-full md:w-64 lg:w-72 shrink-0 flex-col transition-all duration-200 ${
-        isOpen ? 'flex' : 'hidden md:flex'
-      }`}
-    >
-      {/* Mobile header only on small screens when expanded */}
-      {isOpen && (
-        <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#E5E0D8] md:hidden">
-          <span className="font-semibold text-[#1C1917] text-xs uppercase tracking-wider">
-            Select Day
-          </span>
+    <>
+      {/* Semi-transparent backdrop overlay with blur */}
+      <div
+        className={`fixed inset-0 bg-stone-900/40 backdrop-blur-xs z-40 transition-opacity duration-300 ease-out ${
+          isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Slide-over Drawer Panel */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] bg-[#F2EFE9] border-r border-[#E5E0D8] shadow-2xl flex flex-col justify-between transition-transform duration-300 ease-out transform ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Weekly Milestones and Days Navigation"
+      >
+        {/* Drawer Header */}
+        <div className="p-4 sm:p-5 border-b border-[#E5E0D8] bg-white/80 backdrop-blur-md flex items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-[#1C1917] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <Calendar className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="font-bold tracking-tight text-[#1C1917] text-xs font-sans block leading-tight">
+                DAYS & MILESTONES
+              </span>
+              <span className="text-[10px] text-[#78716C] font-mono block truncate mt-0.5">
+                {formatWeekRange(weekStart)}
+              </span>
+            </div>
+          </div>
+
           <button
             type="button"
             onClick={onClose}
-            className="text-xs px-2.5 py-1 rounded-full bg-white border border-[#E5E0D8] text-[#57534E] hover:text-[#1C1917] cursor-pointer"
+            aria-label="Close navigation menu"
+            className="p-1.5 rounded-full hover:bg-stone-200/70 text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
           >
-            Close
+            <X className="w-4 h-4" />
           </button>
         </div>
-      )}
 
-      {/* Architectural Navigation Dock - sticky in desktop flow so it stays accessible */}
-      <nav className="space-y-1.5 md:sticky md:top-20 bg-white/80 backdrop-blur-md border border-[#E5E0D8] rounded-3xl p-2.5 shadow-[0_10px_30px_-5px_rgba(28,25,23,0.04)]">
+        {/* Scrollable Navigation List */}
+        <nav className="flex-1 p-3.5 space-y-2 overflow-y-auto">
           {navItems.map((item) => {
             const isSelected = selectedDay === item.day
             const isToday = isCurrentWeek && item.day === todayDayNumber
@@ -75,10 +113,10 @@ export default function DaySidebar({
                   onSelectDay(item.day)
                   if (onClose) onClose()
                 }}
-                className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer group ${
+                className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer group text-left ${
                   isSelected
                     ? 'bg-[#1C1917] text-white shadow-md shadow-stone-900/15'
-                    : 'hover:bg-white text-[#44403C] hover:text-[#1C1917]'
+                    : 'bg-white/90 hover:bg-white text-[#44403C] hover:text-[#1C1917] border border-[#E5E0D8] hover:border-[#1C1917]/30 shadow-xs'
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
@@ -89,6 +127,8 @@ export default function DaySidebar({
                         ? 'bg-white/10 border-white/20 text-[#FAF8F5]'
                         : item.isSunday
                         ? 'bg-[#F4ECE1] border-[#E8DAC5] text-[#695431]'
+                        : item.isWeekly
+                        ? 'bg-[#FAF8F5] border-[#E5E0D8] text-[#1C1917]'
                         : 'bg-white border-[#E5E0D8] text-[#78716C] group-hover:text-[#1C1917]'
                     }`}
                   >
@@ -113,7 +153,7 @@ export default function DaySidebar({
                       )}
                     </div>
                     <div
-                      className={`text-xs flex items-center gap-2 ${
+                      className={`text-xs flex items-center gap-2 mt-0.5 ${
                         isSelected ? 'text-stone-300' : 'text-[#78716C]'
                       }`}
                     >
@@ -133,7 +173,7 @@ export default function DaySidebar({
                 </div>
 
                 {/* Right task counters */}
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0 pl-2">
                   {stats.taskCount > 0 ? (
                     <span
                       className={`text-xs font-mono px-2 py-0.5 rounded-full border ${
@@ -141,7 +181,7 @@ export default function DaySidebar({
                           ? 'bg-white/15 border-white/25 text-white'
                           : stats.completedCount === stats.taskCount
                           ? 'bg-[#EBF2EC] border-[#CFE1D3] text-[#224A32]'
-                          : 'bg-white border-[#E5E0D8] text-[#57534E]'
+                          : 'bg-[#FAF8F5] border-[#E5E0D8] text-[#57534E]'
                       }`}
                     >
                       {stats.completedCount}/{stats.taskCount}
@@ -157,7 +197,7 @@ export default function DaySidebar({
                   )}
                   <ChevronRight
                     className={`w-3.5 h-3.5 transition-transform ${
-                      isSelected ? 'text-white translate-x-0.5' : 'text-stone-400'
+                      isSelected ? 'text-white translate-x-0.5' : 'text-stone-400 group-hover:translate-x-0.5'
                     }`}
                   />
                 </div>
@@ -165,6 +205,19 @@ export default function DaySidebar({
             )
           })}
         </nav>
+
+        {/* Drawer Footer */}
+        <div className="p-3.5 sm:p-4 border-t border-[#E5E0D8] bg-white/70 backdrop-blur-md shrink-0 flex items-center justify-between text-xs text-[#78716C]">
+          <span className="font-medium text-[11px]">Press Esc or click outside to close</span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-xs font-semibold text-[#1C1917] hover:underline cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
       </aside>
+    </>
   )
 }
