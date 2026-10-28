@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { toDateString } from '../utils/dateUtils'
 import { useAuth } from '../context/AuthContext'
@@ -71,6 +71,8 @@ function sortMilestonesBySavedOrder(items, orderMap) {
 
 export function useMilestones(weekStart) {
   const { user } = useAuth()
+  const userId = user?.id
+  const loadedWeekRef = useRef(null)
   const [milestones, setMilestones] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -82,8 +84,14 @@ export function useMilestones(weekStart) {
     let ignore = false
 
     async function fetchMilestones() {
-      if (!user) return
-      setLoading(true)
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
+      const isNewWeek = loadedWeekRef.current !== weekStartDateString;
+      if (isNewWeek) {
+        setLoading(true);
+      }
       setError(null)
 
       try {
@@ -99,7 +107,8 @@ export function useMilestones(weekStart) {
         if (fetchError) {
           setError(fetchError.message)
         } else {
-          const savedOrder = getStoredOrder(user.id, weekStartDateString);
+          loadedWeekRef.current = weekStartDateString;
+          const savedOrder = getStoredOrder(userId, weekStartDateString);
           const sorted = sortMilestonesBySavedOrder(data || [], savedOrder);
           setMilestones(sorted);
         }
@@ -119,7 +128,7 @@ export function useMilestones(weekStart) {
     return () => {
       ignore = true
     }
-  }, [weekStartDateString, user])
+  }, [weekStartDateString, userId])
 
   // Add a single milestone
   const addMilestone = useCallback(

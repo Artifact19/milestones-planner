@@ -44,7 +44,20 @@ export function AuthProvider({ children }) {
         setIsPasswordRecovery(true)
       }
       setSession(newSession)
-      setUser(newSession?.user ?? null)
+      setUser((prevUser) => {
+        const newUser = newSession?.user ?? null
+        if (!prevUser && !newUser) return null
+        if (
+          prevUser &&
+          newUser &&
+          prevUser.id === newUser.id &&
+          prevUser.email === newUser.email &&
+          prevUser.user_metadata?.avatar_url === newUser.user_metadata?.avatar_url
+        ) {
+          return prevUser // Preserve stable identity to prevent tab-switching re-render storms
+        }
+        return newUser
+      })
       setLoading(false)
     })
 

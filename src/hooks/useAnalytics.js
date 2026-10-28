@@ -78,12 +78,13 @@ function buildWeeksForMonth(year, monthIndex) {
 
 export function useAnalytics() {
   const { user } = useAuth()
+  const userId = user?.id
   const [milestones, setMilestones] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   const fetchMilestones = useCallback(async () => {
-    if (!user) {
+    if (!userId) {
       setMilestones([])
       setLoading(false)
       return
@@ -96,7 +97,7 @@ export function useAnalytics() {
       const { data, error: fetchErr } = await supabase
         .from('milestones')
         .select('id, week_start_date, day_of_week, title, is_completed, duration_minutes, break_minutes, tag, created_at')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('week_start_date', { ascending: true })
 
       if (fetchErr) throw fetchErr
@@ -106,7 +107,7 @@ export function useAnalytics() {
     } finally {
       setLoading(false)
     }
-  }, [user])
+  }, [userId])
 
   useEffect(() => {
     fetchMilestones()
