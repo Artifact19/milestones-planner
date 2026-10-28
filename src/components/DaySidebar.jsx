@@ -19,7 +19,7 @@ export default function DaySidebar({
   onClose
 }) {
   const todayDayNumber = getTodayDayNumber()
-  const isCurrentWeek = isSameWeek(weekStart, getMonday(new Date()))
+  const isCurrentWeek = useMemo(() => isSameWeek(weekStart, getMonday(new Date())), [weekStart])
 
   // Keyboard accessibility: dismiss drawer on Escape key
   useEffect(() => {

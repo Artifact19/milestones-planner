@@ -144,8 +144,10 @@ export default function FocusedDayView({
   const isWeeklyMaster = selectedDay === 0
   const isSunday = selectedDay === 7
   const todayDayNumber = getTodayDayNumber()
-  const isToday =
-    selectedDay === todayDayNumber && isSameWeek(weekStart, getMonday(new Date()))
+  const isToday = useMemo(
+    () => selectedDay === todayDayNumber && isSameWeek(weekStart, getMonday(new Date())),
+    [selectedDay, todayDayNumber, weekStart]
+  )
 
   const dayDate = useMemo(() => {
     if (selectedDay === 0) return null

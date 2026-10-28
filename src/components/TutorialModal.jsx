@@ -13,37 +13,7 @@ import {
   ListTodo
 } from 'lucide-react'
 
-export default function TutorialModal({ isOpen, onClose, onComplete }) {
-  const [currentStep, setCurrentStep] = useState(0)
-
-  // Reset to step 0 when reopened
-  useEffect(() => {
-    if (isOpen) {
-      setCurrentStep(0)
-    }
-  }, [isOpen])
-
-  // Keyboard navigation
-  useEffect(() => {
-    if (!isOpen) return
-
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        handleSkip()
-      } else if (e.key === 'ArrowRight') {
-        handleNext()
-      } else if (e.key === 'ArrowLeft') {
-        handlePrev()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, currentStep])
-
-  if (!isOpen) return null
-
-  const steps = [
+const steps = [
     {
       id: 'weekly-flow',
       tag: 'WELCOME & CADENCE',
@@ -302,10 +272,25 @@ export default function TutorialModal({ isOpen, onClose, onComplete }) {
     }
   ]
 
+export default function TutorialModal({ isOpen, onClose, onComplete }) {
+  const [currentStep, setCurrentStep] = useState(0)
+
+  // Reset to step 0 when reopened
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentStep(0)
+    }
+  }, [isOpen])
+
   const step = steps[currentStep]
   const isFirst = currentStep === 0
   const isLast = currentStep === steps.length - 1
   const progressPercent = Math.round(((currentStep + 1) / steps.length) * 100)
+
+  const handleComplete = () => {
+    if (onComplete) onComplete()
+    onClose()
+  }
 
   const handleNext = () => {
     if (isLast) {
@@ -324,10 +309,25 @@ export default function TutorialModal({ isOpen, onClose, onComplete }) {
     onClose()
   }
 
-  const handleComplete = () => {
-    if (onComplete) onComplete()
-    onClose()
-  }
+  // Keyboard navigation
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        handleSkip()
+      } else if (e.key === 'ArrowRight') {
+        handleNext()
+      } else if (e.key === 'ArrowLeft') {
+        handlePrev()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, currentStep, isLast])
+
+  if (!isOpen) return null
 
   return (
     <div

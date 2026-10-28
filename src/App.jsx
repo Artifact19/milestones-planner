@@ -41,7 +41,7 @@ function TrackerMain() {
         return () => clearTimeout(timer)
       }
     }
-  }, [user?.id])
+  }, [user])
 
   const handleCompleteTutorial = useCallback(() => {
     if (user?.id) {
@@ -64,8 +64,6 @@ function TrackerMain() {
     toggleMilestone,
     updateMilestone,
     moveMilestone,
-    moveMilestoneToWeek,
-    batchMoveMilestonesToWeek,
     copyMilestonesToWeek,
     deleteMilestone,
     deleteSeries,

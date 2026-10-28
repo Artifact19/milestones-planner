@@ -1,8 +1,9 @@
+import { useMemo } from 'react'
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import { formatWeekRange, getMonday, isSameWeek } from '../utils/dateUtils'
 
 export default function WeekSwitcher({ weekStart, onPrevWeek, onNextWeek, onCurrentWeek }) {
-  const currentWeekMonday = getMonday(new Date())
+  const currentWeekMonday = useMemo(() => getMonday(new Date()), [])
   const isViewingCurrentWeek = isSameWeek(weekStart, currentWeekMonday)
   const rangeLabel = formatWeekRange(weekStart)
 

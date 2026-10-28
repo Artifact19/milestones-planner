@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react'
 import {
   X,
   Calendar,
-  ArrowRight,
   CalendarDays,
   Clock,
   Sparkles,

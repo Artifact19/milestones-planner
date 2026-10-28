@@ -651,7 +651,7 @@ export function useMilestones(weekStart) {
     milestones.forEach((m) => {
       const dur = m.duration_minutes ?? 30
       totalFocusMinutes += dur
-      if (Boolean(m.is_completed)) {
+      if (m.is_completed) {
         completedFocusMinutes += dur
       }
       totalBreakMinutes += m.break_minutes ?? 5

@@ -13,7 +13,9 @@ export function useWeeklyNote(weekStart) {
   const debounceTimerRef = useRef(null)
   const activeWeekRef = useRef(weekStartDateString)
 
-  activeWeekRef.current = weekStartDateString
+  useEffect(() => {
+    activeWeekRef.current = weekStartDateString
+  }, [weekStartDateString])
 
   // Fetch note for the current week
   useEffect(() => {
