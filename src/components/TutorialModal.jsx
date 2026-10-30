@@ -1,481 +1,360 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   X,
   ArrowRight,
   ArrowLeft,
   CheckCircle2,
-  Calendar,
-  Clock,
-  Repeat,
-  BarChart3,
-  Sparkles,
-  FileText,
-  ListTodo
+  Sparkles
 } from 'lucide-react'
 
-const steps = [
-    {
-      id: 'weekly-flow',
-      tag: 'WELCOME & CADENCE',
-      title: 'Your Intentional Weekly Canvas',
-      subtitle:
-        'Milestones organizes your focus around natural 7-day cycles (Monday to Sunday) for sustainable productivity.',
-      icon: Sparkles,
-      iconColor: 'text-[#695431]',
-      diagram: (
-        <div className="bg-white rounded-2xl border border-[#E5E0D8] p-4 shadow-sm flex flex-col gap-3 font-sans">
-          <div className="flex items-center justify-between pb-2 border-b border-[#E5E0D8]/60 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-[#FAF8F5] border border-[#E5E0D8] p-0.5 overflow-hidden flex items-center justify-center">
-                <img src="/favicon.png" alt="App Icon" className="w-full h-full object-contain [image-rendering:pixelated]" />
-              </div>
-              <span className="font-bold text-[#1C1917] tracking-tight">MILESTONES</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FAF8F5] border border-[#E5E0D8] text-[11px] font-mono text-[#57534E]">
-              <span>‹</span>
-              <span className="font-semibold text-[#1C1917]">Oct 19 — Oct 25</span>
-              <span>›</span>
-            </div>
-            <div className="px-2 py-0.5 rounded-full bg-[#EBF2EC] text-[#224A32] font-mono text-[10px] font-bold">
-              85% Done
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-2 text-center text-[11px]">
-            <div className="p-2 rounded-xl bg-[#FAF8F5] border border-[#E5E0D8]/80">
-              <span className="block text-stone-400 text-[10px] uppercase font-bold">Today Button</span>
-              <span className="font-semibold text-[#1C1917] mt-0.5 block">Instant Return</span>
-            </div>
-            <div className="p-2 rounded-xl bg-[#FAF8F5] border border-[#E5E0D8]/80">
-              <span className="block text-stone-400 text-[10px] uppercase font-bold">Week Switcher</span>
-              <span className="font-semibold text-[#1C1917] mt-0.5 block">Future & History</span>
-            </div>
-            <div className="p-2 rounded-xl bg-[#FAF8F5] border border-[#E5E0D8]/80">
-              <span className="block text-stone-400 text-[10px] uppercase font-bold">Time Budget</span>
-              <span className="font-semibold text-[#1C1917] mt-0.5 block">Total Week Hours</span>
-            </div>
-          </div>
-        </div>
-      ),
-      highlights: [
-        {
-          title: 'Monday to Sunday Flow',
-          desc: 'Structure your commitments by natural weeks so you always have a fresh start every Monday.'
-        },
-        {
-          title: 'Spider-Man Home Button',
-          desc: 'Click the Spider-Man icon or the "Today" pill anytime to quickly return to current day.'
-        },
-        {
-          title: 'Live Weekly Progress Pill',
-          desc: 'Watch your completion badge and architectural progress bar fill up as you check off items.'
-        }
-      ],
-      tip: 'Use the left & right arrows next to the date in the top bar to plan next week ahead of time.'
-    },
-    {
-      id: 'sidebar-navigation',
-      tag: 'SIDEBAR NAVIGATION',
-      title: 'Focused Daily Workspaces',
-      subtitle:
-        'Concentrate on one single day at a time without feeling overwhelmed by your whole to-do list.',
-      icon: Calendar,
-      iconColor: 'text-[#224A32]',
-      diagram: (
-        <div className="bg-white rounded-2xl border border-[#E5E0D8] p-4 shadow-sm flex flex-col gap-2 font-sans">
-          <div className="p-2 rounded-xl bg-[#FAF8F5] border border-[#E5E0D8] flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2">
-              <ListTodo className="w-3.5 h-3.5 text-[#695431]" />
-              <span className="font-bold text-[#1C1917]">Weekly Milestones</span>
-            </div>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white border border-[#E5E0D8] text-stone-500 font-mono">
-              Master Bucket
-            </span>
-          </div>
-          <div className="p-2 rounded-xl bg-[#1C1917] text-white flex items-center justify-between text-xs shadow-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-bold">Tuesday (Active Day)</span>
-            </div>
-            <span className="text-[10px] font-mono bg-white/20 px-2 py-0.5 rounded-full">
-              4/5 Tasks
-            </span>
-          </div>
-          <div className="p-2 rounded-xl bg-white border border-[#E5E0D8]/60 flex items-center justify-between text-xs text-stone-500">
-            <span>Wednesday</span>
-            <span className="text-[10px] font-mono">2 Tasks</span>
-          </div>
-        </div>
-      ),
-      highlights: [
-        {
-          title: 'Single Day Focus',
-          desc: 'Click any weekday (Mon–Sun) in the sidebar to review and execute only what matters today.'
-        },
-        {
-          title: 'Master Weekly Milestones',
-          desc: 'Select day "0" at the top of the sidebar for high-level weekly projects not tied to one date.'
-        },
-        {
-          title: 'Live Daily Counters',
-          desc: 'Each sidebar tab displays your active task tally and completion progress in real time.'
-        }
-      ],
-      tip: 'On mobile, tap the menu hamburger icon in the top bar to toggle the day selector anytime.'
-    },
-    {
-      id: 'task-entry',
-      tag: 'TASKS & HABITS',
-      title: 'Floating Add Bar & Smart Recurrence',
-      subtitle:
-        'Quickly capture tasks with duration budgeting and multi-day recurrence that stays under your control.',
-      icon: Clock,
-      iconColor: 'text-[#1C1917]',
-      diagram: (
-        <div className="bg-white rounded-2xl border border-[#E5E0D8] p-4 shadow-sm flex flex-col gap-2.5 font-sans">
-          <div className="flex items-center gap-2 p-2 rounded-xl bg-[#FAF8F5] border border-[#E5E0D8] text-xs">
-            <span className="text-stone-400 font-bold">+</span>
-            <span className="text-[#1C1917] font-medium flex-1">Complete system architecture review</span>
-            <span className="px-2 py-0.5 rounded-md bg-stone-200 text-[#1C1917] font-mono text-[10px] font-semibold">
-              45m
-            </span>
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#FAF4EB] border border-[#E8DAC5] text-[#695431] text-[10px] font-semibold">
-              <Repeat className="w-3 h-3" /> Repeat
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-[11px]">
-            <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-[#224A32]">
-              <span className="font-bold block">Smart Repeating</span>
-              <span className="text-[10px] text-emerald-700">Repeats across selected days of the week</span>
-            </div>
-            <div className="p-2 rounded-xl bg-amber-50 border border-amber-200 text-[#695431]">
-              <span className="font-bold block">Safe Delete Modal</span>
-              <span className="text-[10px] text-amber-800">Delete just one instance or all future ones</span>
-            </div>
-          </div>
-        </div>
-      ),
-      highlights: [
-        {
-          title: 'Docked Bottom Input',
-          desc: 'The input bar stays anchored at the bottom of your workspace so your active tasks stay clean.'
-        },
-        {
-          title: 'Time & Energy Tagging',
-          desc: 'Assign realistic estimates (15m, 30m, 1h, 2h) to balance your daily cognitive workload.'
-        },
-        {
-          title: 'Safe Repeating Task Deletion',
-          desc: 'Deleting a recurring habit gives you the choice to delete either only this day or all forward days.'
-        }
-      ],
-      tip: 'Press Enter while typing in the add bar to immediately create your task and keep planning.'
-    },
-    {
-      id: 'sunday-retro',
-      tag: 'SUNDAY RITUAL',
-      title: 'Sunday Intentions & Weekly Notes',
-      subtitle:
-        'A dedicated retrospective space to consolidate weekly learnings and establish momentum for next week.',
-      icon: FileText,
-      iconColor: 'text-[#695431]',
-      diagram: (
-        <div className="bg-[#FAF8F5] rounded-2xl border border-[#E8DAC5] p-4 shadow-sm flex flex-col gap-2 font-sans">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-bold text-[#695431] uppercase tracking-wider text-[10px]">
-              Sunday Weekly Notes
-            </span>
-            <span className="text-[10px] text-stone-500 font-mono">Auto-Saved</span>
-          </div>
-          <div className="bg-white p-3 rounded-xl border border-[#E5E0D8] text-xs text-[#44403C] space-y-1">
-            <p className="font-medium text-[#1C1917]">✦ Weekly Reflections & Wins</p>
-            <p className="text-[11px] text-[#78716C]">• Shipped new feature ahead of schedule</p>
-            <p className="text-[11px] text-[#78716C]">• Maintained 85% completion rate across all 7 days</p>
-          </div>
-          <div className="flex items-center justify-between pt-1 text-[11px]">
-            <span className="text-stone-500">Unfinished items?</span>
-            <span className="font-semibold text-[#224A32] cursor-default">
-              One-Click Carry Forward to Monday →
-            </span>
-          </div>
-        </div>
-      ),
-      highlights: [
-        {
-          title: 'Dedicated Sunday Workspace',
-          desc: 'Sunday features a scratchpad designed for end-of-week reflection and priority calibration.'
-        },
-        {
-          title: 'Continuous Auto-Saving',
-          desc: 'Weekly thoughts, meeting notes, and wins are saved directly to your private cloud storage.'
-        },
-        {
-          title: 'Carry Forward',
-          desc: 'Easily transition any uncompleted milestones into next Monday without manual re-typing.'
-        }
-      ],
-      tip: 'Spend 10 minutes on Sunday evening reviewing your week — it sets you up for an effortless Monday.'
-    },
-    {
-      id: 'analytics-exports',
-      tag: 'ANALYTICS & EXPORTS',
-      title: '12-Month Analytics & Executive Reports',
-      subtitle:
-        'Gain long-term visibility into your productivity trends and export presentation-ready summaries.',
-      icon: BarChart3,
-      iconColor: 'text-[#1C1917]',
-      diagram: (
-        <div className="bg-white rounded-2xl border border-[#E5E0D8] p-4 shadow-sm flex flex-col gap-3 font-sans">
-          <div className="flex items-center justify-between text-xs pb-2 border-b border-[#E5E0D8]/60">
-            <span className="font-bold text-[#1C1917]">All-Time Consistency</span>
-            <div className="flex items-center gap-1.5">
-              <span className="px-2 py-0.5 rounded-full bg-[#FAF8F5] border border-[#E5E0D8] text-[10px] font-semibold text-[#1C1917]">
-                🖨️ PDF Report
-              </span>
-              <span className="px-2 py-0.5 rounded-full bg-[#FAF8F5] border border-[#E5E0D8] text-[10px] font-semibold text-[#1C1917]">
-                📥 CSV Sheet
-              </span>
-            </div>
-          </div>
-          {/* Mini Bar Chart Mockup */}
-          <div className="flex items-end justify-between h-14 px-2 pt-2 gap-1.5">
-            {[45, 60, 55, 80, 75, 90, 85, 95, 88, 92, 98, 94].map((val, idx) => (
-              <div key={idx} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
-                <div
-                  className="w-full rounded-t-sm transition-all bg-[#1C1917] hover:bg-[#695431]"
-                  style={{ height: `${val}%` }}
-                />
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center justify-between text-[10px] text-stone-400 font-mono px-1">
-            <span>Jan</span>
-            <span>Jun</span>
-            <span>Dec</span>
-          </div>
-        </div>
-      ),
-      highlights: [
-        {
-          title: 'Profile Modal & Avatar',
-          desc: 'Click "Profile" in the top bar to upload a profile picture and view 12-month completion analytics.'
-        },
-        {
-          title: 'Executive PDF & CSV Reports',
-          desc: 'Click "Reports" in the top bar to print or export detailed Weekly, Monthly, or Yearly breakdown sheets.'
-        },
-        {
-          title: 'Re-Visit Tour Anytime',
-          desc: 'You can replay this tutorial anytime by clicking the "Tour" button in the top bar.'
-        }
-      ],
-      tip: 'Export a monthly CSV report at the end of each month to track your personal productivity archives!'
-    }
-  ]
+const TOUR_STEPS = [
+  {
+    id: 'time-budget',
+    target: 'time-budget',
+    badge: 'DAILY TIME AUDIT',
+    title: 'See Where Your Entire Day Goes',
+    oneLiner:
+      'Track your daily Focus, Breaks, and Category split (Career, College, Personal) so you know exactly what to cut down or prioritize.'
+  },
+  {
+    id: 'day-strip',
+    target: 'day-strip',
+    badge: 'DAY SWITCHER',
+    title: 'Focus on One Day at a Time',
+    oneLiner:
+      'Switch between Monday–Sunday to execute today’s plan, or click "Wk" to view your high-level Weekly Milestones.'
+  },
+  {
+    id: 'add-task',
+    target: 'add-task',
+    badge: 'ADD & CUSTOMIZE',
+    title: 'Double-Click to Set Time, Tags & Repeat',
+    oneLiner:
+      'Type any task here—double-click this bar anytime to expand repeat days, Career/College/Personal tags, and focus time.'
+  },
+  {
+    id: 'task-list',
+    target: 'task-list',
+    badge: 'TASK CONTROLS',
+    title: 'Check Off, Reorder & Repeat Tasks',
+    oneLiner:
+      'Tick tasks as you finish, drag to reorder, or click the 🔁 button on any task to repeat it across multiple days.'
+  },
+  {
+    id: 'week-switcher',
+    target: 'week-switcher',
+    badge: 'WEEKLY PROGRESS',
+    title: 'Live Weekly Completion & Hours',
+    oneLiner:
+      'Watch your weekly completion bar and total budgeted hours update live as you check off tasks.'
+  },
+  {
+    id: 'analytics-btn',
+    target: 'analytics-btn',
+    badge: 'DEEP ANALYTICS',
+    title: 'See Which Tasks Take the Most Time',
+    oneLiner:
+      'Open Profile & Analytics to see your Career, College, and Personal hours—plus a ranked breakdown of which specific tasks took your time.'
+  },
+  {
+    id: 'reports-btn',
+    target: 'reports-btn',
+    badge: 'EXPORT REPORTS',
+    title: 'One-Click PDF & CSV Reports',
+    oneLiner:
+      'Download or print clean weekly, monthly, or yearly summaries of your completed milestones anytime.'
+  }
+]
 
 export default function TutorialModal({ isOpen, onClose, onComplete }) {
   const [currentStep, setCurrentStep] = useState(0)
+  const [targetRect, setTargetRect] = useState(null)
 
-  // Reset to step 0 when reopened
+  const step = TOUR_STEPS[currentStep] || TOUR_STEPS[0]
+  const isFirst = currentStep === 0
+  const isLast = currentStep === TOUR_STEPS.length - 1
+
+  // Measure target DOM element and keep spotlight aligned
+  const updateSpotlight = useCallback(() => {
+    if (!isOpen || !step?.target) return
+    const el = document.querySelector(`[data-tour="${step.target}"]`)
+    if (!el) {
+      setTargetRect(null)
+      return
+    }
+    const rect = el.getBoundingClientRect()
+    setTargetRect({
+      top: rect.top,
+      left: rect.left,
+      width: rect.width,
+      height: rect.height,
+      bottom: rect.bottom,
+      right: rect.right
+    })
+  }, [isOpen, step])
+
+  // Reset to step 0 when opened
   useEffect(() => {
     if (isOpen) {
       setCurrentStep(0)
     }
   }, [isOpen])
 
-  const step = steps[currentStep]
-  const isFirst = currentStep === 0
-  const isLast = currentStep === steps.length - 1
-  const progressPercent = Math.round(((currentStep + 1) / steps.length) * 100)
-
-  const handleComplete = () => {
-    if (onComplete) onComplete()
-    onClose()
-  }
-
-  const handleNext = () => {
-    if (isLast) {
-      handleComplete()
-    } else {
-      setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1))
+  // Scroll target into view when step changes, then measure
+  useEffect(() => {
+    if (!isOpen || !step?.target) return
+    const el = document.querySelector(`[data-tour="${step.target}"]`)
+    if (el) {
+      const rect = el.getBoundingClientRect()
+      const inViewport = rect.top >= 60 && rect.bottom <= window.innerHeight - 60
+      if (!inViewport) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
     }
-  }
 
-  const handlePrev = () => {
-    setCurrentStep((prev) => Math.max(prev - 1, 0))
-  }
+    updateSpotlight()
+    const timer1 = setTimeout(updateSpotlight, 180)
+    const timer2 = setTimeout(updateSpotlight, 400)
 
-  const handleSkip = () => {
+    window.addEventListener('resize', updateSpotlight)
+    window.addEventListener('scroll', updateSpotlight, true)
+
+    return () => {
+      clearTimeout(timer1)
+      clearTimeout(timer2)
+      window.removeEventListener('resize', updateSpotlight)
+      window.removeEventListener('scroll', updateSpotlight, true)
+    }
+  }, [isOpen, currentStep, step, updateSpotlight])
+
+  const handleFinish = useCallback(() => {
     if (onComplete) onComplete()
     onClose()
-  }
+  }, [onComplete, onClose])
+
+  const handleNext = useCallback(() => {
+    if (isLast) {
+      handleFinish()
+    } else {
+      setCurrentStep((prev) => Math.min(prev + 1, TOUR_STEPS.length - 1))
+    }
+  }, [isLast, handleFinish])
+
+  const handlePrev = useCallback(() => {
+    setCurrentStep((prev) => Math.max(prev - 1, 0))
+  }, [])
 
   // Keyboard navigation
   useEffect(() => {
     if (!isOpen) return
-
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        handleSkip()
-      } else if (e.key === 'ArrowRight') {
+        handleFinish()
+      } else if (e.key === 'ArrowRight' || e.key === 'Enter') {
+        e.preventDefault()
         handleNext()
       } else if (e.key === 'ArrowLeft') {
+        e.preventDefault()
         handlePrev()
       }
     }
-
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, currentStep, isLast])
+  }, [isOpen, handleFinish, handleNext, handlePrev])
 
   if (!isOpen) return null
+
+  // Compute spotlight frame & tooltip placement
+  const pad = 8
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 1024
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 768
+
+  const hasRect = Boolean(targetRect && targetRect.width > 0 && targetRect.height > 0)
+
+  const spotTop = hasRect ? Math.max(4, targetRect.top - pad) : vh / 2 - 40
+  const spotLeft = hasRect ? Math.max(4, targetRect.left - pad) : vw / 2 - 150
+  const spotWidth = hasRect ? Math.min(vw - 8, targetRect.width + pad * 2) : 300
+  const spotHeight = hasRect ? Math.min(vh - 8, targetRect.height + pad * 2) : 80
+
+  // Decide whether tooltip goes below or above the spotlight
+  const spaceBelow = vh - (spotTop + spotHeight)
+  const placeAbove = hasRect && spaceBelow < 210 && spotTop > 190
+
+  const tooltipWidth = Math.min(360, vw - 24)
+  const targetCenterX = hasRect ? spotLeft + spotWidth / 2 : vw / 2
+  const tooltipLeft = Math.min(
+    Math.max(12, targetCenterX - tooltipWidth / 2),
+    vw - tooltipWidth - 12
+  )
+
+  // Arrow horizontal offset relative to tooltip card
+  const arrowLeft = Math.min(
+    Math.max(24, targetCenterX - tooltipLeft),
+    tooltipWidth - 24
+  )
+
+  const tooltipStyle = hasRect
+    ? placeAbove
+      ? {
+          left: `${tooltipLeft}px`,
+          bottom: `${Math.max(12, vh - spotTop + 18)}px`,
+          width: `${tooltipWidth}px`
+        }
+      : {
+          left: `${tooltipLeft}px`,
+          top: `${Math.min(vh - 190, spotTop + spotHeight + 18)}px`,
+          width: `${tooltipWidth}px`
+        }
+    : {
+        left: '50%',
+        top: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: `${tooltipWidth}px`
+      }
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-labelledby="tutorial-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+      aria-label="Interactive Feature Tour"
+      className="fixed inset-0 z-50 overflow-hidden select-none"
     >
-      <div className="relative w-full max-w-xl bg-[#FAF8F5] border border-[#E5E0D8] rounded-3xl shadow-[0_24px_50px_-12px_rgba(28,25,23,0.18)] flex flex-col overflow-hidden max-h-[92vh]">
-        {/* Top Slim Progress Strip */}
-        <div className="w-full bg-[#E5E0D8]/70 h-1 overflow-hidden">
+      {/* Clickable Dimmed Backdrop (when no target rect) */}
+      {!hasRect && (
+        <div
+          className="fixed inset-0 bg-[#1C1917]/65 backdrop-blur-[1px]"
+          onClick={handleFinish}
+        />
+      )}
+
+      {/* Spotlight Cutout Frame over Active Element */}
+      {hasRect && (
+        <div
+          onClick={handleNext}
+          title="Click Next to continue tour"
+          style={{
+            top: `${spotTop}px`,
+            left: `${spotLeft}px`,
+            width: `${spotWidth}px`,
+            height: `${spotHeight}px`,
+            boxShadow: '0 0 0 9999px rgba(28, 25, 23, 0.65)'
+          }}
+          className="fixed z-50 rounded-2xl border-3 border-[#FEF08A] ring-4 ring-[#FEF08A]/35 transition-all duration-300 ease-out cursor-pointer pointer-events-auto"
+        />
+      )}
+
+      {/* Floating Neo-Brutalist One-Line Tooltip Card with Arrow */}
+      <div
+        style={tooltipStyle}
+        className="fixed z-50 bg-white border-2 border-[#1C1917] rounded-2xl p-4 shadow-[5px_5px_0px_#1C1917] transition-all duration-300 ease-out pointer-events-auto"
+      >
+        {/* Pointer Arrow pointing to the highlighted feature */}
+        {hasRect && !placeAbove && (
           <div
-            className="h-full bg-[#1C1917] transition-all duration-300 ease-out"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
+            style={{ left: `${arrowLeft}px` }}
+            className="absolute -top-3 -translate-x-1/2 flex flex-col items-center pointer-events-none"
+          >
+            <div className="w-4 h-4 rotate-45 bg-[#FEF08A] border-l-2 border-t-2 border-[#1C1917]" />
+          </div>
+        )}
 
-        {/* Modal Header */}
-        <div className="px-6 pt-5 pb-3 flex items-center justify-between border-b border-[#E5E0D8]/60">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#1C1917] text-white uppercase tracking-wider">
-              {step.tag}
+        {hasRect && placeAbove && (
+          <div
+            style={{ left: `${arrowLeft}px` }}
+            className="absolute -bottom-3 -translate-x-1/2 flex flex-col items-center pointer-events-none"
+          >
+            <div className="w-4 h-4 rotate-45 bg-white border-r-2 border-b-2 border-[#1C1917]" />
+          </div>
+        )}
+
+        {/* Top Bar: Step Badge + Skip */}
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[#FEF08A] border border-[#1C1917] text-[#1C1917] font-mono text-[10px] font-black uppercase tracking-wider shadow-[1px_1px_0px_#1C1917]">
+              <Sparkles className="w-2.5 h-2.5" />
+              {step.badge}
             </span>
-            <span className="text-xs font-mono font-medium text-[#78716C]">
-              Step {currentStep + 1} of {steps.length}
+            <span className="text-[11px] font-mono font-bold text-[#78716C]">
+              {currentStep + 1} / {TOUR_STEPS.length}
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Skip Option Button */}
-            <button
-              type="button"
-              onClick={handleSkip}
-              className="text-xs text-[#78716C] hover:text-[#1C1917] font-medium px-2.5 py-1 rounded-full hover:bg-stone-200/60 transition-colors cursor-pointer"
-            >
-              Skip Tour
-            </button>
-            <button
-              type="button"
-              onClick={handleSkip}
-              aria-label="Close tutorial"
-              className="p-1 rounded-full text-stone-400 hover:text-[#1C1917] hover:bg-stone-200/60 transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Scrollable Modal Content */}
-        <div className="px-6 py-5 overflow-y-auto space-y-5">
-          {/* Step Title & Subtitle */}
-          <div>
-            <h2
-              id="tutorial-modal-title"
-              className="text-xl sm:text-2xl font-bold font-sans tracking-tight text-[#1C1917]"
-            >
-              {step.title}
-            </h2>
-            <p className="text-xs sm:text-sm text-[#57534E] mt-1 leading-relaxed">
-              {step.subtitle}
-            </p>
-          </div>
-
-          {/* Feature Diagram / Mockup */}
-          {step.diagram}
-
-          {/* Feature Highlights Grid */}
-          <div className="space-y-2.5">
-            {step.highlights.map((item, idx) => (
-              <div
-                key={idx}
-                className="flex items-start gap-3 p-3 rounded-2xl bg-white border border-[#E5E0D8] shadow-sm"
-              >
-                <div className="mt-0.5 p-1 rounded-full bg-[#FAF8F5] border border-[#E5E0D8] text-[#224A32] shrink-0">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-[#1C1917]">{item.title}</h4>
-                  <p className="text-[11px] text-[#57534E] mt-0.5 leading-relaxed">
-                    {item.desc}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Architectural Pro Tip */}
-          {step.tip && (
-            <div className="p-3.5 rounded-2xl bg-[#FAF4EB] border border-[#E8DAC5] flex items-start gap-2.5 text-xs text-[#695431]">
-              <Sparkles className="w-4 h-4 shrink-0 text-[#695431] mt-0.5" />
-              <div>
-                <span className="font-bold text-[#695431] mr-1 uppercase text-[10px] tracking-wider block sm:inline">
-                  Architectural Tip:
-                </span>
-                <span>{step.tip}</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Modal Footer Controls */}
-        <div className="px-6 py-4 bg-white border-t border-[#E5E0D8] flex items-center justify-between gap-3">
-          {/* Skip for now text */}
           <button
             type="button"
-            onClick={handleSkip}
-            className="text-xs font-semibold text-[#78716C] hover:text-[#1C1917] cursor-pointer transition-colors"
+            onClick={handleFinish}
+            aria-label="Close tour"
+            className="p-1 rounded-lg text-[#78716C] hover:text-[#1C1917] hover:bg-[#FAF8F5] transition-colors cursor-pointer"
           >
-            Skip for now
+            <X className="w-4 h-4 stroke-[2.5]" />
           </button>
+        </div>
 
-          {/* Interactive Step Dots */}
-          <div className="flex items-center gap-1.5">
-            {steps.map((_, index) => (
+        {/* Feature Title & Single Simple Line */}
+        <h3 className="text-sm sm:text-base font-black text-[#1C1917] tracking-tight">
+          {step.title}
+        </h3>
+        <p className="text-xs text-[#44403C] font-medium mt-1 leading-relaxed">
+          {step.oneLiner}
+        </p>
+
+        {/* Step Dots + Navigation Controls */}
+        <div className="mt-3.5 pt-2.5 border-t border-[#1C1917]/15 flex items-center justify-between gap-2">
+          {/* Progress Dots */}
+          <div className="flex items-center gap-1">
+            {TOUR_STEPS.map((s, idx) => (
               <button
-                key={index}
+                key={s.id}
                 type="button"
-                onClick={() => setCurrentStep(index)}
-                aria-label={`Go to step ${index + 1}`}
-                className={`transition-all rounded-full cursor-pointer ${
-                  index === currentStep
-                    ? 'w-6 h-2 bg-[#1C1917]'
-                    : 'w-2 h-2 bg-stone-300 hover:bg-stone-400'
+                onClick={() => setCurrentStep(idx)}
+                aria-label={`Go to step ${idx + 1}`}
+                className={`h-2 rounded-full border border-[#1C1917] transition-all cursor-pointer ${
+                  idx === currentStep
+                    ? 'w-5 bg-[#FEF08A]'
+                    : idx < currentStep
+                    ? 'w-2 bg-[#1C1917]'
+                    : 'w-2 bg-stone-200'
                 }`}
               />
             ))}
           </div>
 
-          {/* Back & Next Navigation Buttons */}
-          <div className="flex items-center gap-2">
+          {/* Action Buttons */}
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleFinish}
+              className="px-2 py-1 text-[11px] font-bold text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+            >
+              Skip
+            </button>
+
             {!isFirst && (
               <button
                 type="button"
                 onClick={handlePrev}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#FAF8F5] hover:bg-[#F2EFE9] border border-[#E5E0D8] text-[#1C1917] text-xs font-semibold transition-colors cursor-pointer"
+                aria-label="Previous step"
+                className="p-1.5 rounded-xl bg-white hover:bg-[#FAF8F5] border-2 border-[#1C1917] text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Back</span>
+                <ArrowLeft className="w-3.5 h-3.5 stroke-[2.5]" />
               </button>
             )}
 
             <button
               type="button"
               onClick={handleNext}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#1C1917] hover:bg-black text-[#FAF8F5] text-xs font-semibold shadow-sm transition-all cursor-pointer"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#FEF08A] hover:bg-[#FDE047] border-2 border-[#1C1917] text-[#1C1917] text-xs font-black shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
             >
-              <span>{isLast ? 'Get Started 🚀' : 'Next Step'}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              {isLast ? (
+                <>
+                  <span>Done</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" />
+                </>
+              ) : (
+                <>
+                  <span>Next</span>
+                  <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                </>
+              )}
             </button>
           </div>
         </div>

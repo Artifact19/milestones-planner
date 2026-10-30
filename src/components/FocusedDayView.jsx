@@ -13,7 +13,10 @@ import {
   Info,
   ChevronLeft,
   ChevronRight,
-  CalendarDays
+  CalendarDays,
+  Sparkles,
+  PieChart,
+  ChevronDown
 } from 'lucide-react'
 import TaskItem from './TaskItem'
 import AddTaskInput from './AddTaskInput'
@@ -27,7 +30,8 @@ import {
   formatDuration,
   getTodayDayNumber,
   getMonday,
-  isSameWeek
+  isSameWeek,
+  normalizeCategory
 } from '../utils/dateUtils'
 
 
@@ -173,6 +177,24 @@ export default function FocusedDayView({
   const [pendingMasterCompletion, setPendingMasterCompletion] = useState(null)
   // Cross-week placement modal state: null | { tasks: Task[] }
   const [moveToWeekData, setMoveToWeekData] = useState(null)
+  // Interactive daily time breakdown filter: null (collapsed) | 'all' | 'career' | 'college' | 'personal'
+  const [dayBreakdownCat, setDayBreakdownCat] = useState(null)
+
+  const handleToggleDayBreakdown = (cat) => {
+    setDayBreakdownCat((prev) => (prev === cat ? null : cat))
+  }
+
+  const dayTasksSortedByTime = useMemo(() => {
+    const filtered =
+      !dayBreakdownCat || dayBreakdownCat === 'all'
+        ? tasks
+        : tasks.filter((t) => normalizeCategory(t.tag) === dayBreakdownCat)
+    return [...filtered].sort((a, b) => {
+      const aTotal = (a.duration_minutes ?? 30) + (a.break_minutes ?? 5)
+      const bTotal = (b.duration_minutes ?? 30) + (b.break_minutes ?? 5)
+      return bTotal - aTotal
+    })
+  }, [tasks, dayBreakdownCat])
 
   const getSubTasksForTask = (task) => {
     if (!task || task.day_of_week !== 0) return []
@@ -235,7 +257,10 @@ export default function FocusedDayView({
   return (
     <div className="flex-1 flex flex-col gap-6 min-w-0 pb-16">
       {/* Neo-Brutalist Segmented Days Strip & Stepper */}
-      <div className="flex flex-wrap items-center justify-between gap-2 bg-white border-2 border-[#1C1917] rounded-2xl p-1.5 shadow-[2.5px_2.5px_0px_#1C1917]">
+      <div
+        data-tour="day-strip"
+        className="flex flex-wrap items-center justify-between gap-2 bg-white border-2 border-[#1C1917] rounded-2xl p-1.5 shadow-[2.5px_2.5px_0px_#1C1917]"
+      >
         {/* Direct Day Selector Tabs */}
         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
           {[
@@ -306,7 +331,10 @@ export default function FocusedDayView({
       </div>
 
       {/* Main Architectural Workspace Card */}
-      <div className="bg-white border-2 border-[#1C1917] rounded-3xl p-5 sm:p-7 shadow-[4px_4px_0px_#1C1917]">
+      <div
+        data-tour="time-budget"
+        className="bg-white border-2 border-[#1C1917] rounded-3xl p-5 sm:p-7 shadow-[4px_4px_0px_#1C1917]"
+      >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b-2 border-[#1C1917]/15">
           <div>
             <div className="flex items-center gap-3">
@@ -383,34 +411,258 @@ export default function FocusedDayView({
 
         {/* Time Budget Breakdown Banner (shown on daily views Mon to Sun) */}
         {!isWeeklyMaster ? (
-          <div className="mt-5 pt-1 flex flex-wrap items-center justify-between gap-y-3 gap-x-6 text-xs sm:text-sm">
-            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3.5">
-              {/* Focus */}
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917]">
-                <Clock className="w-3.5 h-3.5 text-[#1C1917] shrink-0" />
-                <span className="text-[#78716C] font-medium">Focus:</span>
-                <span className="font-mono font-black text-[#1C1917]">
-                  {formatDuration(dayStats.focusMinutes)}
-                </span>
+          <div className="mt-5 pt-1 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-y-3 gap-x-4 text-xs sm:text-sm">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                {/* Focus */}
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917]">
+                  <Clock className="w-3.5 h-3.5 text-[#1C1917] shrink-0" />
+                  <span className="text-[#78716C] font-medium">Focus:</span>
+                  <span className="font-mono font-black text-[#1C1917]">
+                    {formatDuration(dayStats.focusMinutes)}
+                  </span>
+                </div>
+
+                {/* Breaks */}
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917]">
+                  <Coffee className="w-3.5 h-3.5 text-[#1C1917] shrink-0" />
+                  <span className="text-[#78716C] font-medium">Breaks:</span>
+                  <span className="font-mono font-black text-[#1C1917]">
+                    {formatDuration(dayStats.breakMinutes)}
+                  </span>
+                </div>
+
+                {/* Total Budgeted */}
+                <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1C1917] text-[#FAF7F0] border-2 border-[#1C1917] shadow-[2px_2px_0px_#78716C]">
+                  <span className="text-stone-300 font-medium">Total Budgeted:</span>
+                  <span className="font-mono font-black text-[#FEF08A]">
+                    {formatDuration(dayStats.totalMinutes)}
+                  </span>
+                </div>
               </div>
 
-              {/* Breaks */}
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917]">
-                <Coffee className="w-3.5 h-3.5 text-[#1C1917] shrink-0" />
-                <span className="text-[#78716C] font-medium">Breaks:</span>
-                <span className="font-mono font-black text-[#1C1917]">
-                  {formatDuration(dayStats.breakMinutes)}
-                </span>
-              </div>
+              {/* Interactive Category Time Split Pills */}
+              {tasks.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                  {dayStats.careerFocusMinutes > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleToggleDayBreakdown('career')}
+                      title="Click to see which Career / Study tasks take time today"
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-xl border-2 border-[#1C1917] font-bold transition-all cursor-pointer ${
+                        dayBreakdownCat === 'career'
+                          ? 'bg-[#224A32] text-white shadow-none translate-x-0.5 translate-y-0.5'
+                          : 'bg-[#BBF7D0] hover:bg-[#86EFAC] text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917]'
+                      }`}
+                    >
+                      <Briefcase className="w-3 h-3" />
+                      <span>Career:</span>
+                      <span className="font-mono">{formatDuration(dayStats.careerFocusMinutes)}</span>
+                    </button>
+                  )}
 
-              {/* Total Budgeted */}
-              <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1C1917] text-[#FAF7F0] border-2 border-[#1C1917] shadow-[2px_2px_0px_#78716C]">
-                <span className="text-stone-300 font-medium">Total Budgeted:</span>
-                <span className="font-mono font-black text-[#FEF08A]">
-                  {formatDuration(dayStats.totalMinutes)}
-                </span>
-              </div>
+                  {dayStats.collegeFocusMinutes > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleToggleDayBreakdown('college')}
+                      title="Click to see which College / Assignment tasks take time today"
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-xl border-2 border-[#1C1917] font-bold transition-all cursor-pointer ${
+                        dayBreakdownCat === 'college'
+                          ? 'bg-[#3E364E] text-white shadow-none translate-x-0.5 translate-y-0.5'
+                          : 'bg-[#E9D5FF] hover:bg-[#D8B4FE] text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917]'
+                      }`}
+                    >
+                      <BookOpen className="w-3 h-3" />
+                      <span>College:</span>
+                      <span className="font-mono">{formatDuration(dayStats.collegeFocusMinutes)}</span>
+                    </button>
+                  )}
+
+                  {dayStats.personalFocusMinutes > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleToggleDayBreakdown('personal')}
+                      title="Click to see which Personal / Other tasks take time today"
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-xl border-2 border-[#1C1917] font-bold transition-all cursor-pointer ${
+                        dayBreakdownCat === 'personal'
+                          ? 'bg-[#635032] text-white shadow-none translate-x-0.5 translate-y-0.5'
+                          : 'bg-[#FDE68A] hover:bg-[#FCD34D] text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917]'
+                      }`}
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      <span>Personal:</span>
+                      <span className="font-mono">{formatDuration(dayStats.personalFocusMinutes)}</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => handleToggleDayBreakdown('all')}
+                    title="Inspect where today's hours go by task"
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-xl border-2 border-[#1C1917] font-bold transition-all cursor-pointer ${
+                      dayBreakdownCat === 'all'
+                        ? 'bg-[#FEF08A] text-[#1C1917] shadow-none translate-x-0.5 translate-y-0.5'
+                        : 'bg-white hover:bg-[#FEF08A] text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917]'
+                    }`}
+                  >
+                    <PieChart className="w-3 h-3" />
+                    <span>Time Split</span>
+                    <ChevronDown
+                      className={`w-3 h-3 transition-transform ${dayBreakdownCat ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                </div>
+              )}
             </div>
+
+            {/* Expandable Daily Task Time Breakdown Drawer */}
+            {dayBreakdownCat && tasks.length > 0 && (
+              <div className="bg-[#FAF8F5] border-2 border-[#1C1917] rounded-2xl p-4 shadow-[3px_3px_0px_#1C1917] space-y-3 animate-in fade-in duration-150">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[#1C1917]/15">
+                  <div>
+                    <h3 className="text-xs font-black uppercase tracking-wider text-[#1C1917]">
+                      Where Your {title} Time Goes
+                    </h3>
+                    <p className="text-[11px] text-[#78716C] font-medium">
+                      Ranked by time cost so you can spot what to cut down or rebalance
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1 text-[11px] font-bold">
+                    {[
+                      { id: 'all', label: 'All' },
+                      { id: 'career', label: 'Career' },
+                      { id: 'college', label: 'College' },
+                      { id: 'personal', label: 'Personal' }
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setDayBreakdownCat(tab.id)}
+                        className={`px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                          dayBreakdownCat === tab.id
+                            ? 'bg-[#1C1917] text-[#FEF08A] border-[#1C1917]'
+                            : 'bg-white text-[#57534E] hover:text-[#1C1917] border-[#1C1917]/30'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Stacked Category Share Bar */}
+                {dayStats.focusMinutes > 0 && (
+                  <div className="space-y-1">
+                    <div className="w-full h-3 rounded-full border-2 border-[#1C1917] bg-white overflow-hidden flex p-[1px]">
+                      {dayStats.careerFocusMinutes > 0 && (
+                        <div
+                          style={{
+                            width: `${Math.round((dayStats.careerFocusMinutes / dayStats.focusMinutes) * 100)}%`
+                          }}
+                          className="h-full bg-[#16A34A] transition-all duration-300"
+                          title={`Career: ${formatDuration(dayStats.careerFocusMinutes)}`}
+                        />
+                      )}
+                      {dayStats.collegeFocusMinutes > 0 && (
+                        <div
+                          style={{
+                            width: `${Math.round((dayStats.collegeFocusMinutes / dayStats.focusMinutes) * 100)}%`
+                          }}
+                          className="h-full bg-[#7E22CE] transition-all duration-300"
+                          title={`College: ${formatDuration(dayStats.collegeFocusMinutes)}`}
+                        />
+                      )}
+                      {dayStats.personalFocusMinutes > 0 && (
+                        <div
+                          style={{
+                            width: `${Math.round((dayStats.personalFocusMinutes / dayStats.focusMinutes) * 100)}%`
+                          }}
+                          className="h-full bg-[#D97706] transition-all duration-300"
+                          title={`Personal: ${formatDuration(dayStats.personalFocusMinutes)}`}
+                        />
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between text-[10px] font-mono font-bold text-[#57534E]">
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-[#16A34A] inline-block" />
+                        Career: {Math.round((dayStats.careerFocusMinutes / dayStats.focusMinutes) * 100)}%
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-[#7E22CE] inline-block" />
+                        College: {Math.round((dayStats.collegeFocusMinutes / dayStats.focusMinutes) * 100)}%
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-[#D97706] inline-block" />
+                        Personal: {Math.round((dayStats.personalFocusMinutes / dayStats.focusMinutes) * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Per-Task Breakdown Rows */}
+                <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+                  {dayTasksSortedByTime.length === 0 ? (
+                    <p className="text-xs text-[#78716C] py-2 text-center font-medium">
+                      No tasks in this category for {title}.
+                    </p>
+                  ) : (
+                    dayTasksSortedByTime.map((t, i) => {
+                      const focus = t.duration_minutes ?? 30
+                      const brk = t.break_minutes ?? 5
+                      const totalT = focus + brk
+                      const sharePct =
+                        dayStats.totalMinutes > 0
+                          ? Math.round((totalT / dayStats.totalMinutes) * 100)
+                          : 0
+                      const cat = normalizeCategory(t.tag)
+                      const barFill =
+                        cat === 'career'
+                          ? 'bg-[#16A34A]'
+                          : cat === 'college'
+                          ? 'bg-[#7E22CE]'
+                          : 'bg-[#D97706]'
+                      return (
+                        <div
+                          key={t.id}
+                          className="bg-white border border-[#1C1917] rounded-xl p-2.5 flex flex-col gap-1.5 shadow-[1.5px_1.5px_0px_#1C1917]"
+                        >
+                          <div className="flex items-center justify-between gap-2 text-xs">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="font-mono text-[10px] font-black px-1.5 py-0.5 rounded bg-[#FEF08A] border border-[#1C1917] text-[#1C1917] shrink-0">
+                                #{i + 1}
+                              </span>
+                              <span
+                                className={`font-bold text-[#1C1917] truncate ${
+                                  t.is_completed ? 'line-through opacity-60' : ''
+                                }`}
+                              >
+                                {t.title}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0 font-mono text-xs">
+                              <span className="text-[11px] text-[#78716C]">
+                                {formatDuration(focus)}
+                                {brk > 0 ? ` + ${brk}m` : ''}
+                              </span>
+                              <span className="font-black text-[#1C1917] bg-[#FAF8F5] px-2 py-0.5 rounded-md border border-[#1C1917]/30">
+                                {sharePct}% of day
+                              </span>
+                            </div>
+                          </div>
+                          <div className="w-full h-1.5 rounded-full bg-stone-100 border border-[#1C1917]/30 overflow-hidden">
+                            <div
+                              style={{ width: `${Math.max(sharePct, 4)}%` }}
+                              className={`h-full rounded-full ${barFill}`}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="mt-4 pt-1 flex items-center justify-between text-xs text-[#78716C]">
@@ -488,7 +740,7 @@ export default function FocusedDayView({
       </div>
 
       {/* Day Tasks List — Positioned directly beneath the Day Header Card */}
-      <div className="space-y-3">
+      <div data-tour="task-list" className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2 px-2">
           <div className="flex items-center gap-2.5">
             <span className="text-xs font-black text-[#1C1917] uppercase tracking-wider">
@@ -667,7 +919,7 @@ export default function FocusedDayView({
       )}
 
       {/* Floating Bottom Add Task Dock */}
-      <div className="sticky bottom-4 z-20 mt-auto pt-2 drop-shadow-xl">
+      <div data-tour="add-task" className="sticky bottom-4 z-20 mt-auto pt-2 drop-shadow-xl">
         <AddTaskInput
           selectedDay={selectedDay}
           onAdd={(title, duration, breakMins, tag) =>

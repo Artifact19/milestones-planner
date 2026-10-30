@@ -13,6 +13,94 @@ const MONTH_FULL_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ]
 
+function recordTaskIntoBucket(bucketMap, m) {
+  const rawTitle = (m.title || 'Untitled Task').trim()
+  const cat = normalizeCategory(m.tag)
+  const key = `${cat}::${rawTitle.toLowerCase()}`
+  const dur = m.duration_minutes ?? 30
+  const brk = m.break_minutes ?? 5
+  const isComp = Boolean(m.is_completed)
+  const isCalendarDay = Number(m.day_of_week) >= 1 && Number(m.day_of_week) <= 7
+
+  if (!bucketMap[key]) {
+    bucketMap[key] = {
+      key,
+      title: rawTitle,
+      category: cat,
+      perSessionFocus: dur,
+      perSessionBreak: brk,
+      calendarTotalCount: 0,
+      calendarCompletedCount: 0,
+      calendarPlannedFocusMinutes: 0,
+      calendarCompletedFocusMinutes: 0,
+      calendarPlannedBreakMinutes: 0,
+      calendarCompletedBreakMinutes: 0,
+      masterTotalCount: 0,
+      masterCompletedCount: 0,
+      masterPlannedFocusMinutes: 0,
+      masterCompletedFocusMinutes: 0
+    }
+  }
+
+  const entry = bucketMap[key]
+  if (isCalendarDay) {
+    entry.calendarTotalCount += 1
+    entry.calendarPlannedFocusMinutes += dur
+    entry.calendarPlannedBreakMinutes += brk
+    if (isComp) {
+      entry.calendarCompletedCount += 1
+      entry.calendarCompletedFocusMinutes += dur
+      entry.calendarCompletedBreakMinutes += brk
+    }
+  } else {
+    entry.masterTotalCount += 1
+    entry.masterPlannedFocusMinutes += dur
+    if (isComp) {
+      entry.masterCompletedCount += 1
+      entry.masterCompletedFocusMinutes += dur
+    }
+  }
+}
+
+function finalizeTaskBreakdown(bucketMap) {
+  return Object.values(bucketMap)
+    .map((entry) => {
+      const useCalendar = entry.calendarTotalCount > 0
+      const totalCount = useCalendar ? entry.calendarTotalCount : entry.masterTotalCount
+      const completedCount = useCalendar ? entry.calendarCompletedCount : entry.masterCompletedCount
+      const plannedFocusMinutes = useCalendar
+        ? entry.calendarPlannedFocusMinutes
+        : entry.masterPlannedFocusMinutes
+      const completedFocusMinutes = useCalendar
+        ? entry.calendarCompletedFocusMinutes
+        : entry.masterCompletedFocusMinutes
+      const plannedBreakMinutes = useCalendar ? entry.calendarPlannedBreakMinutes : 0
+      const completedBreakMinutes = useCalendar ? entry.calendarCompletedBreakMinutes : 0
+
+      return {
+        key: entry.key,
+        title: entry.title,
+        category: entry.category,
+        perSessionFocus: entry.perSessionFocus,
+        perSessionBreak: entry.perSessionBreak,
+        totalCount,
+        completedCount,
+        plannedFocusMinutes,
+        completedFocusMinutes,
+        plannedBreakMinutes,
+        completedBreakMinutes,
+        plannedTotalMinutes: plannedFocusMinutes + plannedBreakMinutes,
+        completedTotalMinutes: completedFocusMinutes + completedBreakMinutes
+      }
+    })
+    .sort((a, b) => {
+      if (b.completedFocusMinutes !== a.completedFocusMinutes) {
+        return b.completedFocusMinutes - a.completedFocusMinutes
+      }
+      return b.plannedFocusMinutes - a.plannedFocusMinutes
+    })
+}
+
 // Helper to partition any month into its weekly calendar segments
 function buildWeeksForMonth(year, monthIndex) {
   const weeks = []
@@ -61,11 +149,19 @@ function buildWeeksForMonth(year, monthIndex) {
       total: 0,
       completed: 0,
       focusMinutes: 0,
+      plannedFocusMinutes: 0,
       focusByCategory: {
         career: 0,
         college: 0,
         personal: 0
       },
+      plannedFocusByCategory: {
+        career: 0,
+        college: 0,
+        personal: 0
+      },
+      _taskMap: {},
+      taskBreakdown: [],
       percent: 0
     })
 
@@ -129,11 +225,19 @@ export function useAnalytics() {
         total: 0,
         completed: 0,
         focusMinutes: 0,
+        plannedFocusMinutes: 0,
         focusByCategory: {
           career: 0,
           college: 0,
           personal: 0
         },
+        plannedFocusByCategory: {
+          career: 0,
+          college: 0,
+          personal: 0
+        },
+        _taskMap: {},
+        taskBreakdown: [],
         percent: 0,
         isCurrent: m === currentMonth,
         weeksList: buildWeeksForMonth(currentYear, m)
@@ -142,6 +246,7 @@ export function useAnalytics() {
 
     // Yearly buckets
     const yearsMap = {}
+    const allTimeTaskMap = {}
 
     milestones.forEach((m) => {
       // Determine the calendar date of this task
@@ -155,16 +260,24 @@ export function useAnalytics() {
       const isComp = Boolean(m.is_completed)
       const dur = m.duration_minutes ?? 30
       const cat = normalizeCategory(m.tag)
+      const isCalendarDay = Number(m.day_of_week) >= 1 && Number(m.day_of_week) <= 7
+
+      recordTaskIntoBucket(allTimeTaskMap, m)
 
       // Add to current year months
       if (y === currentYear && monthsMap[mon]) {
         const mObj = monthsMap[mon]
         mObj.total += 1
+        if (isCalendarDay) {
+          mObj.plannedFocusMinutes += dur
+          mObj.plannedFocusByCategory[cat] = (mObj.plannedFocusByCategory[cat] || 0) + dur
+        }
         if (isComp) {
           mObj.completed += 1
           mObj.focusMinutes += dur
           mObj.focusByCategory[cat] = (mObj.focusByCategory[cat] || 0) + dur
         }
+        recordTaskIntoBucket(mObj._taskMap, m)
 
         // Add to corresponding week inside this month
         const dayOfMonth = taskDate.getDate()
@@ -173,11 +286,17 @@ export function useAnalytics() {
         )
         if (targetWeek) {
           targetWeek.total += 1
+          if (isCalendarDay) {
+            targetWeek.plannedFocusMinutes += dur
+            targetWeek.plannedFocusByCategory[cat] =
+              (targetWeek.plannedFocusByCategory[cat] || 0) + dur
+          }
           if (isComp) {
             targetWeek.completed += 1
             targetWeek.focusMinutes += dur
             targetWeek.focusByCategory[cat] = (targetWeek.focusByCategory[cat] || 0) + dur
           }
+          recordTaskIntoBucket(targetWeek._taskMap, m)
         }
       }
 
@@ -220,13 +339,15 @@ export function useAnalytics() {
       }
     })
 
-    // Compute percentages for monthly and its weeks
+    // Compute percentages and finalize task breakdowns for monthly and its weeks
     const monthlyList = Object.values(monthsMap).map((item) => ({
       ...item,
       percent: item.total > 0 ? Math.round((item.completed / item.total) * 100) : 0,
+      taskBreakdown: finalizeTaskBreakdown(item._taskMap),
       weeksList: item.weeksList.map((w) => ({
         ...w,
-        percent: w.total > 0 ? Math.round((w.completed / w.total) * 100) : 0
+        percent: w.total > 0 ? Math.round((w.completed / w.total) * 100) : 0,
+        taskBreakdown: finalizeTaskBreakdown(w._taskMap)
       }))
     }))
 
@@ -278,20 +399,33 @@ export function useAnalytics() {
     const totalFocusMinutes = milestones
       .filter((m) => m.is_completed)
       .reduce((acc, m) => acc + (m.duration_minutes ?? 30), 0)
+    const totalPlannedFocusMinutes = milestones
+      .filter((m) => Number(m.day_of_week) >= 1 && Number(m.day_of_week) <= 7)
+      .reduce((acc, m) => acc + (m.duration_minutes ?? 30), 0)
 
     const totalFocusByCategory = {
       career: 0,
       college: 0,
       personal: 0
     }
+    const totalPlannedFocusByCategory = {
+      career: 0,
+      college: 0,
+      personal: 0
+    }
 
     milestones.forEach((m) => {
+      const cat = normalizeCategory(m.tag)
+      const dur = m.duration_minutes ?? 30
+      if (Number(m.day_of_week) >= 1 && Number(m.day_of_week) <= 7) {
+        totalPlannedFocusByCategory[cat] = (totalPlannedFocusByCategory[cat] || 0) + dur
+      }
       if (m.is_completed) {
-        const cat = normalizeCategory(m.tag)
-        const dur = m.duration_minutes ?? 30
         totalFocusByCategory[cat] = (totalFocusByCategory[cat] || 0) + dur
       }
     })
+
+    const allTimeTaskBreakdown = finalizeTaskBreakdown(allTimeTaskMap)
 
     // Best month calculation
     const activeMonths = monthlyList.filter((m) => m.total > 0)
@@ -307,7 +441,10 @@ export function useAnalytics() {
       completedAll,
       overallPercent,
       totalFocusMinutes,
+      totalPlannedFocusMinutes,
       totalFocusByCategory,
+      totalPlannedFocusByCategory,
+      allTimeTaskBreakdown,
       bestMonth,
       currentYear
     }

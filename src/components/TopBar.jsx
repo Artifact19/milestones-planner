@@ -57,7 +57,10 @@ export default function TopBar({
         </div>
 
         {/* Center: Week Switcher & Unified Stats Badge */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+        <div
+          data-tour="week-switcher"
+          className="flex items-center gap-1.5 sm:gap-2.5 shrink-0"
+        >
           <WeekSwitcher
             weekStart={weekStart}
             onPrevWeek={onPrevWeek}
@@ -109,6 +112,7 @@ export default function TopBar({
 
           <button
             type="button"
+            data-tour="reports-btn"
             onClick={onOpenReport}
             title="Download Reports (Weekly, Monthly, Yearly)"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#FEF08A] border-2 border-[#1C1917] text-[#1C1917] text-xs font-bold shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer group whitespace-nowrap"
@@ -129,6 +133,7 @@ export default function TopBar({
 
           <button
             type="button"
+            data-tour="analytics-btn"
             onClick={onOpenProfile}
             title="Profile & Milestone Analytics"
             className="flex items-center gap-1.5 p-1 pl-1.5 pr-2 sm:pr-2.5 rounded-xl bg-white hover:bg-[#FEF08A] border-2 border-[#1C1917] text-[#1C1917] text-xs font-bold shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer group whitespace-nowrap"
