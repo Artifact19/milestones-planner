@@ -54,6 +54,8 @@ export default function TaskItem({
   totalTasks = 1,
   subTasks = [],
   hasConnectedTasks: hasConnectedTasksProp,
+  allMilestones = [],
+  onRepeatAcrossDays,
   onToggle,
   onMasterToggleRequest,
   onToggleSubTask,
@@ -84,6 +86,21 @@ export default function TaskItem({
   // Shows the "just this one / all following" choice for repeating tasks
   const [confirmDelete, setConfirmDelete] = useState(false)
   const isRepeating = Boolean(task.series_id)
+
+  // Sibling connected days in this series for the current week
+  const connectedDays = useMemo(() => {
+    if (task.series_id && allMilestones && allMilestones.length > 0) {
+      const days = allMilestones
+        .filter((m) => m.series_id === task.series_id)
+        .map((m) => m.day_of_week)
+      if (days.length > 0) {
+        return Array.from(new Set(days)).sort((a, b) => a - b)
+      }
+    }
+    return [task.day_of_week]
+  }, [task, allMilestones])
+
+  const [editRepeatDays, setEditRepeatDays] = useState(connectedDays)
 
   // Master task and sub-tasks calculations
   const hasSubTasks = task.day_of_week === 0 && subTasks && subTasks.length > 0
@@ -123,7 +140,8 @@ export default function TaskItem({
     setEditDuration(task.duration_minutes ?? 30)
     setEditBreak(task.break_minutes ?? 5)
     setEditTag(task.tag || 'career')
-  }, [task])
+    setEditRepeatDays(connectedDays)
+  }, [task, connectedDays])
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -145,7 +163,18 @@ export default function TaskItem({
   const handleStartEdit = () => {
     setIsCustomDuration(!DURATION_PRESETS.some((p) => p.value === (task.duration_minutes ?? 30)))
     setUpdateEntireWeek(true)
+    setEditRepeatDays(connectedDays)
     setIsEditing(true)
+  }
+
+  const toggleEditRepeatDay = (dayNum) => {
+    if (editRepeatDays.includes(dayNum)) {
+      if (editRepeatDays.length > 1) {
+        setEditRepeatDays(editRepeatDays.filter((d) => d !== dayNum))
+      }
+    } else {
+      setEditRepeatDays([...editRepeatDays, dayNum].sort((a, b) => a - b))
+    }
   }
 
   const handleSaveEdit = () => {
@@ -153,16 +182,24 @@ export default function TaskItem({
     if (trimmed) {
       const finalDuration = Math.max(1, Math.min(1440, Number(editDuration) || 30))
       const finalBreak = Math.max(0, Math.min(240, Number(editBreak) || 0))
-      onEdit(
-        task.id,
-        {
-          title: trimmed,
-          duration_minutes: finalDuration,
-          break_minutes: finalBreak,
-          tag: editTag
-        },
-        { updateEntireWeek: isConnectedSeries && updateEntireWeek }
-      )
+      const updates = {
+        title: trimmed,
+        duration_minutes: finalDuration,
+        break_minutes: finalBreak,
+        tag: editTag
+      }
+      if (onRepeatAcrossDays) {
+        onRepeatAcrossDays(task.id, editRepeatDays, updates)
+      } else {
+        onEdit(
+          task.id,
+          updates,
+          {
+            updateEntireWeek: isConnectedSeries && updateEntireWeek,
+            repeatDays: editRepeatDays
+          }
+        )
+      }
     }
     setIsEditing(false)
     setIsCustomDuration(false)
@@ -386,6 +423,84 @@ export default function TaskItem({
               </button>
             </div>
 
+            {/* Repeat Across Multiple Days Selector */}
+            <div className="bg-[#FAF8F5] border-2 border-[#1C1917] rounded-xl p-2.5 space-y-2 shadow-[2px_2px_0px_#1C1917] mt-0.5">
+              <div className="flex flex-wrap items-center justify-between gap-1.5">
+                <div className="flex items-center gap-1.5 text-xs font-black text-[#1C1917]">
+                  <Repeat className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>Repeat across days:</span>
+                  <span className="text-[10px] font-mono font-bold bg-[#FEF08A] px-1.5 py-0.5 rounded border border-[#1C1917]">
+                    {editRepeatDays.length} {editRepeatDays.length === 1 ? 'day' : 'days'}
+                  </span>
+                </div>
+
+                {/* 1-Click Presets */}
+                <div className="flex flex-wrap items-center gap-1 text-[10px]">
+                  <button
+                    type="button"
+                    onClick={() => setEditRepeatDays([1, 2, 3, 4, 5, 6])}
+                    className="px-2 py-0.5 rounded-md bg-white hover:bg-[#FEF08A] border border-[#1C1917] font-bold shadow-[1px_1px_0px_#1C1917] cursor-pointer"
+                  >
+                    Mon–Sat
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditRepeatDays([1, 2, 3, 4, 5])}
+                    className="px-2 py-0.5 rounded-md bg-white hover:bg-[#FEF08A] border border-[#1C1917] font-bold shadow-[1px_1px_0px_#1C1917] cursor-pointer"
+                  >
+                    Mon–Fri
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditRepeatDays([1, 2, 3, 4, 5, 6, 7])}
+                    className="px-2 py-0.5 rounded-md bg-white hover:bg-[#FEF08A] border border-[#1C1917] font-bold shadow-[1px_1px_0px_#1C1917] cursor-pointer"
+                  >
+                    All 7 Days
+                  </button>
+                  {editRepeatDays.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setEditRepeatDays([task.day_of_week])}
+                      className="px-2 py-0.5 rounded-md bg-white hover:bg-[#FECDD3] border border-[#1C1917] font-bold shadow-[1px_1px_0px_#1C1917] text-[#9F1239] cursor-pointer"
+                    >
+                      Single Day
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Day Pill Buttons */}
+              <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                {[
+                  { num: 0, label: 'Wk', name: 'Weekly Master' },
+                  { num: 1, label: 'Mon', name: 'Monday' },
+                  { num: 2, label: 'Tue', name: 'Tuesday' },
+                  { num: 3, label: 'Wed', name: 'Wednesday' },
+                  { num: 4, label: 'Thu', name: 'Thursday' },
+                  { num: 5, label: 'Fri', name: 'Friday' },
+                  { num: 6, label: 'Sat', name: 'Saturday' },
+                  { num: 7, label: 'Sun', name: 'Sunday' }
+                ].map((d) => {
+                  const isChecked = editRepeatDays.includes(d.num)
+                  return (
+                    <button
+                      key={d.num}
+                      type="button"
+                      onClick={() => toggleEditRepeatDay(d.num)}
+                      title={d.name}
+                      className={`px-2.5 py-1 text-[11px] font-black rounded-lg border-2 transition-all cursor-pointer ${
+                        isChecked
+                          ? 'bg-[#FEF08A] border-[#1C1917] text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917]'
+                          : 'bg-white border-[#1C1917]/30 text-[#78716C] hover:text-[#1C1917] hover:border-[#1C1917]'
+                      }`}
+                    >
+                      {d.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             {/* Option to sync edit across entire week */}
             {isConnectedSeries && (
               <div className="flex items-center gap-2 pt-1.5 border-t-2 border-[#1C1917]/10">
@@ -593,10 +708,32 @@ export default function TaskItem({
                   </button>
                 )}
 
+                {/* Direct 1-click option to make task repeat across days */}
+                <button
+                  type="button"
+                  onClick={handleStartEdit}
+                  aria-label="Repeat task across multiple days"
+                  title={
+                    isRepeating
+                      ? `Repeating on ${connectedDays.length} days (Click to change repeat days)`
+                      : 'Make this task repeat across multiple days (e.g. Mon–Sat)'
+                  }
+                  className={`flex items-center gap-1 text-[11px] font-bold border border-[#1C1917] rounded-lg px-2 py-0.5 transition-all cursor-pointer ${
+                    isRepeating
+                      ? 'bg-[#FEF08A] text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917]'
+                      : 'bg-white hover:bg-[#FEF08A] text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917]'
+                  }`}
+                >
+                  <Repeat className="w-3 h-3 stroke-[2.5]" />
+                  <span className="hidden sm:inline">{isRepeating ? `${connectedDays.length}d` : 'Repeat'}</span>
+                </button>
+
                 <select
                   value={task.day_of_week}
                   onChange={(e) => {
-                    if (e.target.value === 'move-week') {
+                    if (e.target.value === 'repeat') {
+                      handleStartEdit()
+                    } else if (e.target.value === 'move-week') {
                       if (onOpenMoveToWeek) onOpenMoveToWeek(task)
                     } else if (onMove) {
                       onMove(task.id, Number(e.target.value))
@@ -614,6 +751,7 @@ export default function TaskItem({
                   <option value={5}>Fri</option>
                   <option value={6}>Sat</option>
                   <option value={7}>Sun</option>
+                  <option value="repeat">🔁 Repeat across days…</option>
                   <option value="move-week">🗓️ Carry…</option>
                 </select>
 

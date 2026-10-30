@@ -87,6 +87,11 @@ export default function AddTaskInput({
     }
   }
 
+  const handleToggleOptions = (e) => {
+    if (e.target.closest('button, select, [data-no-toggle]')) return
+    setShowOptions((prev) => !prev)
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
     const trimmed = title.trim()
@@ -129,8 +134,12 @@ export default function AddTaskInput({
       onSubmit={handleSubmit}
       className="bg-white border-2 border-[#1C1917] focus-within:border-[#1C1917] rounded-3xl p-3.5 shadow-[4px_4px_0px_#1C1917] transition-all"
     >
-      {/* Title Input Row */}
-      <div className="flex items-center gap-2">
+      {/* Title Input Row (double-click to expand/collapse editable settings) */}
+      <div
+        onDoubleClick={handleToggleOptions}
+        title="Double-click to expand or collapse editable settings"
+        className="flex items-center gap-2 cursor-pointer"
+      >
         <div className="text-[#1C1917] shrink-0 pl-1.5">
           <Plus className="w-5 h-5 stroke-[2.5]" />
         </div>
@@ -139,13 +148,15 @@ export default function AddTaskInput({
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          onDoubleClick={handleToggleOptions}
           placeholder={
             isRecurring
               ? `Repeat on ${selectedDays.length} days…`
               : placeholder
           }
           maxLength={200}
-          className="flex-1 min-w-0 bg-transparent text-sm font-bold text-[#1C1917] placeholder-stone-400 focus:outline-none font-sans"
+          title="Double-click to expand/collapse repeat, tags, and focus time"
+          className="flex-1 min-w-0 bg-transparent text-sm font-bold text-[#1C1917] placeholder-stone-400 focus:outline-none font-sans cursor-text"
         />
 
         {/* Quick Options Button */}
@@ -188,12 +199,13 @@ export default function AddTaskInput({
                   Repeat across multiple days
                 </span>
                 <span className="text-[10px] font-bold text-[#1C1917] bg-[#FEF08A] px-2 py-0.5 rounded-md border border-[#1C1917]">
-                  e.g. Study 2h Mon–Sat
+                  {isRecurring ? `${selectedDays.length} days active` : 'Single day'}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setIsRecurring(!isRecurring)}
+                title={isRecurring ? 'Turn off repeat' : 'Turn on repeat across multiple days'}
                 className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-[#1C1917] transition-colors duration-200 ease-in-out focus:outline-none ${
                   isRecurring ? 'bg-[#FEF08A]' : 'bg-[#E7E5E4]'
                 }`}
@@ -206,65 +218,87 @@ export default function AddTaskInput({
               </button>
             </div>
 
-            {/* Presets and Day Toggles when recurring is enabled */}
-            {isRecurring && (
-              <div className="pt-2.5 border-t border-[#1C1917]/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                <div className="flex items-center gap-1.5 text-xs">
-                  <span className="text-[#1C1917] font-bold text-[11px] mr-1">Presets:</span>
+            {/* Presets and Day Toggles */}
+            <div className="pt-2.5 border-t border-[#1C1917]/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                <span className="text-[#1C1917] font-bold text-[11px] mr-1">Presets:</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRecurring(true)
+                    handleApplyPreset([1, 2, 3, 4, 5, 6])
+                  }}
+                  className="px-2.5 py-0.5 rounded-lg bg-white hover:bg-[#FEF08A] border border-[#1C1917] text-[#1C1917] font-bold text-[11px] shadow-[1px_1px_0px_#1C1917] cursor-pointer"
+                >
+                  Mon to Sat
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRecurring(true)
+                    handleApplyPreset([1, 2, 3, 4, 5])
+                  }}
+                  className="px-2.5 py-0.5 rounded-lg bg-white hover:bg-[#FEF08A] border border-[#1C1917] text-[#1C1917] font-bold text-[11px] shadow-[1px_1px_0px_#1C1917] cursor-pointer"
+                >
+                  Mon to Fri
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRecurring(true)
+                    handleApplyPreset([1, 2, 3, 4, 5, 6, 7])
+                  }}
+                  className="px-2.5 py-0.5 rounded-lg bg-white hover:bg-[#FEF08A] border border-[#1C1917] text-[#1C1917] font-bold text-[11px] shadow-[1px_1px_0px_#1C1917] cursor-pointer"
+                >
+                  All 7 Days
+                </button>
+                {selectedDay === 0 && (
                   <button
                     type="button"
-                    onClick={() => handleApplyPreset([1, 2, 3, 4, 5, 6])}
+                    onClick={() => {
+                      setIsRecurring(true)
+                      setSelectedDays([0])
+                    }}
                     className="px-2.5 py-0.5 rounded-lg bg-white hover:bg-[#FEF08A] border border-[#1C1917] text-[#1C1917] font-bold text-[11px] shadow-[1px_1px_0px_#1C1917] cursor-pointer"
                   >
-                    Mon to Sat
+                    Master Only
                   </button>
+                )}
+                {isRecurring && (
                   <button
                     type="button"
-                    onClick={() => handleApplyPreset([1, 2, 3, 4, 5])}
-                    className="px-2.5 py-0.5 rounded-lg bg-white hover:bg-[#FEF08A] border border-[#1C1917] text-[#1C1917] font-bold text-[11px] shadow-[1px_1px_0px_#1C1917] cursor-pointer"
+                    onClick={() => setIsRecurring(false)}
+                    className="px-2.5 py-0.5 rounded-lg bg-white hover:bg-[#FECDD3] border border-[#1C1917] text-[#9F1239] font-bold text-[11px] shadow-[1px_1px_0px_#1C1917] cursor-pointer"
                   >
-                    Mon to Fri
+                    Single Day
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleApplyPreset([1, 2, 3, 4, 5, 6, 7])}
-                    className="px-2.5 py-0.5 rounded-lg bg-white hover:bg-[#FEF08A] border border-[#1C1917] text-[#1C1917] font-bold text-[11px] shadow-[1px_1px_0px_#1C1917] cursor-pointer"
-                  >
-                    All 7 Days
-                  </button>
-                  {selectedDay === 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedDays([0])}
-                      className="px-2.5 py-0.5 rounded-lg bg-white hover:bg-[#FEF08A] border border-[#1C1917] text-[#1C1917] font-bold text-[11px] shadow-[1px_1px_0px_#1C1917] cursor-pointer"
-                    >
-                      Master Only
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex flex-wrap items-center gap-1">
-                  {dayButtons.map((d) => {
-                    const isChecked = selectedDays.includes(d.num)
-                    return (
-                      <button
-                        key={d.num}
-                        type="button"
-                        onClick={() => toggleDay(d.num)}
-                        title={d.name}
-                        className={`w-6 h-6 text-[10px] font-black rounded-md border flex items-center justify-center transition-all cursor-pointer ${
-                          isChecked
-                            ? 'bg-[#FEF08A] border-[#1C1917] text-[#1C1917] shadow-[1px_1px_0px_#1C1917]'
-                            : 'bg-white border-[#1C1917]/40 text-[#78716C] hover:text-[#1C1917]'
-                        }`}
-                      >
-                        {d.label}
-                      </button>
-                    )
-                  })}
-                </div>
+                )}
               </div>
-            )}
+
+              <div className="flex flex-wrap items-center gap-1">
+                {dayButtons.map((d) => {
+                  const isChecked = isRecurring && selectedDays.includes(d.num)
+                  return (
+                    <button
+                      key={d.num}
+                      type="button"
+                      onClick={() => {
+                        if (!isRecurring) setIsRecurring(true)
+                        toggleDay(d.num)
+                      }}
+                      title={d.name}
+                      className={`w-6 h-6 text-[10px] font-black rounded-md border flex items-center justify-center transition-all cursor-pointer ${
+                        isChecked
+                          ? 'bg-[#FEF08A] border-[#1C1917] text-[#1C1917] shadow-[1px_1px_0px_#1C1917]'
+                          : 'bg-white border-[#1C1917]/40 text-[#78716C] hover:text-[#1C1917]'
+                      }`}
+                    >
+                      {d.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           </div>
 
           {/* Tag Selector */}

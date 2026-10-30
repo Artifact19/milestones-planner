@@ -290,10 +290,192 @@ export function useMilestones(weekStart) {
     [user]
   )
 
-  // Update milestone fields (with optional entire-week series sync)
+  // Repeat an existing milestone across multiple days in the current week (or modify repeat days)
+  const repeatMilestoneAcrossDays = useCallback(
+    async (id, targetDays, updates = {}) => {
+      if (!user || String(id).startsWith('temp-')) return
+
+      const previousMilestones = milestones
+      const targetItem = milestones.find((m) => m.id === id)
+      if (!targetItem) return
+
+      // Clean & sort target days (0..7)
+      const validDays =
+        Array.isArray(targetDays) && targetDays.length > 0
+          ? Array.from(new Set(targetDays.map(Number)))
+              .filter((d) => d >= 0 && d <= 7)
+              .sort((a, b) => a - b)
+          : [targetItem.day_of_week]
+
+      // Determine seriesId
+      const seriesId = targetItem.series_id || (validDays.length > 1 ? newUuid() : null)
+
+      // Find all tasks that are currently part of this series in this week
+      let seriesItems = [targetItem]
+      if (targetItem.series_id) {
+        seriesItems = milestones.filter((m) => m.series_id === targetItem.series_id)
+      } else {
+        const normTitle = targetItem.title.trim().toLowerCase()
+        const matched = milestones.filter(
+          (m) => m.title && m.title.trim().toLowerCase() === normTitle
+        )
+        if (matched.length > 1) {
+          seriesItems = matched
+        }
+      }
+
+      // Existing map of day -> item
+      const existingByDay = new Map()
+      seriesItems.forEach((item) => {
+        existingByDay.set(item.day_of_week, item)
+      })
+
+      // Identify days to insert and tasks to delete
+      const daysToInsert = validDays.filter((d) => !existingByDay.has(d))
+      const tasksToDelete = seriesItems.filter((item) => !validDays.includes(item.day_of_week))
+
+      // If targetItem's current day was unchecked, reassign targetItem to one of the daysToInsert
+      let targetNewDay = undefined
+      if (!validDays.includes(targetItem.day_of_week)) {
+        if (daysToInsert.length > 0) {
+          targetNewDay = daysToInsert.shift()
+          const targetIndexInDel = tasksToDelete.findIndex((t) => t.id === targetItem.id)
+          if (targetIndexInDel !== -1) {
+            tasksToDelete.splice(targetIndexInDel, 1)
+          }
+        }
+      }
+
+      const deleteIds = new Set(tasksToDelete.map((t) => t.id))
+      const tasksToUpdate = seriesItems.filter((item) => !deleteIds.has(item.id))
+
+      const baseTitle = updates.title !== undefined ? updates.title.trim() : targetItem.title
+      const baseDuration =
+        updates.duration_minutes !== undefined
+          ? updates.duration_minutes
+          : (targetItem.duration_minutes ?? 30)
+      const baseBreak =
+        updates.break_minutes !== undefined
+          ? updates.break_minutes
+          : (targetItem.break_minutes ?? 5)
+      const baseTag = updates.tag !== undefined ? updates.tag : (targetItem.tag || 'career')
+
+      const payloadUpdates = {
+        title: baseTitle,
+        duration_minutes: baseDuration,
+        break_minutes: baseBreak,
+        tag: baseTag,
+        series_id: seriesId
+      }
+
+      // New rows to insert into Supabase
+      const rowsToInsert = daysToInsert.map((day) => ({
+        user_id: user.id,
+        week_start_date: weekStartDateString,
+        day_of_week: day,
+        title: baseTitle,
+        duration_minutes: baseDuration,
+        break_minutes: baseBreak,
+        tag: baseTag,
+        series_id: seriesId,
+        is_completed: false
+      }))
+
+      const tempRows = rowsToInsert.map((r) => ({
+        ...r,
+        id: 'temp-' + newUuid(),
+        created_at: new Date().toISOString()
+      }))
+
+      // Optimistic state update
+      setMilestones((prev) => {
+        const kept = prev.filter((m) => !deleteIds.has(m.id))
+        const updated = kept.map((m) => {
+          if (m.id === targetItem.id) {
+            return {
+              ...m,
+              ...payloadUpdates,
+              day_of_week: targetNewDay !== undefined ? targetNewDay : m.day_of_week
+            }
+          }
+          if (tasksToUpdate.some((u) => u.id === m.id)) {
+            return {
+              ...m,
+              ...payloadUpdates
+            }
+          }
+          return m
+        })
+        return [...updated, ...tempRows]
+      })
+      setError(null)
+
+      try {
+        // 1. Delete removed days
+        if (deleteIds.size > 0) {
+          const { error: delError } = await supabase
+            .from('milestones')
+            .delete()
+            .in('id', Array.from(deleteIds))
+            .eq('user_id', user.id)
+          if (delError) throw delError
+        }
+
+        // 2. Update target item
+        const targetDbUpdate = { ...payloadUpdates }
+        if (targetNewDay !== undefined) {
+          targetDbUpdate.day_of_week = targetNewDay
+        }
+        const { error: targetErr } = await supabase
+          .from('milestones')
+          .update(targetDbUpdate)
+          .eq('id', targetItem.id)
+          .eq('user_id', user.id)
+        if (targetErr) throw targetErr
+
+        // 3. Update other existing series items
+        const otherIds = tasksToUpdate.filter((t) => t.id !== targetItem.id).map((t) => t.id)
+        if (otherIds.length > 0) {
+          const { error: otherErr } = await supabase
+            .from('milestones')
+            .update(payloadUpdates)
+            .in('id', otherIds)
+            .eq('user_id', user.id)
+          if (otherErr) throw otherErr
+        }
+
+        // 4. Insert new days
+        if (rowsToInsert.length > 0) {
+          const { data: insertedData, error: insErr } = await supabase
+            .from('milestones')
+            .insert(rowsToInsert)
+            .select()
+          if (insErr) throw insErr
+
+          if (insertedData) {
+            const tempIds = new Set(tempRows.map((t) => t.id))
+            setMilestones((prev) => {
+              const cleaned = prev.filter((m) => !tempIds.has(m.id))
+              return [...cleaned, ...insertedData]
+            })
+          }
+        }
+      } catch (err) {
+        setMilestones(previousMilestones)
+        setError(`Could not update repeating days: ${err.message || 'Network error'}`)
+      }
+    },
+    [user, milestones, weekStartDateString, repeatMilestoneAcrossDays]
+  )
+
+  // Update milestone fields (with optional entire-week series sync or repeatDays sync)
   const updateMilestone = useCallback(
     async (id, updates, options = {}) => {
       if (!user || String(id).startsWith('temp-')) return
+
+      if (options?.repeatDays && Array.isArray(options.repeatDays)) {
+        return repeatMilestoneAcrossDays(id, options.repeatDays, updates)
+      }
 
       const previousMilestones = milestones
       const targetItem = milestones.find((m) => m.id === id)
@@ -786,6 +968,7 @@ export function useMilestones(weekStart) {
     addBatchMilestones,
     toggleMilestone,
     updateMilestone,
+    repeatMilestoneAcrossDays,
     moveMilestone,
     moveMilestoneToWeek,
     batchMoveMilestonesToWeek,

@@ -62,6 +62,7 @@ export default function FocusedDayView({
   dayStats,
   onToggle,
   onEdit,
+  onRepeatAcrossDays,
   onDelete,
   onDeleteSeries,
   onCompleteSeries,
@@ -547,6 +548,8 @@ export default function FocusedDayView({
                 totalTasks={tasks.length}
                 subTasks={getSubTasksForTask(task)}
                 hasConnectedTasks={getHasConnectedTasks(task)}
+                allMilestones={allMilestones}
+                onRepeatAcrossDays={onRepeatAcrossDays}
                 onToggle={onToggle}
                 onMasterToggleRequest={handleMasterToggleRequest}
                 onToggleSubTask={onToggle}
@@ -628,6 +631,8 @@ export default function FocusedDayView({
                     totalTasks={weeklyTasks.length}
                     subTasks={getSubTasksForTask(task)}
                     hasConnectedTasks={getHasConnectedTasks(task)}
+                    allMilestones={allMilestones}
+                    onRepeatAcrossDays={onRepeatAcrossDays}
                     onToggle={onToggle}
                     onMasterToggleRequest={handleMasterToggleRequest}
                     onToggleSubTask={onToggle}

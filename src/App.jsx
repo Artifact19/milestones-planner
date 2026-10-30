@@ -61,6 +61,7 @@ function TrackerMain() {
     addBatchMilestones,
     toggleMilestone,
     updateMilestone,
+    repeatMilestoneAcrossDays,
     moveMilestone,
     copyMilestonesToWeek,
     deleteMilestone,
@@ -217,6 +218,7 @@ function TrackerMain() {
               dayStats={currentDayStats}
               onToggle={toggleMilestone}
               onEdit={updateMilestone}
+              onRepeatAcrossDays={repeatMilestoneAcrossDays}
               onDelete={deleteMilestone}
               onDeleteSeries={deleteSeries}
               onCompleteSeries={completeSeriesInWeek}
