@@ -465,7 +465,7 @@ export function useMilestones(weekStart) {
         setError(`Could not update repeating days: ${err.message || 'Network error'}`)
       }
     },
-    [user, milestones, weekStartDateString, repeatMilestoneAcrossDays]
+    [user, milestones, weekStartDateString]
   )
 
   // Update milestone fields (with optional entire-week series sync or repeatDays sync)
@@ -541,7 +541,7 @@ export function useMilestones(weekStart) {
         setError(`Could not save edit: ${err.message || 'Network error'}`)
       }
     },
-    [user, milestones, weekStartDateString]
+    [user, milestones, weekStartDateString, repeatMilestoneAcrossDays]
   )
 
   // Move milestone to a different day
