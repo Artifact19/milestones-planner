@@ -88,7 +88,8 @@ export default function AddTaskInput({
   }
 
   const handleToggleOptions = (e) => {
-    if (e.target.closest('button, select, [data-no-toggle]')) return
+    if (e.target.closest('[data-no-dblclick-toggle]')) return
+    if (e.target.closest('[data-options-panel]') && e.target.closest('button, input, select')) return
     setShowOptions((prev) => !prev)
   }
 
@@ -132,14 +133,12 @@ export default function AddTaskInput({
     <form
       ref={containerRef}
       onSubmit={handleSubmit}
-      className="bg-white border-2 border-[#1C1917] focus-within:border-[#1C1917] rounded-3xl p-3.5 shadow-[4px_4px_0px_#1C1917] transition-all"
+      onDoubleClick={handleToggleOptions}
+      title="Double-click to expand or collapse editable settings"
+      className="bg-white border-2 border-[#1C1917] focus-within:border-[#1C1917] rounded-3xl p-3.5 shadow-[4px_4px_0px_#1C1917] transition-all cursor-pointer"
     >
       {/* Title Input Row (double-click to expand/collapse editable settings) */}
-      <div
-        onDoubleClick={handleToggleOptions}
-        title="Double-click to expand or collapse editable settings"
-        className="flex items-center gap-2 cursor-pointer"
-      >
+      <div className="flex items-center gap-2">
         <div className="text-[#1C1917] shrink-0 pl-1.5">
           <Plus className="w-5 h-5 stroke-[2.5]" />
         </div>
@@ -148,7 +147,6 @@ export default function AddTaskInput({
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          onDoubleClick={handleToggleOptions}
           placeholder={
             isRecurring
               ? `Repeat on ${selectedDays.length} days…`
@@ -162,6 +160,7 @@ export default function AddTaskInput({
         {/* Quick Options Button */}
         <button
           type="button"
+          data-no-dblclick-toggle
           onClick={() => setShowOptions(!showOptions)}
           aria-label="Toggle time, tag, and repeat options"
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border-2 border-[#1C1917] transition-all cursor-pointer shrink-0 ${
@@ -180,6 +179,7 @@ export default function AddTaskInput({
         {/* Neo-Brutalist Submit Button */}
         <button
           type="submit"
+          data-no-dblclick-toggle
           disabled={!title.trim()}
           className="px-4 py-1.5 bg-[#FEF08A] hover:bg-[#FDE047] disabled:opacity-30 disabled:cursor-not-allowed text-[#1C1917] font-black rounded-xl text-xs border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer shrink-0"
         >
@@ -189,7 +189,10 @@ export default function AddTaskInput({
 
       {/* Expandable Options */}
       {showOptions && (
-        <div className="mt-3.5 pt-3.5 border-t-2 border-[#1C1917]/15 space-y-3.5 animate-in fade-in duration-150">
+        <div
+          data-options-panel
+          className="mt-3.5 pt-3.5 border-t-2 border-[#1C1917]/15 space-y-3.5 animate-in fade-in duration-150 cursor-default"
+        >
           {/* Recurring Master Routine Mode Toggle */}
           <div className="bg-[#FAF8F5] border-2 border-[#1C1917] rounded-2xl p-3 space-y-2.5 shadow-[2px_2px_0px_#1C1917]">
             <div className="flex items-center justify-between">
