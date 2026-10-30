@@ -101,6 +101,11 @@ export default function TaskItem({
   }, [task, allMilestones])
 
   const [editRepeatDays, setEditRepeatDays] = useState(connectedDays)
+  const connectedCalendarDaysCount = useMemo(
+    () => connectedDays.filter((d) => d > 0).length,
+    [connectedDays]
+  )
+  const editCalendarDaysCount = editRepeatDays.filter((d) => d > 0).length
 
   // Master task and sub-tasks calculations
   const hasSubTasks = task.day_of_week === 0 && subTasks && subTasks.length > 0
@@ -430,7 +435,7 @@ export default function TaskItem({
                   <Repeat className="w-3.5 h-3.5 stroke-[2.5]" />
                   <span>Repeat across days:</span>
                   <span className="text-[10px] font-mono font-bold bg-[#FEF08A] px-1.5 py-0.5 rounded border border-[#1C1917]">
-                    {editRepeatDays.length} {editRepeatDays.length === 1 ? 'day' : 'days'}
+                    {editCalendarDaysCount} {editCalendarDaysCount === 1 ? 'day' : 'days'}
                   </span>
                 </div>
 
@@ -438,26 +443,40 @@ export default function TaskItem({
                 <div className="flex flex-wrap items-center gap-1 text-[10px]">
                   <button
                     type="button"
-                    onClick={() => setEditRepeatDays([1, 2, 3, 4, 5, 6])}
+                    onClick={() =>
+                      setEditRepeatDays(
+                        editRepeatDays.includes(0) ? [0, 1, 2, 3, 4, 5, 6] : [1, 2, 3, 4, 5, 6]
+                      )
+                    }
                     className="px-2 py-0.5 rounded-md bg-white hover:bg-[#FEF08A] border border-[#1C1917] font-bold shadow-[1px_1px_0px_#1C1917] cursor-pointer"
                   >
                     Mon–Sat
                   </button>
                   <button
                     type="button"
-                    onClick={() => setEditRepeatDays([1, 2, 3, 4, 5])}
+                    onClick={() =>
+                      setEditRepeatDays(
+                        editRepeatDays.includes(0) ? [0, 1, 2, 3, 4, 5] : [1, 2, 3, 4, 5]
+                      )
+                    }
                     className="px-2 py-0.5 rounded-md bg-white hover:bg-[#FEF08A] border border-[#1C1917] font-bold shadow-[1px_1px_0px_#1C1917] cursor-pointer"
                   >
                     Mon–Fri
                   </button>
                   <button
                     type="button"
-                    onClick={() => setEditRepeatDays([1, 2, 3, 4, 5, 6, 7])}
+                    onClick={() =>
+                      setEditRepeatDays(
+                        editRepeatDays.includes(0)
+                          ? [0, 1, 2, 3, 4, 5, 6, 7]
+                          : [1, 2, 3, 4, 5, 6, 7]
+                      )
+                    }
                     className="px-2 py-0.5 rounded-md bg-white hover:bg-[#FEF08A] border border-[#1C1917] font-bold shadow-[1px_1px_0px_#1C1917] cursor-pointer"
                   >
                     All 7 Days
                   </button>
-                  {editRepeatDays.length > 1 && (
+                  {editCalendarDaysCount > 1 && (
                     <button
                       type="button"
                       onClick={() => setEditRepeatDays([task.day_of_week])}
@@ -714,8 +733,8 @@ export default function TaskItem({
                   onClick={handleStartEdit}
                   aria-label="Repeat task across multiple days"
                   title={
-                    isRepeating
-                      ? `Repeating on ${connectedDays.length} days (Click to change repeat days)`
+                    isRepeating && connectedCalendarDaysCount > 0
+                      ? `Repeating on ${connectedCalendarDaysCount} ${connectedCalendarDaysCount === 1 ? 'day' : 'days'} (Click to change repeat days)`
                       : 'Make this task repeat across multiple days (e.g. Mon–Sat)'
                   }
                   className={`flex items-center gap-1 text-[11px] font-bold border border-[#1C1917] rounded-lg px-2 py-0.5 transition-all cursor-pointer ${
@@ -725,7 +744,11 @@ export default function TaskItem({
                   }`}
                 >
                   <Repeat className="w-3 h-3 stroke-[2.5]" />
-                  <span className="hidden sm:inline">{isRepeating ? `${connectedDays.length}d` : 'Repeat'}</span>
+                  <span className="hidden sm:inline">
+                    {isRepeating && connectedCalendarDaysCount > 0
+                      ? `${connectedCalendarDaysCount}d`
+                      : 'Repeat'}
+                  </span>
                 </button>
 
                 <select

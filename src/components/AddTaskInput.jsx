@@ -117,6 +117,7 @@ export default function AddTaskInput({
   }
 
   const totalTime = duration + breakMinutes
+  const selectedCalendarDaysCount = selectedDays.filter((d) => d > 0).length
 
   const dayButtons = [
     { num: 0, label: 'Wk', name: 'Weekly Master' },
@@ -149,7 +150,9 @@ export default function AddTaskInput({
           onChange={(e) => setTitle(e.target.value)}
           placeholder={
             isRecurring
-              ? `Repeat on ${selectedDays.length} days…`
+              ? selectedCalendarDaysCount > 0
+                ? `Repeat on ${selectedCalendarDaysCount} ${selectedCalendarDaysCount === 1 ? 'day' : 'days'}…`
+                : 'Add to Weekly Master…'
               : placeholder
           }
           maxLength={200}
@@ -183,7 +186,11 @@ export default function AddTaskInput({
           disabled={!title.trim()}
           className="px-4 py-1.5 bg-[#FEF08A] hover:bg-[#FDE047] disabled:opacity-30 disabled:cursor-not-allowed text-[#1C1917] font-black rounded-xl text-xs border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer shrink-0"
         >
-          {isRecurring ? `${selectedDays.length} Days` : 'Add'}
+          {isRecurring
+            ? selectedCalendarDaysCount > 0
+              ? `${selectedCalendarDaysCount} ${selectedCalendarDaysCount === 1 ? 'Day' : 'Days'}`
+              : 'Master'
+            : 'Add'}
         </button>
       </div>
 
@@ -202,7 +209,11 @@ export default function AddTaskInput({
                   Repeat across multiple days
                 </span>
                 <span className="text-[10px] font-bold text-[#1C1917] bg-[#FEF08A] px-2 py-0.5 rounded-md border border-[#1C1917]">
-                  {isRecurring ? `${selectedDays.length} days active` : 'Single day'}
+                  {isRecurring
+                    ? selectedCalendarDaysCount > 0
+                      ? `${selectedCalendarDaysCount} ${selectedCalendarDaysCount === 1 ? 'day' : 'days'} active`
+                      : 'Master only'
+                    : 'Single day'}
                 </span>
               </div>
               <button
@@ -454,7 +465,7 @@ export default function AddTaskInput({
               {breakMinutes > 0 && <span> + <span className="text-[#695431] font-semibold">{breakMinutes}m break</span></span>}
             </span>
             <span className="font-mono text-[#1C1917] font-bold">
-              = {formatDuration(totalTime)} total {isRecurring ? `(x ${selectedDays.length} days)` : ''}
+              = {formatDuration(totalTime)} total {isRecurring && selectedCalendarDaysCount > 0 ? `(x ${selectedCalendarDaysCount} ${selectedCalendarDaysCount === 1 ? 'day' : 'days'})` : ''}
             </span>
           </div>
         </div>
