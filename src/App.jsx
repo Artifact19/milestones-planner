@@ -143,14 +143,20 @@ function TrackerMain() {
     }
   }, [selectedDay])
 
-  // Filter tasks for the selected day view
+  // Filter tasks for the selected day view: incomplete tasks above, completed tasks below
   const currentTasks = useMemo(() => {
-    return milestones.filter((m) => m.day_of_week === selectedDay)
+    const dayTasks = milestones.filter((m) => m.day_of_week === selectedDay)
+    const incomplete = dayTasks.filter((t) => !t.is_completed)
+    const completed = dayTasks.filter((t) => Boolean(t.is_completed))
+    return [...incomplete, ...completed]
   }, [milestones, selectedDay])
 
-  // Weekly master milestones (day_of_week === 0)
+  // Weekly master milestones (day_of_week === 0): incomplete tasks above, completed tasks below
   const weeklyTasks = useMemo(() => {
-    return milestones.filter((m) => m.day_of_week === 0)
+    const masterTasks = milestones.filter((m) => m.day_of_week === 0)
+    const incomplete = masterTasks.filter((t) => !t.is_completed)
+    const completed = masterTasks.filter((t) => Boolean(t.is_completed))
+    return [...incomplete, ...completed]
   }, [milestones])
 
   const currentDayStats = useMemo(() => {

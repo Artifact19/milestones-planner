@@ -52,7 +52,10 @@ function reorderTaskList(list, sourceId, targetId, position) {
 
   const nextList = [...listWithoutItem];
   nextList.splice(insertIndex, 0, itemToMove);
-  return nextList;
+
+  const incomplete = nextList.filter((t) => !t.is_completed);
+  const completed = nextList.filter((t) => Boolean(t.is_completed));
+  return [...incomplete, ...completed];
 }
 
 
@@ -141,8 +144,12 @@ export default function FocusedDayView({
     const [moved] = nextList.splice(currentIndex, 1);
     nextList.splice(newIndex, 0, moved);
 
+    const incomplete = nextList.filter((t) => !t.is_completed);
+    const completed = nextList.filter((t) => Boolean(t.is_completed));
+    const finalList = [...incomplete, ...completed];
+
     if (onReorderTasks) {
-      onReorderTasks(targetDay, nextList);
+      onReorderTasks(targetDay, finalList);
     }
   };
 
@@ -190,6 +197,9 @@ export default function FocusedDayView({
         ? tasks
         : tasks.filter((t) => normalizeCategory(t.tag) === dayBreakdownCat)
     return [...filtered].sort((a, b) => {
+      const aDone = Boolean(a.is_completed)
+      const bDone = Boolean(b.is_completed)
+      if (aDone !== bDone) return aDone ? 1 : -1
       const aTotal = (a.duration_minutes ?? 30) + (a.break_minutes ?? 5)
       const bTotal = (b.duration_minutes ?? 30) + (b.break_minutes ?? 5)
       return bTotal - aTotal
@@ -791,10 +801,23 @@ export default function FocusedDayView({
           tasks.map((task, index) => {
             const isDragging = draggedItem?.id === task.id;
             const isTarget = dropTarget?.id === task.id && dropTarget?.listType === 'day';
+            const isFirstCompleted =
+              Boolean(task.is_completed) &&
+              index > 0 &&
+              !tasks[index - 1].is_completed;
 
             return (
-              <TaskItem
-                key={task.id}
+              <div key={task.id} className="contents">
+                {isFirstCompleted && (
+                  <div className="flex items-center gap-2 pt-2.5 pb-0.5 text-xs font-bold text-[#78716C] select-none">
+                    <div className="h-[1.5px] flex-1 bg-[#1C1917]/15 rounded-full" />
+                    <span className="font-mono text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-[#78716C] bg-white px-2.5 py-0.5 rounded-md border border-[#1C1917]/20 shadow-xs">
+                      Completed ({tasks.filter((t) => Boolean(t.is_completed)).length})
+                    </span>
+                    <div className="h-[1.5px] flex-1 bg-[#1C1917]/15 rounded-full" />
+                  </div>
+                )}
+                <TaskItem
                 task={task}
                 index={index}
                 totalTasks={tasks.length}
@@ -820,7 +843,8 @@ export default function FocusedDayView({
                 onDrop={(id, pos) => handleDrop(id, pos, 'day')}
                 onDragEnd={handleDragEnd}
                 onMoveRelative={(dir) => handleMoveRelative(task.id, dir, 'day')}
-              />
+                />
+              </div>
             );
           })
         )}
@@ -874,10 +898,23 @@ export default function FocusedDayView({
               weeklyTasks.map((task, index) => {
                 const isDragging = draggedItem?.id === task.id;
                 const isTarget = dropTarget?.id === task.id && dropTarget?.listType === 'weekly';
+                const isFirstCompleted =
+                  Boolean(task.is_completed) &&
+                  index > 0 &&
+                  !weeklyTasks[index - 1].is_completed;
 
                 return (
-                  <TaskItem
-                    key={task.id}
+                  <div key={task.id} className="contents">
+                    {isFirstCompleted && (
+                      <div className="flex items-center gap-2 pt-2.5 pb-0.5 text-xs font-bold text-[#78716C] select-none">
+                        <div className="h-[1.5px] flex-1 bg-[#1C1917]/15 rounded-full" />
+                        <span className="font-mono text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-[#78716C] bg-white px-2.5 py-0.5 rounded-md border border-[#1C1917]/20 shadow-xs">
+                          Completed ({weeklyTasks.filter((t) => Boolean(t.is_completed)).length})
+                        </span>
+                        <div className="h-[1.5px] flex-1 bg-[#1C1917]/15 rounded-full" />
+                      </div>
+                    )}
+                    <TaskItem
                     task={task}
                     index={index}
                     totalTasks={weeklyTasks.length}
@@ -903,7 +940,8 @@ export default function FocusedDayView({
                     onDrop={(id, pos) => handleDrop(id, pos, 'weekly')}
                     onDragEnd={handleDragEnd}
                     onMoveRelative={(dir) => handleMoveRelative(task.id, dir, 'weekly')}
-                  />
+                    />
+                  </div>
                 );
               })
             )}

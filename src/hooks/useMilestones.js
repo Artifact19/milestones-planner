@@ -54,6 +54,12 @@ function sortMilestonesBySavedOrder(items, orderMap) {
     savedIds.forEach((id, index) => idToOrder.set(id, index));
 
     dayTasks.sort((a, b) => {
+      // Incomplete tasks always come before completed tasks
+      const aDone = Boolean(a.is_completed);
+      const bDone = Boolean(b.is_completed);
+      if (aDone !== bDone) {
+        return aDone ? 1 : -1;
+      }
       const orderA = idToOrder.has(a.id) ? idToOrder.get(a.id) : 999999;
       const orderB = idToOrder.has(b.id) ? idToOrder.get(b.id) : 999999;
       if (orderA !== orderB) {
@@ -247,21 +253,42 @@ export function useMilestones(weekStart) {
     [weekStartDateString, user]
   )
 
-  // Toggle milestone with optimistic update
+  // Toggle milestone with optimistic update (sends completed task down in order)
   const toggleMilestone = useCallback(
     async (id) => {
       if (!user || String(id).startsWith('temp-')) return
 
+      let previousMilestones = null
       let previousItem = null
 
       setMilestones((prev) => {
-        return prev.map((item) => {
+        previousMilestones = prev
+        let toggledItem = null
+        const updated = prev.map((item) => {
           if (item.id === id) {
             previousItem = item
-            return { ...item, is_completed: !item.is_completed }
+            toggledItem = { ...item, is_completed: !item.is_completed }
+            return toggledItem
           }
           return item
         })
+
+        if (!toggledItem) return prev
+
+        const targetDay = toggledItem.day_of_week ?? 0
+        const savedOrder = getStoredOrder(user.id, weekStartDateString)
+        const currentDaySavedIds = (savedOrder[targetDay] || []).filter((savedId) => savedId !== id)
+
+        if (toggledItem.is_completed) {
+          // Completed task: send down to the bottom
+          savedOrder[targetDay] = [...currentDaySavedIds, id]
+        } else {
+          // Unchecked task: bring back up to incomplete tasks
+          savedOrder[targetDay] = [id, ...currentDaySavedIds]
+        }
+
+        saveStoredOrder(user.id, weekStartDateString, savedOrder)
+        return sortMilestonesBySavedOrder(updated, savedOrder)
       })
 
       if (!previousItem) return
@@ -275,19 +302,15 @@ export function useMilestones(weekStart) {
           .eq('user_id', user.id)
 
         if (updateError) {
-          setMilestones((prev) =>
-            prev.map((m) => (m.id === id ? previousItem : m))
-          )
+          if (previousMilestones) setMilestones(previousMilestones)
           setError(`Could not update task: ${updateError.message}`)
         }
       } catch (err) {
-        setMilestones((prev) =>
-          prev.map((m) => (m.id === id ? previousItem : m))
-        )
+        if (previousMilestones) setMilestones(previousMilestones)
         setError(`Could not update task: ${err.message || 'Network error'}`)
       }
     },
-    [user]
+    [user, weekStartDateString]
   )
 
   // Repeat an existing milestone across multiple days in the current week (or modify repeat days)
@@ -813,12 +836,14 @@ export function useMilestones(weekStart) {
 
       setMilestones((prev) => {
         previousMilestones = prev
-        return prev.map((item) => {
+        const updated = prev.map((item) => {
           if (item.series_id === seriesId) {
             return { ...item, is_completed: true }
           }
           return item
         })
+        const savedOrder = getStoredOrder(user.id, weekStartDateString)
+        return sortMilestonesBySavedOrder(updated, savedOrder)
       })
       setError(null)
 
