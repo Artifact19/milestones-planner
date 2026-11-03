@@ -101,72 +101,66 @@ function finalizeTaskBreakdown(bucketMap) {
     })
 }
 
-// Helper to partition any month into its weekly calendar segments
+// Helper to partition any month into full Monday–Sunday weekly segments
+// Each Monday–Sunday week is assigned to the month that contains the majority (>=4) of its days (i.e. its Thursday)
 function buildWeeksForMonth(year, monthIndex) {
   const weeks = []
-  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate()
-  const monthShort = MONTH_NAMES[monthIndex]
-  const today = new Date()
-  const isCurrentMonth = today.getFullYear() === year && today.getMonth() === monthIndex
-  const todayDate = today.getDate()
+  const todayMondayStr = toDateString(getMonday(new Date()))
+  const firstOfMonth = new Date(year, monthIndex, 1)
+  const lastOfMonth = new Date(year, monthIndex + 1, 0)
 
-  let currentStartDay = 1
+  let monday = getMonday(firstOfMonth)
   let weekNum = 1
 
-  while (currentStartDay <= daysInMonth) {
-    const startDate = new Date(year, monthIndex, currentStartDay)
-    const dayOfWeek = startDate.getDay() // 0=Sun, 1=Mon, ..., 6=Sat
-    // Sunday ends the week in our ISO-based system
-    const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek
-    const endDay = Math.min(daysInMonth, currentStartDay + daysUntilSunday)
+  while (monday <= lastOfMonth) {
+    const thursday = addDays(monday, 3)
+    if (thursday.getFullYear() === year && thursday.getMonth() === monthIndex) {
+      const sunday = addDays(monday, 6)
+      const mondayStr = toDateString(monday)
+      const isCurrentWeek = mondayStr === todayMondayStr
 
-    const isCurrentWeek =
-      isCurrentMonth && todayDate >= currentStartDay && todayDate <= endDay
+      const startMonthShort = MONTH_NAMES[monday.getMonth()]
+      const endMonthShort = MONTH_NAMES[sunday.getMonth()]
+      const startDay = monday.getDate()
+      const endDay = sunday.getDate()
 
-    const mondayDate = getMonday(startDate)
-    const mondayStr = toDateString(mondayDate)
+      const dateRange = `${startMonthShort} ${startDay} – ${endMonthShort} ${endDay}`
+      const dateRangeShort =
+        startMonthShort === endMonthShort
+          ? `${startMonthShort} ${startDay}–${endDay}`
+          : `${startMonthShort} ${startDay} – ${endMonthShort} ${endDay}`
 
-    const dateRange =
-      currentStartDay === endDay
-        ? `${monthShort} ${currentStartDay}`
-        : `${monthShort} ${currentStartDay} – ${monthShort} ${endDay}`
-
-    const dateRangeShort =
-      currentStartDay === endDay
-        ? `${monthShort} ${currentStartDay}`
-        : `${monthShort} ${currentStartDay}–${endDay}`
-
-    weeks.push({
-      weekNumber: weekNum,
-      weekLabel: `Week ${weekNum}`,
-      dateRange,
-      dateRangeShort,
-      startDay: currentStartDay,
-      endDay,
-      mondayDate,
-      mondayStr,
-      isCurrentWeek,
-      total: 0,
-      completed: 0,
-      focusMinutes: 0,
-      plannedFocusMinutes: 0,
-      focusByCategory: {
-        career: 0,
-        college: 0,
-        personal: 0
-      },
-      plannedFocusByCategory: {
-        career: 0,
-        college: 0,
-        personal: 0
-      },
-      _taskMap: {},
-      taskBreakdown: [],
-      percent: 0
-    })
-
-    currentStartDay = endDay + 1
-    weekNum++
+      weeks.push({
+        weekNumber: weekNum,
+        weekLabel: `Week ${weekNum}`,
+        dateRange,
+        dateRangeShort,
+        startDay,
+        endDay,
+        mondayDate: monday,
+        mondayStr,
+        isCurrentWeek,
+        total: 0,
+        completed: 0,
+        focusMinutes: 0,
+        plannedFocusMinutes: 0,
+        focusByCategory: {
+          career: 0,
+          college: 0,
+          personal: 0
+        },
+        plannedFocusByCategory: {
+          career: 0,
+          college: 0,
+          personal: 0
+        },
+        _taskMap: {},
+        taskBreakdown: [],
+        percent: 0
+      })
+      weekNum++
+    }
+    monday = addDays(monday, 7)
   }
 
   return weeks
@@ -249,14 +243,13 @@ export function useAnalytics() {
     const allTimeTaskMap = {}
 
     milestones.forEach((m) => {
-      // Determine the calendar date of this task
-      let taskDate = parseDateString(m.week_start_date)
-      if (m.day_of_week >= 1 && m.day_of_week <= 7) {
-        taskDate = addDays(taskDate, m.day_of_week - 1)
-      }
+      // Determine the Monday–Sunday week this task belongs to, and assign it to the month of its Thursday (>=4 days)
+      const mondayDate = getMonday(parseDateString(m.week_start_date))
+      const mondayStr = toDateString(mondayDate)
+      const thursdayDate = addDays(mondayDate, 3)
 
-      const y = taskDate.getFullYear()
-      const mon = taskDate.getMonth()
+      const y = thursdayDate.getFullYear()
+      const mon = thursdayDate.getMonth()
       const isComp = Boolean(m.is_completed)
       const dur = m.duration_minutes ?? 30
       const cat = normalizeCategory(m.tag)
@@ -279,11 +272,8 @@ export function useAnalytics() {
         }
         recordTaskIntoBucket(mObj._taskMap, m)
 
-        // Add to corresponding week inside this month
-        const dayOfMonth = taskDate.getDate()
-        const targetWeek = mObj.weeksList.find(
-          (w) => dayOfMonth >= w.startDay && dayOfMonth <= w.endDay
-        )
+        // Add to corresponding full Monday–Sunday week inside this month
+        const targetWeek = mObj.weeksList.find((w) => w.mondayStr === mondayStr)
         if (targetWeek) {
           targetWeek.total += 1
           if (isCalendarDay) {

@@ -3,6 +3,8 @@ import {
   addDays,
   formatDuration,
   formatWeekRange,
+  getMonday,
+  toDateString,
   DAY_NAMES,
   TAG_OPTIONS,
   normalizeCategory
@@ -20,6 +22,12 @@ function getTaskDate(task) {
     return addDays(monday, task.day_of_week - 1)
   }
   return monday
+}
+
+// Determine the Thursday of the Monday–Sunday week a task belongs to (assigns full weeks to the month with >=4 days)
+function getTaskWeekThursday(task) {
+  const monday = getMonday(parseDateString(task.week_start_date))
+  return addDays(monday, 3)
 }
 
 // Compile structured report data based on report type
@@ -61,8 +69,8 @@ export function compileReportData({
     subtitle = `${monthName} ${targetYear}`
 
     filteredMilestones = milestones.filter((m) => {
-      const d = getTaskDate(m)
-      return d.getFullYear() === targetYear && d.getMonth() === targetMonthIndex
+      const thu = getTaskWeekThursday(m)
+      return thu.getFullYear() === targetYear && thu.getMonth() === targetMonthIndex
     })
   } else {
     // Yearly
@@ -70,8 +78,8 @@ export function compileReportData({
     subtitle = `Year ${targetYear} Performance Review`
 
     filteredMilestones = milestones.filter((m) => {
-      const d = getTaskDate(m)
-      return d.getFullYear() === targetYear
+      const thu = getTaskWeekThursday(m)
+      return thu.getFullYear() === targetYear
     })
   }
 
@@ -122,7 +130,7 @@ export function compileReportData({
   const monthBreakdown = []
   if (type === 'yearly') {
     for (let m = 0; m < 12; m++) {
-      const monthTasks = filteredMilestones.filter((task) => getTaskDate(task).getMonth() === m)
+      const monthTasks = filteredMilestones.filter((task) => getTaskWeekThursday(task).getMonth() === m)
       const mTotal = monthTasks.length
       const mComp = monthTasks.filter((t) => t.is_completed).length
       const mPercent = mTotal > 0 ? Math.round((mComp / mTotal) * 100) : 0
@@ -138,44 +146,45 @@ export function compileReportData({
     }
   }
 
-  // Weekly breakdown for monthly report
+  // Weekly breakdown for monthly report (full Monday–Sunday weeks whose Thursday falls in the month)
   const weekBreakdown = []
   if (type === 'monthly') {
-    const daysInMonth = new Date(targetYear, targetMonthIndex + 1, 0).getDate()
-    const monthShort = MONTH_NAMES[targetMonthIndex].slice(0, 3)
-    let currentStartDay = 1
+    const firstOfMonth = new Date(targetYear, targetMonthIndex, 1)
+    const lastOfMonth = new Date(targetYear, targetMonthIndex + 1, 0)
+    let monday = getMonday(firstOfMonth)
     let weekNum = 1
 
-    while (currentStartDay <= daysInMonth) {
-      const startDate = new Date(targetYear, targetMonthIndex, currentStartDay)
-      const dayOfWeek = startDate.getDay()
-      const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek
-      const endDay = Math.min(daysInMonth, currentStartDay + daysUntilSunday)
+    while (monday <= lastOfMonth) {
+      const thursday = addDays(monday, 3)
+      if (thursday.getFullYear() === targetYear && thursday.getMonth() === targetMonthIndex) {
+        const sunday = addDays(monday, 6)
+        const mondayStr = toDateString(monday)
+        const startMonthShort = MONTH_NAMES[monday.getMonth()].slice(0, 3)
+        const endMonthShort = MONTH_NAMES[sunday.getMonth()].slice(0, 3)
 
-      const weekTasks = filteredMilestones.filter((task) => {
-        const d = getTaskDate(task)
-        const dayOfMonth = d.getDate()
-        return dayOfMonth >= currentStartDay && dayOfMonth <= endDay
-      })
+        const weekTasks = filteredMilestones.filter((task) => {
+          const taskMondayStr = toDateString(getMonday(parseDateString(task.week_start_date)))
+          return taskMondayStr === mondayStr
+        })
 
-      const wTotal = weekTasks.length
-      const wComp = weekTasks.filter((t) => t.is_completed).length
-      const wPercent = wTotal > 0 ? Math.round((wComp / wTotal) * 100) : 0
-      const wFocus = weekTasks
-        .filter((t) => t.is_completed)
-        .reduce((acc, t) => acc + (t.duration_minutes ?? 30), 0)
+        const wTotal = weekTasks.length
+        const wComp = weekTasks.filter((t) => t.is_completed).length
+        const wPercent = wTotal > 0 ? Math.round((wComp / wTotal) * 100) : 0
+        const wFocus = weekTasks
+          .filter((t) => t.is_completed)
+          .reduce((acc, t) => acc + (t.duration_minutes ?? 30), 0)
 
-      weekBreakdown.push({
-        weekLabel: `Week ${weekNum}`,
-        dateRange: `${monthShort} ${currentStartDay} – ${monthShort} ${endDay}`,
-        total: wTotal,
-        completed: wComp,
-        percent: wPercent,
-        focusMinutes: wFocus
-      })
-
-      currentStartDay = endDay + 1
-      weekNum++
+        weekBreakdown.push({
+          weekLabel: `Week ${weekNum}`,
+          dateRange: `${startMonthShort} ${monday.getDate()} – ${endMonthShort} ${sunday.getDate()}`,
+          total: wTotal,
+          completed: wComp,
+          percent: wPercent,
+          focusMinutes: wFocus
+        })
+        weekNum++
+      }
+      monday = addDays(monday, 7)
     }
   }
 
