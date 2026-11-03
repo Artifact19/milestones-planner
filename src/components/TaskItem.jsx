@@ -80,9 +80,13 @@ export default function TaskItem({
   const [editText, setEditText] = useState(task.title)
   const [editDuration, setEditDuration] = useState(task.duration_minutes ?? 30)
   const [isCustomDuration, setIsCustomDuration] = useState(false)
+  const [isDurationDropdownOpen, setIsDurationDropdownOpen] = useState(false)
   const [editBreak, setEditBreak] = useState(task.break_minutes ?? 5)
   const [editTag, setEditTag] = useState(task.tag || 'career')
   const inputRef = useRef(null)
+  const customDurationInputRef = useRef(null)
+  const focusDropdownRef = useRef(null)
+  const lastFocusClickRef = useRef(0)
   // Shows the "just this one / all following" choice for repeating tasks
   const [confirmDelete, setConfirmDelete] = useState(false)
   const isRepeating = Boolean(task.series_id)
@@ -149,11 +153,43 @@ export default function TaskItem({
   }, [task, connectedDays])
 
   useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus()
-      inputRef.current.select()
+    if (isEditing) {
+      if (isCustomDuration && customDurationInputRef.current) {
+        customDurationInputRef.current.focus()
+        customDurationInputRef.current.select()
+      } else if (inputRef.current) {
+        inputRef.current.focus()
+        inputRef.current.select()
+      }
     }
-  }, [isEditing])
+  }, [isEditing, isCustomDuration])
+
+  // Click outside listener for the duration preset dropdown
+  useEffect(() => {
+    if (!isDurationDropdownOpen) return
+
+    const handleOutsideClick = (e) => {
+      if (focusDropdownRef.current && !focusDropdownRef.current.contains(e.target)) {
+        setIsDurationDropdownOpen(false)
+      }
+    }
+
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        setIsDurationDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleOutsideClick)
+    document.addEventListener('touchstart', handleOutsideClick)
+    document.addEventListener('keydown', handleEscape)
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick)
+      document.removeEventListener('touchstart', handleOutsideClick)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [isDurationDropdownOpen])
 
   
   const handleCapsuleDoubleClick = (e) => {
@@ -208,6 +244,7 @@ export default function TaskItem({
     }
     setIsEditing(false)
     setIsCustomDuration(false)
+    setIsDurationDropdownOpen(false)
   }
 
   const handleKeyDown = (e) => {
@@ -221,6 +258,7 @@ export default function TaskItem({
       setEditBreak(task.break_minutes ?? 5)
       setIsEditing(false)
       setIsCustomDuration(false)
+      setIsDurationDropdownOpen(false)
     }
   }
 
@@ -332,8 +370,16 @@ export default function TaskItem({
               </select>
 
               {isCustomDuration ? (
-                <div className="flex items-center gap-1 bg-white border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg px-2 py-0.5">
+                <div
+                  onDoubleClick={(e) => {
+                    e.stopPropagation()
+                    customDurationInputRef.current?.select()
+                  }}
+                  className="flex items-center gap-1 bg-white border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg px-2 py-0.5 animate-in fade-in zoom-in-95 duration-100"
+                  title="Custom focus minutes (Double-click to select all)"
+                >
                   <input
+                    ref={customDurationInputRef}
                     type="number"
                     min={1}
                     max={1440}
@@ -363,40 +409,95 @@ export default function TaskItem({
                     type="button"
                     onClick={() => {
                       setIsCustomDuration(false)
+                      setIsDurationDropdownOpen(false)
                       setEditDuration(task.duration_minutes || 30)
                     }}
                     title="Switch back to presets"
-                    className="text-stone-400 hover:text-stone-700 text-xs px-1 cursor-pointer font-bold"
+                    className="text-stone-400 hover:text-[#1C1917] text-xs px-1 cursor-pointer font-bold transition-colors"
                   >
                     ✕
                   </button>
                 </div>
               ) : (
-                <select
-                  value={DURATION_PRESETS.some((p) => p.value === editDuration) ? editDuration : 'custom'}
-                  onChange={(e) => {
-                    if (e.target.value === 'custom') {
+                <div ref={focusDropdownRef} className="relative inline-block">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      const now = Date.now()
+                      if (now - lastFocusClickRef.current < 400) {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setIsDurationDropdownOpen(false)
+                        setIsCustomDuration(true)
+                        lastFocusClickRef.current = 0
+                        return
+                      }
+                      lastFocusClickRef.current = now
+                      setIsDurationDropdownOpen((prev) => !prev)
+                    }}
+                    onDoubleClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      setIsDurationDropdownOpen(false)
                       setIsCustomDuration(true)
-                    } else {
-                      const val = Number(e.target.value)
-                      setEditDuration(val)
-                      setEditBreak(getDefaultBreakMinutes(val))
-                    }
-                  }}
-                  onKeyDown={handleKeyDown}
-                  className="bg-white border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg px-2.5 py-1 text-xs font-bold text-[#1C1917] focus:outline-none cursor-pointer"
-                >
-                  {DURATION_PRESETS.map((p) => (
-                    <option key={p.value} value={p.value}>
-                      {p.label}
-                    </option>
-                  ))}
-                  <option value="custom">
-                    {DURATION_PRESETS.some((p) => p.value === editDuration)
-                      ? '✏️ Custom…'
-                      : `✏️ Custom (${formatDuration(editDuration)})`}
-                  </option>
-                </select>
+                    }}
+                    title="Click for presets • Double-click for custom focus time"
+                    className="bg-white border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg px-2.5 py-1 text-xs font-bold text-[#1C1917] hover:bg-[#FAF8F5] focus:outline-none cursor-pointer flex items-center gap-1.5 select-none transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                  >
+                    <span>
+                      {DURATION_PRESETS.find((p) => p.value === Number(editDuration))?.label ||
+                        `${formatDuration(Number(editDuration) || 30)} focus`}
+                    </span>
+                    <ChevronDown
+                      className={`w-3 h-3 text-[#1C1917] stroke-[2.5] transition-transform duration-150 ${
+                        isDurationDropdownOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {/* Dropdown Menu for Duration Presets */}
+                  {isDurationDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-1 z-50 bg-white border-2 border-[#1C1917] rounded-xl shadow-[3px_3px_0px_#1C1917] p-1 min-w-[150px] max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-100">
+                      <div className="text-[10px] font-black uppercase text-[#78716C] px-2 py-1 tracking-wider">
+                        Focus Duration
+                      </div>
+                      {DURATION_PRESETS.map((p) => {
+                        const isSelected = Number(editDuration) === p.value
+                        return (
+                          <button
+                            key={p.value}
+                            type="button"
+                            onClick={() => {
+                              setEditDuration(p.value)
+                              setEditBreak(getDefaultBreakMinutes(p.value))
+                              setIsDurationDropdownOpen(false)
+                            }}
+                            className={`w-full text-left px-2.5 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center justify-between ${
+                              isSelected
+                                ? 'bg-[#FEF08A] text-[#1C1917]'
+                                : 'hover:bg-stone-100 text-[#1C1917]'
+                            }`}
+                          >
+                            <span>{p.label}</span>
+                            {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                          </button>
+                        )
+                      })}
+                      <div className="border-t border-[#1C1917]/20 my-1" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsDurationDropdownOpen(false)
+                          setIsCustomDuration(true)
+                        }}
+                        className="w-full text-left px-2.5 py-1 rounded-lg text-xs font-bold text-[#1C1917] hover:bg-[#FEF08A] transition-colors cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Pencil className="w-3 h-3" />
+                        <span>✏️ Custom time…</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
 
               <select
@@ -421,7 +522,11 @@ export default function TaskItem({
               </button>
               <button
                 type="button"
-                onClick={() => setIsEditing(false)}
+                onClick={() => {
+                  setIsEditing(false)
+                  setIsCustomDuration(false)
+                  setIsDurationDropdownOpen(false)
+                }}
                 className="px-3 py-1 bg-white hover:bg-stone-100 text-[#1C1917] border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] font-bold rounded-lg text-xs active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
               >
                 Cancel
@@ -634,11 +739,18 @@ export default function TaskItem({
                 </span>
               )}
 
-              {/* Time Badge */}
+              {/* Time Badge - Double-click enables custom focus time directly */}
               {!isWeeklyMilestone && (
                 <span
-                  className="inline-flex items-center gap-1 text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-white border border-[#1C1917] shadow-[1px_1px_0px_#1C1917] text-[#1C1917]"
-                  title={`${formatDuration(task.duration_minutes ?? 30)} focus${(task.break_minutes ?? 0) > 0 ? ` + ${formatDuration(task.break_minutes)} rest` : ''}`}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation()
+                    setIsCustomDuration(true)
+                    setUpdateEntireWeek(true)
+                    setEditRepeatDays(connectedDays)
+                    setIsEditing(true)
+                  }}
+                  className="inline-flex items-center gap-1 text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-white border border-[#1C1917] shadow-[1px_1px_0px_#1C1917] text-[#1C1917] cursor-pointer hover:bg-[#FEF08A] hover:shadow-[2px_2px_0px_#1C1917] transition-all select-none"
+                  title={`${formatDuration(task.duration_minutes ?? 30)} focus${(task.break_minutes ?? 0) > 0 ? ` + ${formatDuration(task.break_minutes)} rest` : ''} • Double-click for custom focus time`}
                 >
                   <Clock className="w-3 h-3 text-[#1C1917] shrink-0" />
                   <span>{formatDuration(task.duration_minutes ?? 30)}</span>

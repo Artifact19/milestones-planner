@@ -29,6 +29,7 @@ export default function AddTaskInput({
   )
   const inputRef = useRef(null)
   const containerRef = useRef(null)
+  const customDurationInputRef = useRef(null)
 
   // When viewing Weekly Master (day 0), ensure day 0 is selected for recurring additions
   useEffect(() => {
@@ -165,6 +166,15 @@ export default function AddTaskInput({
           type="button"
           data-no-dblclick-toggle
           onClick={() => setShowOptions(!showOptions)}
+          onDoubleClick={(e) => {
+            e.stopPropagation()
+            setShowOptions(true)
+            setTimeout(() => {
+              customDurationInputRef.current?.focus()
+              customDurationInputRef.current?.select()
+            }, 60)
+          }}
+          title="Click to toggle options • Double-click for custom focus time"
           aria-label="Toggle time, tag, and repeat options"
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border-2 border-[#1C1917] transition-all cursor-pointer shrink-0 ${
             showOptions || isRecurring
@@ -349,9 +359,17 @@ export default function AddTaskInput({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Focus Duration */}
             <div>
-              <div className="text-[11px] font-black text-[#1C1917] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+              <div
+                onDoubleClick={() => {
+                  customDurationInputRef.current?.focus()
+                  customDurationInputRef.current?.select()
+                }}
+                title="Double-click to set custom focus time"
+                className="text-[11px] font-black text-[#1C1917] uppercase tracking-wider mb-1.5 flex items-center gap-1.5 cursor-pointer select-none"
+              >
                 <Clock className="w-3 h-3 text-[#1C1917]" />
                 <span>Focus Time</span>
+                <span className="text-[10px] text-stone-400 font-normal lowercase">(dbl-click for custom)</span>
               </div>
               <div className="flex flex-wrap gap-1">
                 {[15, 30, 45, 60, 90, 120, 180, 240, 300, 360, 480].map((mins) => (
@@ -359,6 +377,14 @@ export default function AddTaskInput({
                     key={mins}
                     type="button"
                     onClick={() => handleDurationChange(mins)}
+                    onDoubleClick={() => {
+                      handleDurationChange(mins)
+                      setTimeout(() => {
+                        customDurationInputRef.current?.focus()
+                        customDurationInputRef.current?.select()
+                      }, 50)
+                    }}
+                    title={`Set ${formatDuration(mins)} • Double-click to customize`}
                     className={`text-xs px-2.5 py-1 rounded-lg border font-mono font-bold transition-all cursor-pointer ${
                       duration === mins
                         ? 'bg-[#FEF08A] border-[#1C1917] text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917]'
@@ -372,6 +398,7 @@ export default function AddTaskInput({
               <div className="flex items-center gap-1.5 mt-2 pt-1 border-t border-[#E5E0D8]/60">
                 <span className="text-[11px] font-medium text-[#78716C]">Custom:</span>
                 <input
+                  ref={customDurationInputRef}
                   type="number"
                   min="1"
                   max="1440"
