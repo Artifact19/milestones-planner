@@ -5,11 +5,9 @@ import {
   Upload,
   Trash2,
   Calendar,
-  CheckCircle2,
   Clock,
   TrendingUp,
   BarChart3,
-  Award,
   Sparkles,
   LogOut,
   Loader2,
@@ -183,18 +181,18 @@ export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
       {/* Click outside to close backdrop */}
       <div className="fixed inset-0 -z-10" onClick={onClose} />
 
-      <div className="bg-[#FAF8F5] border border-[#E5E0D8] rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
+      <div className="bg-[#FAF8F5] border-2 border-[#1C1917] rounded-3xl max-w-4xl w-full max-h-[92vh] overflow-hidden flex flex-col shadow-[6px_6px_0px_#1C1917] animate-in zoom-in-95 duration-200">
         {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-[#E5E0D8] bg-white flex items-center justify-between">
+        <div className="px-6 py-4 border-b-2 border-[#1C1917] bg-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-[#1C1917] text-[#FAF8F5] flex items-center justify-center text-xs font-serif font-bold shadow-sm">
+            <div className="w-8 h-8 rounded-xl bg-[#FEF08A] border-2 border-[#1C1917] text-[#1C1917] flex items-center justify-center text-xs font-serif font-black shadow-[1.5px_1.5px_0px_#1C1917]">
               M
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-[#1C1917] tracking-tight">
+              <h2 className="text-base sm:text-lg font-black text-[#1C1917] tracking-tight">
                 Profile & Analytics
               </h2>
-              <p className="text-xs text-[#78716C]">
+              <p className="text-xs text-[#78716C] font-semibold">
                 Milestone completion history and per-task time audit
               </p>
             </div>
@@ -204,142 +202,128 @@ export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="p-1.5 rounded-full hover:bg-[#FAF8F5] border border-transparent hover:border-[#E5E0D8] text-stone-400 hover:text-[#1C1917] transition-all cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-[#FAF8F5] border-2 border-transparent hover:border-[#1C1917] text-stone-500 hover:text-[#1C1917] transition-all cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 stroke-[2.5]" />
           </button>
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
-          {/* Section 1: Profile Photo & Account Card */}
-          <div className="bg-white border border-[#E5E0D8] rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-center sm:items-start gap-4">
-            {/* Avatar with Upload Hover Trigger */}
-            <div className="relative group shrink-0">
-              <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-[#E5E0D8] shadow-md bg-[#F2EFE9] flex items-center justify-center">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt="Profile Avatar"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-2xl font-bold font-serif text-[#1C1917]">
-                    {userInitial}
-                  </span>
-                )}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
+          {/* Section 1: Space-Efficient Account Bar */}
+          <div className="bg-white border-2 border-[#1C1917] rounded-2xl p-3 sm:p-4 shadow-[2.5px_2.5px_0px_#1C1917] flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              {/* Avatar with Upload Hover Trigger */}
+              <div className="relative group shrink-0">
+                <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] bg-[#F2EFE9] flex items-center justify-center">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="Profile Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-lg font-black font-serif text-[#1C1917]">
+                      {userInitial}
+                    </span>
+                  )}
+                </div>
+
+                {/* Upload Overlay Button */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  title="Change profile picture"
+                  className="absolute inset-0 rounded-xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white cursor-pointer"
+                >
+                  {isUploading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Camera className="w-4 h-4" />
+                  )}
+                </button>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
               </div>
 
-              {/* Upload Overlay Button */}
+              {/* Account Details & Quick Stats */}
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-black text-[#1C1917] truncate">
+                    {user?.email?.split('@')[0] || 'Architect'}
+                  </h3>
+                  <span className="text-[11px] font-mono text-[#78716C] truncate hidden md:inline">
+                    ({user?.email})
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-[#57534E] mt-0.5">
+                  <span className="font-bold text-[#1C1917]">
+                    {completedAll}/{totalAll} done
+                  </span>
+                  <span>•</span>
+                  <span className="font-bold text-[#224A32]">
+                    {overallPercent}% rate
+                  </span>
+                  <span>•</span>
+                  <span className="font-semibold text-[#695431]">
+                    {formatDuration(totalFocusMinutes)} focus
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions: Photo, Logout */}
+            <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                title="Change profile picture"
-                className="absolute inset-0 rounded-2xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-semibold cursor-pointer gap-0.5"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#FEF08A] border-2 border-[#1C1917] text-[#1C1917] text-xs font-bold shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
               >
-                {isUploading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    <Camera className="w-5 h-5" />
-                    <span>Upload</span>
-                  </>
-                )}
+                <Upload className="w-3.5 h-3.5 stroke-[2]" />
+                <span>{avatarUrl ? 'Change Photo' : 'Upload Photo'}</span>
               </button>
 
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
+              <button
+                type="button"
+                onClick={() => {
+                  onClose()
+                  signOut()
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FECDD3] hover:bg-[#FDA4AF] border-2 border-[#1C1917] text-[#9F1239] text-xs font-black shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Log Out</span>
+              </button>
+
+              {avatarUrl && (
+                <button
+                  type="button"
+                  onClick={handleRemoveAvatar}
+                  title="Remove custom photo"
+                  className="p-1.5 rounded-xl bg-white hover:bg-rose-50 border-2 border-[#1C1917] text-stone-400 hover:text-rose-600 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
-            {/* Profile Info & Actions */}
-            <div className="flex-1 text-center sm:text-left min-w-0">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div>
-                  <h3 className="text-sm sm:text-base font-bold text-[#1C1917] truncate">
-                    {user?.email?.split('@')[0] || 'Architect'}
-                  </h3>
-                  <p className="text-xs text-[#78716C] truncate mt-0.5">{user?.email}</p>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1 sm:pt-0">
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#FEF08A] border-2 border-[#1C1917] text-[#1C1917] text-xs font-bold shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
-                  >
-                    <Upload className="w-3.5 h-3.5 stroke-[2]" />
-                    <span>{avatarUrl ? 'Change Photo' : 'Upload Photo'}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onClose()
-                      signOut()
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FECDD3] hover:bg-[#FDA4AF] border-2 border-[#1C1917] text-[#9F1239] text-xs font-black shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
-                  >
-                    <LogOut className="w-3.5 h-3.5 stroke-[2.5]" />
-                    <span>Log Out</span>
-                  </button>
-
-                  {avatarUrl && (
-                    <button
-                      type="button"
-                      onClick={handleRemoveAvatar}
-                      title="Remove custom photo"
-                      className="p-1.5 rounded-full bg-white hover:bg-rose-50 border border-[#E5E0D8] text-stone-400 hover:text-rose-600 transition-colors cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {uploadSuccess && (
-                <p className="text-xs text-emerald-700 font-medium mt-2 animate-in fade-in">
-                  ✓ Profile photo updated successfully!
-                </p>
-              )}
-
-              {uploadError && (
-                <p className="text-xs text-rose-600 font-medium mt-2">{uploadError}</p>
-              )}
-
-              {/* Quick High-Level Stats Strip */}
-              <div className="mt-3 pt-3 border-t border-[#E5E0D8]/80 flex flex-wrap items-center justify-center sm:justify-start gap-3 sm:gap-4 text-xs">
-                <span className="flex items-center gap-1 text-[#57534E]">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#224A32]" />
-                  <span className="font-semibold text-[#1C1917]">{completedAll}</span>
-                  <span>/{totalAll} completed</span>
-                </span>
-                <span className="text-stone-300">•</span>
-                <span className="flex items-center gap-1 text-[#57534E]">
-                  <Clock className="w-3.5 h-3.5 text-[#695431]" />
-                  <span className="font-semibold text-[#1C1917]">
-                    {formatDuration(getCategoryMinutes(totalFocusByCategory, totalFocusMinutes))}
-                  </span>
-                  <span>
-                    {focusCategory === 'all'
-                      ? 'completed focus'
-                      : `${activeCategoryConfig.shortLabel} focus`}
-                  </span>
-                </span>
-                <span className="text-stone-300">•</span>
-                <span className="flex items-center gap-1 text-[#57534E]">
-                  <Award className="w-3.5 h-3.5 text-[#1C1917]" />
-                  <span className="font-bold text-[#1C1917]">{overallPercent}%</span>
-                  <span>overall rate</span>
-                </span>
-              </div>
-            </div>
+            {uploadSuccess && (
+              <p className="w-full text-xs text-emerald-700 font-bold animate-in fade-in">
+                ✓ Profile photo updated successfully!
+              </p>
+            )}
+            {uploadError && (
+              <p className="w-full text-xs text-rose-600 font-bold">{uploadError}</p>
+            )}
           </div>
 
           {/* Section 2: Tab Navigation for Analytics */}
@@ -402,186 +386,193 @@ export default function ProfileModal({ isOpen, onClose, onOpenTutorial }) {
               </p>
             </div>
           ) : activeTab === 'monthly' ? (
-            /* =================== MONTHLY GRAPH =================== */
-            <div className="bg-white border border-[#E5E0D8] rounded-2xl p-5 shadow-sm space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            /* =================== MONTHLY GRAPH (ZERO-SCROLLING, HIGH CLARITY) =================== */
+            <div className="bg-white border-2 border-[#1C1917] rounded-3xl p-4 sm:p-6 shadow-[3px_3px_0px_#1C1917] space-y-4">
+              {/* Header with Title, Legend & Best Month */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b-2 border-[#1C1917]/10">
                 <div>
-                  <h4 className="font-bold text-sm text-[#1C1917] tracking-tight">
-                    Monthly Milestone Completion (%)
-                  </h4>
-                  <p className="text-xs text-[#78716C]">
-                    Percentage of planned tasks marked completed across months
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-[#1C1917]" />
+                    <h4 className="font-black text-base text-[#1C1917] tracking-tight">
+                      Monthly Milestone Completion ({currentYear})
+                    </h4>
+                  </div>
+                  <p className="text-xs text-[#78716C] font-semibold mt-0.5">
+                    Click any month bar to inspect its exact tasks, hours, and weekly breakdown
                   </p>
                 </div>
 
-                {bestMonth && (
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF4EB] border border-[#E8DAC5] text-[#695431] text-xs font-medium self-start sm:self-auto">
-                    <Sparkles className="w-3.5 h-3.5 text-[#695431]" />
-                    <span>
-                      Best Month: <strong className="font-bold">{bestMonth.monthShort} ({bestMonth.percent}%)</strong>
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  {/* Legend */}
+                  <div className="hidden sm:flex items-center gap-2 text-[10px] font-mono font-bold bg-[#FAF8F5] px-2.5 py-1 rounded-xl border border-[#1C1917]/25">
+                    <span className="flex items-center gap-1 text-[#16A34A]">
+                      <span className="w-2 h-2 rounded-full bg-[#16A34A]" /> ≥80%
+                    </span>
+                    <span className="flex items-center gap-1 text-[#CA8A04]">
+                      <span className="w-2 h-2 rounded-full bg-[#EAB308]" /> ≥50%
+                    </span>
+                    <span className="flex items-center gap-1 text-[#1C1917]">
+                      <span className="w-2 h-2 rounded-full bg-[#1C1917]" /> &lt;50%
+                    </span>
+                    <span className="flex items-center gap-1 text-[#A8A29E]">
+                      <span className="w-2 h-2 rounded-full bg-stone-300" /> 0%
                     </span>
                   </div>
-                )}
+
+                  {bestMonth && (
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#FEF08A] border-2 border-[#1C1917] text-[#1C1917] text-xs font-black shadow-[1.5px_1.5px_0px_#1C1917]">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>
+                        Best: {bestMonth.monthShort} ({bestMonth.percent}%)
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Architectural Bar Chart */}
-              <div className="overflow-x-auto pb-2 -mx-1 px-1">
-                <div className="relative pt-6 pb-2 min-w-[420px] sm:min-w-0">
-                  {/* Horizontal Guide Lines */}
-                  <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-40 pb-7">
-                    <div className="border-b border-dashed border-[#E5E0D8] w-full relative">
-                      <span className="absolute -top-2.5 right-0 text-[10px] font-mono text-stone-400">100%</span>
-                    </div>
-                    <div className="border-b border-dashed border-[#E5E0D8] w-full relative">
-                      <span className="absolute -top-2.5 right-0 text-[10px] font-mono text-stone-400">75%</span>
-                    </div>
-                    <div className="border-b border-dashed border-[#E5E0D8] w-full relative">
-                      <span className="absolute -top-2.5 right-0 text-[10px] font-mono text-stone-400">50%</span>
-                    </div>
-                    <div className="border-b border-dashed border-[#E5E0D8] w-full relative">
-                      <span className="absolute -top-2.5 right-0 text-[10px] font-mono text-stone-400">25%</span>
-                    </div>
-                    <div className="border-b border-[#E5E0D8] w-full relative">
-                      <span className="absolute -top-2.5 right-0 text-[10px] font-mono text-stone-400">0%</span>
-                    </div>
+              {/* Chart Container — NO SCROLLING, perfectly responsive across all 12 months */}
+              <div className="w-full pt-2 select-none">
+                <div className="flex gap-1.5 sm:gap-2.5 h-48 sm:h-52">
+                  {/* Y-Axis Labels (Left) */}
+                  <div className="w-8 sm:w-9 flex flex-col justify-between items-end pb-8 text-[10px] font-mono font-bold text-stone-400 shrink-0">
+                    <span>100%</span>
+                    <span>75%</span>
+                    <span>50%</span>
+                    <span>25%</span>
+                    <span>0%</span>
                   </div>
 
-                  {/* Bars Container */}
-                  <div className="relative z-10 grid grid-cols-12 gap-1 sm:gap-2 h-44 items-end px-1 sm:px-2">
-                    {monthlyList.map((m) => {
-                      const isSelected = m.monthIndex === selectedMonthIndex
-                      const heightPercent = m.total > 0 ? Math.max(m.percent, 6) : 0
+                  {/* Chart Grid Area */}
+                  <div className="flex-1 relative h-full flex flex-col justify-between">
+                    {/* Horizontal Guide Lines */}
+                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-8">
+                      <div className="border-b border-dashed border-[#E5E0D8] w-full" />
+                      <div className="border-b border-dashed border-[#E5E0D8] w-full" />
+                      <div className="border-b border-dashed border-[#E5E0D8] w-full" />
+                      <div className="border-b border-dashed border-[#E5E0D8] w-full" />
+                      <div className="border-b-2 border-[#1C1917] w-full" />
+                    </div>
 
-                      // Dynamic bar colors based on achievement
-                      let barColor = 'bg-[#1C1917]'
-                      let badgeBg = 'bg-[#1C1917] text-white'
+                    {/* 12 Month Columns */}
+                    <div className="relative z-10 w-full h-full grid grid-cols-12 gap-0.5 sm:gap-1.5 pb-1">
+                      {monthlyList.map((m) => {
+                        const isSelected = m.monthIndex === selectedMonthIndex
+                        const hasData = m.total > 0
+                        const heightPercent = hasData ? Math.max(m.percent, 8) : 0
 
-                      if (m.percent >= 80) {
-                        barColor = 'bg-[#224A32]'
-                        badgeBg = 'bg-[#224A32] text-white'
-                      } else if (m.percent >= 50) {
-                        barColor = 'bg-[#695431]'
-                        badgeBg = 'bg-[#695431] text-white'
-                      } else if (m.total > 0) {
-                        barColor = 'bg-[#78716C]'
-                        badgeBg = 'bg-[#78716C] text-white'
-                      }
+                        let barBg = 'bg-[#1C1917]'
+                        let badgeBg = 'bg-[#1C1917] text-white'
+                        if (m.percent >= 80) {
+                          barBg = 'bg-[#16A34A]'
+                          badgeBg = 'bg-[#16A34A] text-white'
+                        } else if (m.percent >= 50) {
+                          barBg = 'bg-[#EAB308]'
+                          badgeBg = 'bg-[#EAB308] text-[#1C1917]'
+                        }
 
-                      return (
-                        <button
-                          key={m.monthIndex}
-                          type="button"
-                          onClick={() => setSelectedMonthIndex(m.monthIndex)}
-                          className={`group flex flex-col items-center h-full justify-end cursor-pointer transition-all ${
-                            isSelected ? 'scale-[1.03]' : 'opacity-85 hover:opacity-100'
-                          }`}
-                        >
-                          {/* Floating Percentage Badge above bar */}
-                          <div className="h-5 flex items-center justify-center mb-1">
-                            {m.total > 0 ? (
+                        return (
+                          <button
+                            key={m.monthIndex}
+                            type="button"
+                            onClick={() => setSelectedMonthIndex(m.monthIndex)}
+                            title={`${m.monthFull} ${currentYear}: ${m.completed}/${m.total} completed (${m.percent}%), ${formatDuration(m.focusMinutes)} focus`}
+                            className={`group flex flex-col items-center justify-between h-full pt-1 pb-1 rounded-xl transition-all cursor-pointer ${
+                              isSelected
+                                ? 'bg-[#FEF08A]/35 border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917]'
+                                : 'hover:bg-[#FAF8F5] border border-transparent'
+                            }`}
+                          >
+                            {/* Floating percentage badge */}
+                            <div className="h-5 flex items-center justify-center">
+                              {hasData ? (
+                                <span
+                                  className={`text-[9px] sm:text-[10px] font-mono font-black px-1 sm:px-1.5 py-0.5 rounded-md border border-[#1C1917] transition-all shadow-[0.5px_0.5px_0px_#1C1917] ${
+                                    isSelected ? 'bg-[#FEF08A] text-[#1C1917]' : badgeBg
+                                  }`}
+                                >
+                                  {m.percent}%
+                                </span>
+                              ) : (
+                                <span className="text-[9px] font-mono text-stone-300 opacity-60">—</span>
+                              )}
+                            </div>
+
+                            {/* The Bar Pillar (h-28 container) */}
+                            <div className="w-full flex-1 flex flex-col justify-end items-center px-0.5">
+                              {hasData ? (
+                                <div
+                                  style={{ height: `${heightPercent}%` }}
+                                  className={`w-full max-w-[24px] sm:max-w-[32px] rounded-t-lg border-2 border-[#1C1917] transition-all duration-500 ease-out shadow-[1.5px_0px_0px_#1C1917] group-hover:brightness-110 ${barBg} ${
+                                    isSelected ? 'ring-2 ring-[#1C1917]' : ''
+                                  }`}
+                                />
+                              ) : (
+                                /* Clean minimalist baseline tick — NO giant empty pill! */
+                                <div className="w-2.5 sm:w-3.5 h-1 rounded-full bg-stone-300 mb-0.5" />
+                              )}
+                            </div>
+
+                            {/* Month Name Tag */}
+                            <div className="w-full text-center mt-1">
                               <span
-                                className={`text-[9px] font-mono font-bold px-1 py-0.2 rounded-full transition-all ${
-                                  isSelected ? badgeBg : 'bg-stone-100 text-stone-600'
+                                className={`text-[10px] sm:text-xs font-bold block transition-all truncate px-0.5 ${
+                                  isSelected
+                                    ? 'bg-[#1C1917] text-[#FEF08A] font-black py-0.5 rounded-md shadow-xs'
+                                    : hasData
+                                    ? 'text-[#1C1917] font-black'
+                                    : 'text-[#78716C]'
                                 }`}
                               >
-                                {m.percent}%
+                                {m.monthShort}
                               </span>
-                            ) : (
-                              <span className="text-[9px] font-mono text-stone-300">—</span>
-                            )}
-                          </div>
-
-                          {/* The Pillar / Bar */}
-                          <div className="w-full max-w-[28px] h-32 bg-[#FAF8F5] rounded-xl p-0.5 border border-[#E5E0D8] flex flex-col justify-end overflow-hidden">
-                            {m.total > 0 ? (
-                              <div
-                                style={{ height: `${heightPercent}%` }}
-                                className={`w-full rounded-lg transition-all duration-500 ease-out shadow-sm ${barColor} ${
-                                  isSelected ? 'ring-2 ring-stone-900/20' : ''
-                                }`}
-                              />
-                            ) : (
-                              <div className="w-full h-1 bg-stone-200/60 rounded-full" />
-                            )}
-                          </div>
-
-                          {/* Month Label */}
-                          <div className="mt-2 text-center">
-                            <span
-                              className={`text-[10px] sm:text-[11px] font-semibold block ${
-                                isSelected
-                                  ? 'text-[#1C1917] underline decoration-2 underline-offset-4 font-bold'
-                                  : 'text-[#78716C]'
-                              }`}
-                            >
-                              {m.monthShort}
-                            </span>
-                            {m.isCurrent && (
-                              <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#224A32] mt-0.5" title="Current Month" />
-                            )}
-                          </div>
-                        </button>
-                      )
-                    })}
+                              {m.isCurrent && (
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#16A34A] mt-0.5" title="Current Month" />
+                              )}
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Selected Month Detail Highlight Box */}
+              {/* Clarifying Selected Month Interactive Banner */}
               {activeMonthData && (
-                <div className="bg-[#FAF8F5] border border-[#E5E0D8] rounded-2xl p-3 sm:p-3.5 text-xs">
-                  <div className="flex flex-wrap items-center justify-between gap-2.5">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-[#E5E0D8] text-[#1C1917] font-bold font-mono text-xs shadow-2xs whitespace-nowrap">
-                        <Calendar className="w-3.5 h-3.5 text-[#224A32]" />
-                        <span>{activeMonthData.monthFull} {currentYear}</span>
+                <div className="bg-[#FAF8F5] border-2 border-[#1C1917] rounded-2xl p-3.5 sm:p-4 shadow-[2px_2px_0px_#1C1917] text-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-[#1C1917]" />
+                        <h5 className="font-black text-sm text-[#1C1917]">
+                          {activeMonthData.monthFull} {currentYear}
+                        </h5>
                         {activeMonthData.isCurrent && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#224A32] ml-0.5 animate-pulse" title="Current Month" />
+                          <span className="px-2 py-0.5 rounded-md bg-[#BBF7D0] border border-[#1C1917] text-[10px] font-mono font-black text-[#1C1917]">
+                            Current Month
+                          </span>
                         )}
                       </div>
-                      <span className="text-[#78716C] text-xs">
+                      <p className="text-[11px] text-[#57534E] font-medium">
                         {activeMonthData.total > 0
-                          ? `${activeMonthData.completed} of ${activeMonthData.total} tasks completed`
-                          : 'No milestones recorded for this month'}
-                      </span>
+                          ? `You completed ${activeMonthData.completed} of ${activeMonthData.total} planned milestones (${activeMonthData.percent}% consistency) with ${formatDuration(activeMonthData.focusMinutes)} logged.`
+                          : `No milestones recorded for ${activeMonthData.monthFull}. Click Oct or Nov above to inspect your active months.`}
+                      </p>
                     </div>
 
-                    <div className="flex items-center gap-2 font-mono">
-                      <span className="px-2.5 py-1 rounded-full bg-white border border-[#E5E0D8] text-[#1C1917] font-bold">
-                        Completion: {activeMonthData.percent}%
+                    <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+                      <span className="px-3 py-1 rounded-xl bg-white border-2 border-[#1C1917] font-black text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917]">
+                        {activeMonthData.completed}/{activeMonthData.total} Tasks ({activeMonthData.percent}%)
                       </span>
-                      {activeMonthData.focusMinutes > 0 && (
-                        <span
-                          className={`px-2.5 py-1 rounded-full border font-semibold flex items-center gap-1.5 shadow-xs transition-all ${
-                            focusCategory === 'career'
-                              ? 'bg-[#EBF2EC] border-[#CFE1D3] text-[#224A32]'
-                              : focusCategory === 'college'
-                              ? 'bg-[#ECEAF0] border-[#DBD6E3] text-[#3E364E]'
-                              : focusCategory === 'personal'
-                              ? 'bg-[#F4ECE1] border-[#E8DAC5] text-[#635032]'
-                              : 'bg-[#EBF2EC] border-[#CFE1D3] text-[#224A32]'
-                          }`}
-                          title={`${activeCategoryConfig.label}: ${formatDuration(
-                            getCategoryMinutes(activeMonthData.focusByCategory, activeMonthData.focusMinutes)
-                          )} completed in ${activeMonthData.monthFull}`}
-                        >
-                          <Clock className="w-3 h-3" />
-                          <span>
-                            {formatDuration(
-                              getCategoryMinutes(activeMonthData.focusByCategory, activeMonthData.focusMinutes)
-                            )}
-                          </span>
-                          <span className="text-[10px] font-sans font-bold opacity-80 uppercase tracking-wider">
-                            {activeCategoryConfig.shortLabel}
-                          </span>
-                        </span>
-                      )}
+                      <span className="px-3 py-1 rounded-xl bg-[#BBF7D0] border-2 border-[#1C1917] font-black text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917]">
+                        {formatDuration(activeMonthData.focusMinutes)} Focus
+                      </span>
                     </div>
                   </div>
                 </div>
               )}
             </div>
-          ) : (
+                    ) : (
             /* =================== YEARLY GRAPH & QUARTERS =================== */
             <div className="bg-white border border-[#E5E0D8] rounded-2xl p-5 shadow-sm space-y-6">
               <div>
