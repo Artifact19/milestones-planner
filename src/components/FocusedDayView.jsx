@@ -424,13 +424,31 @@ export default function FocusedDayView({
           <div className="mt-5 pt-1 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-y-3 gap-x-4 text-xs sm:text-sm">
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                {/* Focus */}
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917]">
+                {/* Focus: Completed Focus / Total Planned Focus */}
+                <div
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917]"
+                  title={`Focus completed: ${formatDuration(dayStats.completedFocusMinutes || 0)} of ${formatDuration(dayStats.focusMinutes)} planned (${dayStats.focusMinutes > 0 ? Math.round(((dayStats.completedFocusMinutes || 0) / dayStats.focusMinutes) * 100) : 0}%)`}
+                >
                   <Clock className="w-3.5 h-3.5 text-[#1C1917] shrink-0" />
                   <span className="text-[#78716C] font-medium">Focus:</span>
                   <span className="font-mono font-black text-[#1C1917]">
-                    {formatDuration(dayStats.focusMinutes)}
+                    {dayStats.focusMinutes > 0 ? (
+                      <>
+                        <span className={dayStats.completedFocusMinutes > 0 ? 'text-[#166534]' : 'text-[#1C1917]'}>
+                          {formatDuration(dayStats.completedFocusMinutes || 0)}
+                        </span>
+                        <span className="text-[#78716C] font-normal mx-1">/</span>
+                        <span>{formatDuration(dayStats.focusMinutes)}</span>
+                      </>
+                    ) : (
+                      '0m'
+                    )}
                   </span>
+                  {dayStats.focusMinutes > 0 && (
+                    <span className="text-[11px] font-mono font-bold text-[#78716C]">
+                      ({Math.round(((dayStats.completedFocusMinutes || 0) / dayStats.focusMinutes) * 100)}%)
+                    </span>
+                  )}
                 </div>
 
                 {/* Breaks */}
