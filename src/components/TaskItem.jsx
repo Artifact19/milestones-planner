@@ -229,17 +229,33 @@ export default function TaskItem({
         break_minutes: finalBreak,
         tag: editTag
       }
-      if (onRepeatAcrossDays) {
-        onRepeatAcrossDays(task.id, editRepeatDays, updates)
-      } else {
-        onEdit(
-          task.id,
-          updates,
-          {
-            updateEntireWeek: isConnectedSeries && updateEntireWeek,
+      const syncEntireWeek = isConnectedSeries && updateEntireWeek
+      const repeatDaysChanged =
+        editRepeatDays.length !== connectedDays.length ||
+        editRepeatDays.some((d, idx) => d !== connectedDays[idx])
+
+      if (repeatDaysChanged) {
+        if (onRepeatAcrossDays) {
+          onRepeatAcrossDays(task.id, editRepeatDays, updates, {
+            updateEntireWeek: syncEntireWeek
+          })
+        } else if (onEdit) {
+          onEdit(task.id, updates, {
+            updateEntireWeek: syncEntireWeek,
             repeatDays: editRepeatDays
-          }
-        )
+          })
+        }
+      } else {
+        // Repeat days did not change: update this milestone directly, respecting syncEntireWeek
+        if (onEdit) {
+          onEdit(task.id, updates, {
+            updateEntireWeek: syncEntireWeek
+          })
+        } else if (onRepeatAcrossDays) {
+          onRepeatAcrossDays(task.id, editRepeatDays, updates, {
+            updateEntireWeek: syncEntireWeek
+          })
+        }
       }
     }
     setIsEditing(false)

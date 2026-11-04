@@ -315,12 +315,15 @@ export function useMilestones(weekStart) {
 
   // Repeat an existing milestone across multiple days in the current week (or modify repeat days)
   const repeatMilestoneAcrossDays = useCallback(
-    async (id, targetDays, updates = {}) => {
+    async (id, targetDays, updates = {}, options = {}) => {
       if (!user || String(id).startsWith('temp-')) return
 
       const previousMilestones = milestones
       const targetItem = milestones.find((m) => m.id === id)
       if (!targetItem) return
+
+      const shouldUpdateWeek =
+        options?.updateEntireWeek !== undefined ? Boolean(options.updateEntireWeek) : true
 
       // Clean & sort target days (0..7)
       const validDays =
@@ -352,6 +355,53 @@ export function useMilestones(weekStart) {
       seriesItems.forEach((item) => {
         existingByDay.set(item.day_of_week, item)
       })
+
+      // Check if repeat days actually changed
+      const existingDays = Array.from(existingByDay.keys()).sort((a, b) => a - b)
+      const daysChanged =
+        validDays.length !== existingDays.length ||
+        validDays.some((d, idx) => d !== existingDays[idx])
+
+      // If repeat days did not change and user unchecked updateEntireWeek, update ONLY targetItem!
+      if (!daysChanged && !shouldUpdateWeek) {
+        const baseTitle = updates.title !== undefined ? updates.title.trim() : targetItem.title
+        const baseDuration =
+          updates.duration_minutes !== undefined
+            ? updates.duration_minutes
+            : (targetItem.duration_minutes ?? 30)
+        const baseBreak =
+          updates.break_minutes !== undefined
+            ? updates.break_minutes
+            : (targetItem.break_minutes ?? 5)
+        const baseTag = updates.tag !== undefined ? updates.tag : (targetItem.tag || 'career')
+
+        const singleUpdate = {
+          title: baseTitle,
+          duration_minutes: baseDuration,
+          break_minutes: baseBreak,
+          tag: baseTag
+        }
+
+        setMilestones((prev) => {
+          const updated = prev.map((m) => (m.id === targetItem.id ? { ...m, ...singleUpdate } : m))
+          const savedOrder = getStoredOrder(user.id, weekStartDateString)
+          return sortMilestonesBySavedOrder(updated, savedOrder)
+        })
+
+        try {
+          const { error: singleErr } = await supabase
+            .from('milestones')
+            .update(singleUpdate)
+            .eq('id', targetItem.id)
+            .eq('user_id', user.id)
+
+          if (singleErr) throw singleErr
+        } catch (err) {
+          setMilestones(previousMilestones)
+          setError(`Could not update task: ${err.message || 'Network error'}`)
+        }
+        return
+      }
 
       // Identify days to insert and tasks to delete
       const daysToInsert = validDays.filter((d) => !existingByDay.has(d))
@@ -421,7 +471,7 @@ export function useMilestones(weekStart) {
               day_of_week: targetNewDay !== undefined ? targetNewDay : m.day_of_week
             }
           }
-          if (tasksToUpdate.some((u) => u.id === m.id)) {
+          if (shouldUpdateWeek && tasksToUpdate.some((u) => u.id === m.id)) {
             return {
               ...m,
               ...payloadUpdates
@@ -456,9 +506,9 @@ export function useMilestones(weekStart) {
           .eq('user_id', user.id)
         if (targetErr) throw targetErr
 
-        // 3. Update other existing series items
+        // 3. Update other existing series items (ONLY if shouldUpdateWeek is true)
         const otherIds = tasksToUpdate.filter((t) => t.id !== targetItem.id).map((t) => t.id)
-        if (otherIds.length > 0) {
+        if (shouldUpdateWeek && otherIds.length > 0) {
           const { error: otherErr } = await supabase
             .from('milestones')
             .update(payloadUpdates)
@@ -497,7 +547,7 @@ export function useMilestones(weekStart) {
       if (!user || String(id).startsWith('temp-')) return
 
       if (options?.repeatDays && Array.isArray(options.repeatDays)) {
-        return repeatMilestoneAcrossDays(id, options.repeatDays, updates)
+        return repeatMilestoneAcrossDays(id, options.repeatDays, updates, options)
       }
 
       const previousMilestones = milestones
