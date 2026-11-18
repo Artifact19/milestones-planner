@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { toDateString } from '../utils/dateUtils'
+import { toDateString, getTaskPriority } from '../utils/dateUtils'
 import { useAuth } from '../context/AuthContext'
 
 // Generates a UUID (used to link repeating tasks together as one "series")
@@ -59,6 +59,12 @@ function sortMilestonesBySavedOrder(items, orderMap) {
       const bDone = Boolean(b.is_completed);
       if (aDone !== bDone) {
         return aDone ? 1 : -1;
+      }
+      if (!aDone && !bDone) {
+        const prioDiff = getTaskPriority(a).level - getTaskPriority(b).level;
+        if (prioDiff !== 0) {
+          return prioDiff;
+        }
       }
       const orderA = idToOrder.has(a.id) ? idToOrder.get(a.id) : 999999;
       const orderB = idToOrder.has(b.id) ? idToOrder.get(b.id) : 999999;

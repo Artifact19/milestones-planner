@@ -31,8 +31,18 @@ import {
   getTodayDayNumber,
   getMonday,
   isSameWeek,
-  normalizeCategory
+  normalizeCategory,
+  getTaskPriority,
+  setTaskPriority
 } from '../utils/dateUtils'
+
+function syncMovedTaskPriority(movedTask, targetTask) {
+  if (!movedTask || !targetTask || movedTask.is_completed || targetTask.is_completed) return
+  const targetPrio = getTaskPriority(targetTask).level
+  if (getTaskPriority(movedTask).level !== targetPrio) {
+    setTaskPriority(movedTask, targetPrio, false, false)
+  }
+}
 
 
 function reorderTaskList(list, sourceId, targetId, position) {
@@ -115,6 +125,10 @@ export default function FocusedDayView({
       const targetList = isWeeklyList ? weeklyTasks : tasks;
       const targetDay = isWeeklyList ? 0 : selectedDay;
 
+      const movedTask = targetList.find((t) => t.id === draggedItem.id);
+      const targetTask = targetList.find((t) => t.id === finalTargetId);
+      syncMovedTaskPriority(movedTask, targetTask);
+
       const updatedList = reorderTaskList(targetList, draggedItem.id, finalTargetId, finalPosition);
       if (onReorderTasks) {
         onReorderTasks(targetDay, updatedList);
@@ -140,8 +154,10 @@ export default function FocusedDayView({
     const newIndex = currentIndex + direction;
     if (newIndex < 0 || newIndex >= targetList.length) return;
 
+    const adjacentTask = targetList[newIndex];
     const nextList = [...targetList];
     const [moved] = nextList.splice(currentIndex, 1);
+    syncMovedTaskPriority(moved, adjacentTask);
     nextList.splice(newIndex, 0, moved);
 
     const incomplete = nextList.filter((t) => !t.is_completed);

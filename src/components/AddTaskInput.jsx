@@ -15,8 +15,11 @@ import {
   getDefaultBreakMinutes,
   TAG_OPTIONS,
   HIGHLIGHTER_OPTIONS,
-  setTaskHighlighter
+  PRIORITY_OPTIONS,
+  setTaskHighlighter,
+  setTaskPriority
 } from '../utils/dateUtils'
+import { EditorialPriorityIcon } from './TaskItem'
 
 export default function AddTaskInput({
   selectedDay = null,
@@ -29,6 +32,7 @@ export default function AddTaskInput({
   const [breakMinutes, setBreakMinutes] = useState(5)
   const [selectedTag, setSelectedTag] = useState('career')
   const [selectedHighlight, setSelectedHighlight] = useState(null)
+  const [selectedPriority, setSelectedPriority] = useState(3)
   const [showOptions, setShowOptions] = useState(false)
   const [isRecurring, setIsRecurring] = useState(false)
   const [selectedDays, setSelectedDays] = useState(() =>
@@ -109,6 +113,7 @@ export default function AddTaskInput({
     const finalDuration = Math.max(1, Math.min(1440, Number(duration) || 30))
     const finalBreak = Math.max(0, Math.min(240, Number(breakMinutes) || 0))
 
+    setTaskPriority({ title: trimmed }, selectedPriority, true, !selectedHighlight)
     if (selectedHighlight) {
       setTaskHighlighter({ title: trimmed }, selectedHighlight, true)
     }
@@ -124,6 +129,7 @@ export default function AddTaskInput({
     setShowOptions(false)
     setIsRecurring(false)
     setSelectedHighlight(null)
+    setSelectedPriority(3)
     if (inputRef.current) {
       inputRef.current.focus()
     }
@@ -337,7 +343,7 @@ export default function AddTaskInput({
             </div>
           </div>
 
-          {/* Tag & Highlighter Selectors */}
+          {/* Tag, Priority & Highlighter Selectors */}
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="text-[11px] font-black text-[#1C1917] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
@@ -362,6 +368,42 @@ export default function AddTaskInput({
                       {tag.id === 'college' && <BookOpen className="w-3 h-3" />}
                       {tag.id === 'personal' && <Sparkles className="w-3 h-3" />}
                       <span>{tag.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-[11px] font-black text-[#1C1917] uppercase tracking-wider mb-1.5">
+                <span>Priority</span>
+              </div>
+              <div
+                className="inline-flex flex-wrap items-center gap-1 bg-white border-2 border-[#1C1917] rounded-xl p-1 shadow-[2px_2px_0px_#1C1917]"
+                role="group"
+                aria-label="Priority tier"
+              >
+                {PRIORITY_OPTIONS.map((opt) => {
+                  const isSelected = selectedPriority === opt.level
+                  return (
+                    <button
+                      key={opt.level}
+                      type="button"
+                      onClick={() => setSelectedPriority(opt.level)}
+                      title={`${opt.code} ${opt.label}`}
+                      style={
+                        isSelected
+                          ? { backgroundColor: opt.badgeBg, color: opt.badgeText }
+                          : undefined
+                      }
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        isSelected
+                          ? 'border border-[#1C1917] font-black shadow-[1px_1px_0px_#1C1917]'
+                          : 'text-[#57534E] hover:bg-stone-100'
+                      }`}
+                    >
+                      <EditorialPriorityIcon type={opt.icon} className="w-3 h-3" />
+                      <span>{opt.code} {opt.label}</span>
                     </button>
                   )
                 })}

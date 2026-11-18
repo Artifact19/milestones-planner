@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, Component } from 'react'
+import { useState, useMemo, useCallback, useEffect, useSyncExternalStore, Component } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { Analytics } from '@vercel/analytics/react'
 import AuthPage from './components/AuthPage'
@@ -8,7 +8,15 @@ import ProfileModal from './components/ProfileModal'
 import ReportModal from './components/ReportModal'
 import TutorialModal from './components/TutorialModal'
 import { useMilestones } from './hooks/useMilestones'
-import { getMonday, addWeeks, getTodayDayNumber, formatWeekRange } from './utils/dateUtils'
+import {
+  getMonday,
+  addWeeks,
+  getTodayDayNumber,
+  formatWeekRange,
+  getTaskPriority,
+  getPriorityStorageSnapshot,
+  subscribeTaskHighlighters
+} from './utils/dateUtils'
 import { X, AlertTriangle, Loader2, CheckCircle2, ArrowRight } from 'lucide-react'
 
 function TrackerMain() {
@@ -143,21 +151,36 @@ function TrackerMain() {
     }
   }, [selectedDay])
 
-  // Filter tasks for the selected day view: incomplete tasks above, completed tasks below
-  const currentTasks = useMemo(() => {
-    const dayTasks = milestones.filter((m) => m.day_of_week === selectedDay)
-    const incomplete = dayTasks.filter((t) => !t.is_completed)
-    const completed = dayTasks.filter((t) => Boolean(t.is_completed))
-    return [...incomplete, ...completed]
-  }, [milestones, selectedDay])
+  const prioritySnapshot = useSyncExternalStore(
+    subscribeTaskHighlighters,
+    getPriorityStorageSnapshot
+  )
 
-  // Weekly master milestones (day_of_week === 0): incomplete tasks above, completed tasks below
+  const sortTasksByPriorityAndCompletion = useCallback(
+    (list) => {
+      if (prioritySnapshot === null) return list
+      const incomplete = list
+        .filter((t) => !t.is_completed)
+        .sort((a, b) => getTaskPriority(a).level - getTaskPriority(b).level)
+      const completed = list.filter((t) => Boolean(t.is_completed))
+      return [...incomplete, ...completed]
+    },
+    [prioritySnapshot]
+  )
+
+  // Filter tasks for the selected day view: incomplete tasks sorted by priority above completed tasks
+  const currentTasks = useMemo(() => {
+    return sortTasksByPriorityAndCompletion(
+      milestones.filter((m) => m.day_of_week === selectedDay)
+    )
+  }, [milestones, selectedDay, sortTasksByPriorityAndCompletion])
+
+  // Weekly master milestones (day_of_week === 0): incomplete tasks sorted by priority above completed tasks
   const weeklyTasks = useMemo(() => {
-    const masterTasks = milestones.filter((m) => m.day_of_week === 0)
-    const incomplete = masterTasks.filter((t) => !t.is_completed)
-    const completed = masterTasks.filter((t) => Boolean(t.is_completed))
-    return [...incomplete, ...completed]
-  }, [milestones])
+    return sortTasksByPriorityAndCompletion(
+      milestones.filter((m) => m.day_of_week === 0)
+    )
+  }, [milestones, sortTasksByPriorityAndCompletion])
 
   const currentDayStats = useMemo(() => {
     return getDayStats(selectedDay)

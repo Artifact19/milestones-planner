@@ -163,7 +163,16 @@ export const HIGHLIGHTER_OPTIONS = [
 ]
 
 const HIGHLIGHT_STORAGE_KEY = 'milestones_task_highlights_v1'
+const PRIORITY_STORAGE_KEY = 'milestones_task_priorities_v1'
 const SHORT_CONNECTOR_WORDS = new Set(['for', 'to', 'of', 'in', 'on', 'and', 'the', 'a', 'with', '&'])
+
+// Priority tiers with editorial icon identifiers and matching pastel highlighter colors
+export const PRIORITY_OPTIONS = [
+  { level: 1, id: 'p1', code: 'P1', label: 'Prime', icon: 'spark', defaultColor: 'rose', badgeBg: '#FECDD3', badgeText: '#9F1239' },
+  { level: 2, id: 'p2', code: 'P2', label: 'High', icon: 'diamond', defaultColor: 'peach', badgeBg: '#FED7AA', badgeText: '#9A3412' },
+  { level: 3, id: 'p3', code: 'P3', label: 'Core', icon: 'orbit', defaultColor: 'yellow', badgeBg: '#FEF08A', badgeText: '#1C1917' },
+  { level: 4, id: 'p4', code: 'P4', label: 'Ease', icon: 'botanical', defaultColor: 'mint', badgeBg: '#BBF7D0', badgeText: '#166534' }
+]
 
 // Extract a short scannable prefix from long task titles for the highlighter pill
 export function splitTaskTitleForHighlight(title = '') {
@@ -194,24 +203,58 @@ export function splitTaskTitleForHighlight(title = '') {
   }
 }
 
-function readHighlightMap() {
+function readTaskMap(storageKey) {
   if (typeof window === 'undefined') return {}
   try {
-    const raw = window.localStorage.getItem(HIGHLIGHT_STORAGE_KEY)
+    const raw = window.localStorage.getItem(storageKey)
     return raw ? JSON.parse(raw) : {}
   } catch {
     return {}
   }
 }
 
-function writeHighlightMap(map) {
+function writeTaskMap(storageKey, map, shouldDispatch = true) {
   if (typeof window === 'undefined') return
   try {
-    window.localStorage.setItem(HIGHLIGHT_STORAGE_KEY, JSON.stringify(map))
-    window.dispatchEvent(new CustomEvent('milestones-highlight-change'))
+    window.localStorage.setItem(storageKey, JSON.stringify(map))
+    if (shouldDispatch) {
+      window.dispatchEvent(new CustomEvent('milestones-highlight-change'))
+    }
   } catch {
     // ignore storage quota errors
   }
+}
+
+function lookupTaskMapValue(map, task) {
+  const normTitle = String(task?.title || '').trim().toLowerCase()
+  return (
+    (task?.id && map[`id:${task.id}`]) ||
+    (task?.series_id && map[`series:${task.series_id}`]) ||
+    (normTitle && map[`title:${normTitle}`]) ||
+    null
+  )
+}
+
+function saveTaskMapValue(storageKey, task, value, syncSeries = true, shouldDispatch = true) {
+  const map = readTaskMap(storageKey)
+  const normTitle = String(task?.title || '').trim().toLowerCase()
+
+  if (syncSeries) {
+    if (task?.series_id) {
+      map[`series:${task.series_id}`] = value
+      // Remove any stale per-task override on this card so it stays synced with the series
+      if (task?.id) delete map[`id:${task.id}`]
+    } else if (task?.id) {
+      map[`id:${task.id}`] = value
+    }
+    if (normTitle) {
+      map[`title:${normTitle}`] = value
+    }
+  } else if (task?.id) {
+    map[`id:${task.id}`] = value
+  }
+
+  writeTaskMap(storageKey, map, shouldDispatch)
 }
 
 function findHighlighterById(colorId) {
@@ -228,17 +271,13 @@ function hashSeed(str) {
 }
 
 export function getTaskHighlighter(task) {
-  const map = readHighlightMap()
-  const normTitle = String(task?.title || '').trim().toLowerCase()
-
-  const storedId =
-    (task?.id && map[`id:${task.id}`]) ||
-    (task?.series_id && map[`series:${task.series_id}`]) ||
-    (normTitle && map[`title:${normTitle}`])
+  const map = readTaskMap(HIGHLIGHT_STORAGE_KEY)
+  const storedId = lookupTaskMapValue(map, task)
 
   const matched = findHighlighterById(storedId)
   if (matched) return matched
 
+  const normTitle = String(task?.title || '').trim().toLowerCase()
   const { prefix } = splitTaskTitleForHighlight(task?.title || '')
   const seed = String(task?.series_id || prefix.toLowerCase() || normTitle || task?.id || 'default')
   return HIGHLIGHTER_OPTIONS[hashSeed(seed) % HIGHLIGHTER_OPTIONS.length]
@@ -246,25 +285,33 @@ export function getTaskHighlighter(task) {
 
 export function setTaskHighlighter(task, colorId, syncSeries = true) {
   if (!findHighlighterById(colorId)) return
-  const map = readHighlightMap()
-  const normTitle = String(task?.title || '').trim().toLowerCase()
+  saveTaskMapValue(HIGHLIGHT_STORAGE_KEY, task, colorId, syncSeries, true)
+}
 
-  if (syncSeries) {
-    if (task?.series_id) {
-      map[`series:${task.series_id}`] = colorId
-      // Remove any stale per-task override on this card so it stays synced with the series
-      if (task?.id) delete map[`id:${task.id}`]
-    } else if (task?.id) {
-      map[`id:${task.id}`] = colorId
-    }
-    if (normTitle) {
-      map[`title:${normTitle}`] = colorId
-    }
-  } else if (task?.id) {
-    map[`id:${task.id}`] = colorId
+export function getTaskPriority(task) {
+  const map = readTaskMap(PRIORITY_STORAGE_KEY)
+  const storedLevel = Number(lookupTaskMapValue(map, task))
+  return PRIORITY_OPTIONS.find((p) => p.level === storedLevel) || PRIORITY_OPTIONS[2]
+}
+
+export function setTaskPriority(task, level, syncSeries = true, syncColor = true) {
+  const tier = PRIORITY_OPTIONS.find((p) => p.level === Number(level))
+  if (!tier) return
+
+  // When also syncing color, defer event dispatch until highlighter write so subscribers re-read both atomically
+  saveTaskMapValue(PRIORITY_STORAGE_KEY, task, tier.level, syncSeries, !syncColor)
+  if (syncColor) {
+    setTaskHighlighter(task, tier.defaultColor, syncSeries)
   }
+}
 
-  writeHighlightMap(map)
+export function getPriorityStorageSnapshot() {
+  if (typeof window === 'undefined') return ''
+  try {
+    return window.localStorage.getItem(PRIORITY_STORAGE_KEY) || ''
+  } catch {
+    return ''
+  }
 }
 
 export function subscribeTaskHighlighters(callback) {

@@ -21,11 +21,66 @@ import {
   TAG_OPTIONS,
   DAY_NAMES,
   HIGHLIGHTER_OPTIONS,
+  PRIORITY_OPTIONS,
   splitTaskTitleForHighlight,
   getTaskHighlighter,
   setTaskHighlighter,
+  getTaskPriority,
+  setTaskPriority,
   subscribeTaskHighlighters
 } from '../utils/dateUtils'
+
+/** Crisp editorial geometric symbols for task priority tiers. */
+export function EditorialPriorityIcon({ type, className = 'w-3.5 h-3.5' }) {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" className={className}>
+      {type === 'spark' && (
+        <path
+          d="M8 1L9.9 6.1L15 8L9.9 9.9L8 15L6.1 9.9L1 8L6.1 6.1Z"
+          fill="currentColor"
+          stroke="#1C1917"
+          strokeWidth="1.4"
+          strokeLinejoin="round"
+        />
+      )}
+      {type === 'diamond' && (
+        <>
+          <path
+            d="M8 1.5L14.5 8L8 14.5L1.5 8Z"
+            fill="currentColor"
+            stroke="#1C1917"
+            strokeWidth="1.4"
+            strokeLinejoin="round"
+          />
+          <circle cx="8" cy="8" r="1.8" fill="#1C1917" />
+        </>
+      )}
+      {type === 'orbit' && (
+        <>
+          <circle cx="8" cy="8" r="6" fill="currentColor" stroke="#1C1917" strokeWidth="1.4" />
+          <circle cx="8" cy="8" r="2.2" fill="#1C1917" />
+        </>
+      )}
+      {type === 'botanical' && (
+        <>
+          <path
+            d="M13.5 2.5C7.5 2.5 2.5 7.5 2.5 13.5C8.5 13.5 13.5 8.5 13.5 2.5Z"
+            fill="currentColor"
+            stroke="#1C1917"
+            strokeWidth="1.4"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M2.5 13.5L9.5 6.5"
+            stroke="#1C1917"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+          />
+        </>
+      )}
+    </svg>
+  )
+}
 
 const DURATION_PRESETS = [
   { value: 15, label: '15m focus' },
@@ -297,6 +352,13 @@ export default function TaskItem({
   const activeHighlighter =
     HIGHLIGHTER_OPTIONS.find((h) => h.id === activeHighlightId) || HIGHLIGHTER_OPTIONS[0]
 
+  const activePriorityLevel = useSyncExternalStore(
+    subscribeTaskHighlighters,
+    () => getTaskPriority(task).level
+  )
+  const activePriority =
+    PRIORITY_OPTIONS.find((p) => p.level === activePriorityLevel) || PRIORITY_OPTIONS[2]
+
   const titleParts = useMemo(() => splitTaskTitleForHighlight(task.title), [task.title])
 
   const cardHighlightStyle =
@@ -306,32 +368,6 @@ export default function TaskItem({
           borderLeft: `5px solid ${activeHighlighter.accent}`
         }
       : undefined
-
-  const renderColorDots = (syncSeries, containerClass) => (
-    <div className={containerClass} aria-label="Highlighter color" data-no-drag>
-      {HIGHLIGHTER_OPTIONS.map((h) => {
-        const isSelected = activeHighlighter.id === h.id
-        return (
-          <button
-            key={h.id}
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              setTaskHighlighter(task, h.id, syncSeries)
-            }}
-            title={`Highlight: ${h.name}`}
-            aria-label={`Highlight ${h.name}`}
-            className={`w-3.5 h-3.5 rounded-full border border-[#1C1917] transition-transform cursor-pointer ${
-              isSelected
-                ? 'scale-115 ring-2 ring-[#1C1917]/30'
-                : 'opacity-70 hover:opacity-100 hover:scale-110'
-            }`}
-            style={{ backgroundColor: h.marker }}
-          />
-        )
-      })}
-    </div>
-  )
 
   return (
     <div
@@ -583,11 +619,6 @@ export default function TaskItem({
                 ))}
               </select>
 
-              {renderColorDots(
-                updateEntireWeek,
-                'inline-flex items-center gap-1 bg-white border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg px-2 py-1'
-              )}
-
               <button
                 type="button"
                 onClick={handleSaveEdit}
@@ -606,6 +637,71 @@ export default function TaskItem({
               >
                 Cancel
               </button>
+            </div>
+
+            {/* Priority Tier & Highlighter Color Controls (shown while editing) */}
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <div
+                className="inline-flex items-center gap-1 bg-white border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg px-2 py-0.5"
+                role="group"
+                aria-label="Priority tier"
+              >
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#78716C] mr-0.5">
+                  Priority:
+                </span>
+                {PRIORITY_OPTIONS.map((opt) => {
+                  const isSelected = activePriority.level === opt.level
+                  return (
+                    <button
+                      key={opt.level}
+                      type="button"
+                      onClick={() => setTaskPriority(task, opt.level, updateEntireWeek, true)}
+                      title={`${opt.code} ${opt.label}`}
+                      aria-label={`Set priority ${opt.code} ${opt.label}`}
+                      style={
+                        isSelected
+                          ? { backgroundColor: opt.badgeBg, color: opt.badgeText }
+                          : undefined
+                      }
+                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                        isSelected
+                          ? 'border border-[#1C1917] font-black shadow-[1px_1px_0px_#1C1917]'
+                          : 'text-[#57534E] hover:bg-stone-100'
+                      }`}
+                    >
+                      <EditorialPriorityIcon type={opt.icon} className="w-3 h-3" />
+                      <span>{opt.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div
+                className="inline-flex items-center gap-1.5 bg-white border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg px-2.5 py-1"
+                aria-label="Highlighter color"
+              >
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#78716C]">
+                  Color:
+                </span>
+                {HIGHLIGHTER_OPTIONS.map((h) => {
+                  const isSelected = activeHighlighter.id === h.id
+                  return (
+                    <button
+                      key={h.id}
+                      type="button"
+                      onClick={() => setTaskHighlighter(task, h.id, updateEntireWeek)}
+                      title={`Highlighter: ${h.name}`}
+                      aria-label={`Highlight ${h.name}`}
+                      className={`w-3.5 h-3.5 rounded-full border border-[#1C1917] transition-transform cursor-pointer ${
+                        isSelected
+                          ? 'scale-115 ring-2 ring-[#1C1917]/30'
+                          : 'opacity-70 hover:opacity-100 hover:scale-110'
+                      }`}
+                      style={{ backgroundColor: h.marker }}
+                    />
+                  )
+                })}
+              </div>
             </div>
 
             {/* Repeat Across Multiple Days Selector */}
@@ -753,6 +849,29 @@ export default function TaskItem({
               </div>
             )}
 
+            {/* Queue Stamp (#order + editorial symbol) for incomplete tasks */}
+            {!task.is_completed && (
+              <button
+                type="button"
+                data-no-drag
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const nextLevel = (activePriority.level % 4) + 1
+                  setTaskPriority(task, nextLevel, true, true)
+                }}
+                title={`Queue #${index + 1} • ${activePriority.code} ${activePriority.label} (Click to cycle priority)`}
+                aria-label={`Queue ${index + 1}, priority ${activePriority.label}, click to change`}
+                style={{
+                  backgroundColor: activePriority.badgeBg,
+                  color: activePriority.badgeText
+                }}
+                className="shrink-0 mt-0.5 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] hover:scale-105 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none font-mono font-black text-xs transition-all cursor-pointer select-none"
+              >
+                <span>#{index + 1}</span>
+                <EditorialPriorityIcon type={activePriority.icon} className="w-3 h-3" />
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handleCheckboxClick}
@@ -851,13 +970,6 @@ export default function TaskItem({
                   )}
                 </span>
               )}
-
-              {/* 1-Click Highlighter Color Dots */}
-              {!task.is_completed &&
-                renderColorDots(
-                  true,
-                  'inline-flex items-center gap-1 px-1.5 py-1 rounded-md bg-white/80 border border-[#1C1917]/25'
-                )}
             </div>
 
             {/* Right section: Move to Day / Edit / Delete */}
