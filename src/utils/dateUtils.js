@@ -154,24 +154,26 @@ export const FOCUS_CATEGORY_OPTIONS = [
 
 // Curated light highlighter shades harmonized with the #F8F6F0 / #1C1917 neo-brutalist palette
 export const HIGHLIGHTER_OPTIONS = [
+  { id: 'rose', name: 'Rose Quartz', card: '#FFF1F2', marker: '#FECDD3', accent: '#F43F5E' },
+  { id: 'peach', name: 'Peach Apricot', card: '#FFF7ED', marker: '#FED7AA', accent: '#F97316' },
   { id: 'yellow', name: 'Sunburst Yellow', card: '#FEFCE8', marker: '#FEF08A', accent: '#EAB308' },
   { id: 'mint', name: 'Mint Sage', card: '#F0FDF4', marker: '#BBF7D0', accent: '#22C55E' },
   { id: 'sky', name: 'Sky Breeze', card: '#F0F9FF', marker: '#BAE6FD', accent: '#0EA5E9' },
-  { id: 'violet', name: 'Lavender Mist', card: '#FAF5FF', marker: '#E9D5FF', accent: '#A855F7' },
-  { id: 'peach', name: 'Peach Apricot', card: '#FFF7ED', marker: '#FED7AA', accent: '#F97316' },
-  { id: 'rose', name: 'Rose Quartz', card: '#FFF1F2', marker: '#FECDD3', accent: '#F43F5E' }
+  { id: 'violet', name: 'Lavender Mist', card: '#FAF5FF', marker: '#E9D5FF', accent: '#A855F7' }
 ]
 
 const HIGHLIGHT_STORAGE_KEY = 'milestones_task_highlights_v1'
 const PRIORITY_STORAGE_KEY = 'milestones_task_priorities_v1'
 const SHORT_CONNECTOR_WORDS = new Set(['for', 'to', 'of', 'in', 'on', 'and', 'the', 'a', 'with', '&'])
 
-// Priority tiers with editorial icon identifiers and matching pastel highlighter colors
+// 6 priority tiers mapped 1-to-1 with cool editorial line-art symbols and pastel colors
 export const PRIORITY_OPTIONS = [
-  { level: 1, id: 'p1', code: 'P1', label: 'Prime', icon: 'spark', defaultColor: 'rose', badgeBg: '#FECDD3', badgeText: '#9F1239' },
-  { level: 2, id: 'p2', code: 'P2', label: 'High', icon: 'diamond', defaultColor: 'peach', badgeBg: '#FED7AA', badgeText: '#9A3412' },
-  { level: 3, id: 'p3', code: 'P3', label: 'Core', icon: 'orbit', defaultColor: 'yellow', badgeBg: '#FEF08A', badgeText: '#1C1917' },
-  { level: 4, id: 'p4', code: 'P4', label: 'Ease', icon: 'botanical', defaultColor: 'mint', badgeBg: '#BBF7D0', badgeText: '#166534' }
+  { level: 1, id: 'p1', code: 'P1', label: 'Crown', icon: 'crown', defaultColor: 'rose', card: '#FFF1F2', marker: '#FECDD3', accent: '#F43F5E', badgeBg: '#FECDD3', badgeText: '#9F1239' },
+  { level: 2, id: 'p2', code: 'P2', label: 'Bolt', icon: 'bolt', defaultColor: 'peach', card: '#FFF7ED', marker: '#FED7AA', accent: '#F97316', badgeBg: '#FED7AA', badgeText: '#9A3412' },
+  { level: 3, id: 'p3', code: 'P3', label: 'Saturn', icon: 'planet', defaultColor: 'yellow', card: '#FEFCE8', marker: '#FEF08A', accent: '#EAB308', badgeBg: '#FEF08A', badgeText: '#854D0E' },
+  { level: 4, id: 'p4', code: 'P4', label: 'Wing', icon: 'glider', defaultColor: 'mint', card: '#F0FDF4', marker: '#BBF7D0', accent: '#22C55E', badgeBg: '#BBF7D0', badgeText: '#166534' },
+  { level: 5, id: 'p5', code: 'P5', label: 'Prism', icon: 'hourglass', defaultColor: 'sky', card: '#F0F9FF', marker: '#BAE6FD', accent: '#0EA5E9', badgeBg: '#BAE6FD', badgeText: '#0369A1' },
+  { level: 6, id: 'p6', code: 'P6', label: 'Moon', icon: 'crescent', defaultColor: 'violet', card: '#FAF5FF', marker: '#E9D5FF', accent: '#A855F7', badgeBg: '#E9D5FF', badgeText: '#5B21B6' }
 ]
 
 // Extract a short scannable prefix from long task titles for the highlighter pill
@@ -261,26 +263,23 @@ function findHighlighterById(colorId) {
   return HIGHLIGHTER_OPTIONS.find((h) => h.id === colorId) || null
 }
 
-function hashSeed(str) {
-  let hash = 2166136261
-  for (let i = 0; i < str.length; i += 1) {
-    hash ^= str.charCodeAt(i)
-    hash = Math.imul(hash, 16777619)
-  }
-  return hash >>> 0
+export function getStoredTaskPriorityLevel(task) {
+  const map = readTaskMap(PRIORITY_STORAGE_KEY)
+  const raw = lookupTaskMapValue(map, task)
+  if (raw === null || raw === undefined || raw === '') return null
+  const num = Number(raw)
+  return Number.isInteger(num) && num >= 1 ? num : null
 }
 
-export function getTaskHighlighter(task) {
-  const map = readTaskMap(HIGHLIGHT_STORAGE_KEY)
-  const storedId = lookupTaskMapValue(map, task)
+export function getTaskPriority(task, fallbackIndex = 0) {
+  const stored = getStoredTaskPriorityLevel(task)
+  const effectiveRank = stored !== null ? stored : Math.max(0, Number(fallbackIndex) || 0) + 1
+  return PRIORITY_OPTIONS[(effectiveRank - 1) % PRIORITY_OPTIONS.length]
+}
 
-  const matched = findHighlighterById(storedId)
-  if (matched) return matched
-
-  const normTitle = String(task?.title || '').trim().toLowerCase()
-  const { prefix } = splitTaskTitleForHighlight(task?.title || '')
-  const seed = String(task?.series_id || prefix.toLowerCase() || normTitle || task?.id || 'default')
-  return HIGHLIGHTER_OPTIONS[hashSeed(seed) % HIGHLIGHTER_OPTIONS.length]
+export function getTaskHighlighter(task, fallbackIndex = 0) {
+  const prio = getTaskPriority(task, fallbackIndex)
+  return findHighlighterById(prio.defaultColor) || HIGHLIGHTER_OPTIONS[0]
 }
 
 export function setTaskHighlighter(task, colorId, syncSeries = true) {
@@ -288,21 +287,46 @@ export function setTaskHighlighter(task, colorId, syncSeries = true) {
   saveTaskMapValue(HIGHLIGHT_STORAGE_KEY, task, colorId, syncSeries, true)
 }
 
-export function getTaskPriority(task) {
-  const map = readTaskMap(PRIORITY_STORAGE_KEY)
-  const storedLevel = Number(lookupTaskMapValue(map, task))
-  return PRIORITY_OPTIONS.find((p) => p.level === storedLevel) || PRIORITY_OPTIONS[2]
-}
-
 export function setTaskPriority(task, level, syncSeries = true, syncColor = true) {
-  const tier = PRIORITY_OPTIONS.find((p) => p.level === Number(level))
-  if (!tier) return
+  const num = Number(level)
+  if (!Number.isInteger(num) || num < 1) return
+  const tier = PRIORITY_OPTIONS[(num - 1) % PRIORITY_OPTIONS.length]
 
   // When also syncing color, defer event dispatch until highlighter write so subscribers re-read both atomically
-  saveTaskMapValue(PRIORITY_STORAGE_KEY, task, tier.level, syncSeries, !syncColor)
+  saveTaskMapValue(PRIORITY_STORAGE_KEY, task, num, syncSeries, !syncColor)
   if (syncColor) {
     setTaskHighlighter(task, tier.defaultColor, syncSeries)
   }
+}
+
+export function syncTaskPrioritiesForOrder(incompleteTasks = []) {
+  if (!Array.isArray(incompleteTasks) || incompleteTasks.length === 0) return
+  const prioMap = readTaskMap(PRIORITY_STORAGE_KEY)
+  const hlMap = readTaskMap(HIGHLIGHT_STORAGE_KEY)
+
+  incompleteTasks.forEach((task, idx) => {
+    if (!task?.id) return
+    const tier = PRIORITY_OPTIONS[idx % PRIORITY_OPTIONS.length]
+    prioMap[`id:${task.id}`] = idx + 1
+    hlMap[`id:${task.id}`] = tier.defaultColor
+  })
+
+  writeTaskMap(PRIORITY_STORAGE_KEY, prioMap, false)
+  writeTaskMap(HIGHLIGHT_STORAGE_KEY, hlMap, true)
+}
+
+/** Stable-sort incomplete tasks by explicit priority rank while preserving fallback order for unprioritized items. */
+export function sortIncompleteByPriority(incompleteList = []) {
+  const indexMap = new Map(incompleteList.map((t, idx) => [t.id, idx]))
+  return [...incompleteList].sort((a, b) => {
+    const pA = getStoredTaskPriorityLevel(a)
+    const pB = getStoredTaskPriorityLevel(b)
+    const rankA = pA !== null ? pA : (indexMap.get(a.id) ?? 0) + 1
+    const rankB = pB !== null ? pB : (indexMap.get(b.id) ?? 0) + 1
+    if (rankA !== rankB) return rankA - rankB
+    if ((pA !== null) !== (pB !== null)) return pA !== null ? -1 : 1
+    return (indexMap.get(a.id) ?? 0) - (indexMap.get(b.id) ?? 0)
+  })
 }
 
 export function getPriorityStorageSnapshot() {

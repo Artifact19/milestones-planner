@@ -27,10 +27,10 @@ export default function TopBar({
   const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : 'U'
 
   return (
-    <header className="sticky top-0 z-20 bg-[#F8F6F0] border-b-2 border-[#1C1917] transition-colors">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 lg:gap-4 flex-nowrap overflow-x-auto no-scrollbar">
+    <header className="sticky top-0 z-20 bg-[#F8F6F0]/95 backdrop-blur-xs border-b border-[#1C1917]/20 sm:border-b-2 sm:border-[#1C1917] transition-colors">
+      <div className="max-w-7xl mx-auto px-2.5 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-1.5 sm:gap-2 lg:gap-4">
         {/* Left: Brand Logo */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={onGoHome}
@@ -38,7 +38,7 @@ export default function TopBar({
             className="flex items-center gap-2.5 text-left group cursor-pointer"
           >
             {/* Website Icon */}
-            <div className="w-8 h-8 rounded-xl bg-white border-2 border-[#1C1917] p-1 flex items-center justify-center shadow-[2px_2px_0px_#1C1917] group-hover:bg-[#FEF08A] transition-all overflow-hidden shrink-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-white border border-[#1C1917]/40 sm:border-2 sm:border-[#1C1917] p-1 flex items-center justify-center shadow-none sm:shadow-[2px_2px_0px_#1C1917] group-hover:bg-[#FEF08A] transition-all overflow-hidden shrink-0">
               <img
                 src="/favicon.png"
                 alt="Milestones Website Icon"
@@ -59,7 +59,7 @@ export default function TopBar({
         {/* Center: Week Switcher & Unified Stats Badge */}
         <div
           data-tour="week-switcher"
-          className="flex items-center gap-1.5 sm:gap-2.5 shrink-0"
+          className="flex items-center gap-1.5 sm:gap-2.5 min-w-0"
         >
           <WeekSwitcher
             weekStart={weekStart}
@@ -68,10 +68,10 @@ export default function TopBar({
             onCurrentWeek={onCurrentWeek}
           />
 
-          {/* Unified Compact Completion & Time Budget Pill */}
+          {/* Unified Compact Completion & Time Budget Pill (shown on md+ screens; mobile uses day summary card) */}
           <div
             title={`Week Progress: ${completed} of ${total} tasks completed (${percent}%)`}
-            className="font-mono text-xs font-bold px-3 py-1.5 rounded-xl border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] bg-[#BBF7D0] text-[#1C1917] whitespace-nowrap flex items-center gap-2"
+            className="hidden md:flex font-mono text-xs font-bold px-3 py-1.5 rounded-xl border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] bg-[#BBF7D0] text-[#1C1917] whitespace-nowrap items-center gap-2"
           >
             <span className="flex items-center gap-1">
               <span>{percent}%</span>
@@ -104,7 +104,7 @@ export default function TopBar({
             type="button"
             onClick={onGoHome}
             title="Go to Today (Homepage)"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1C1917] hover:bg-black text-[#FAF8F5] text-xs font-bold border-2 border-[#1C1917] shadow-[2px_2px_0px_#78716C] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer whitespace-nowrap"
+            className="flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-[#1C1917] hover:bg-black text-[#FAF8F5] text-xs font-bold border border-[#1C1917] sm:border-2 shadow-none sm:shadow-[2px_2px_0px_#78716C] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer whitespace-nowrap"
           >
             <Home className="w-3.5 h-3.5" />
             <span className="hidden xl:inline">Today</span>
@@ -115,7 +115,7 @@ export default function TopBar({
             data-tour="reports-btn"
             onClick={onOpenReport}
             title="Download Reports (Weekly, Monthly, Yearly)"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#FEF08A] border-2 border-[#1C1917] text-[#1C1917] text-xs font-bold shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer group whitespace-nowrap"
+            className="flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-white hover:bg-[#FEF08A] border border-[#1C1917]/30 sm:border-2 sm:border-[#1C1917] text-[#1C1917] text-xs font-bold shadow-none sm:shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer group whitespace-nowrap"
           >
             <Download className="w-3.5 h-3.5 text-[#57534E] group-hover:text-[#1C1917]" />
             <span className="hidden xl:inline">Reports</span>
@@ -125,7 +125,7 @@ export default function TopBar({
             type="button"
             onClick={onOpenTutorial}
             title="App Tutorial & Feature Guide"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#FEF08A] border-2 border-[#1C1917] text-[#1C1917] text-xs font-bold shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer group whitespace-nowrap"
+            className="flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-white hover:bg-[#FEF08A] border border-[#1C1917]/30 sm:border-2 sm:border-[#1C1917] text-[#1C1917] text-xs font-bold shadow-none sm:shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer group whitespace-nowrap"
           >
             <HelpCircle className="w-3.5 h-3.5 text-[#57534E] group-hover:text-[#1C1917]" />
             <span className="hidden xl:inline">Tour</span>
@@ -136,7 +136,7 @@ export default function TopBar({
             data-tour="analytics-btn"
             onClick={onOpenProfile}
             title="Profile & Milestone Analytics"
-            className="flex items-center gap-1.5 p-1 pl-1.5 pr-2 sm:pr-2.5 rounded-xl bg-white hover:bg-[#FEF08A] border-2 border-[#1C1917] text-[#1C1917] text-xs font-bold shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer group whitespace-nowrap"
+            className="flex items-center gap-1 sm:gap-1.5 p-1 pl-1 pr-1.5 sm:pl-1.5 sm:pr-2.5 rounded-lg sm:rounded-xl bg-white hover:bg-[#FEF08A] border border-[#1C1917]/30 sm:border-2 sm:border-[#1C1917] text-[#1C1917] text-xs font-bold shadow-none sm:shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer group whitespace-nowrap"
           >
             {avatarUrl ? (
               <img

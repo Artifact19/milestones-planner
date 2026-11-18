@@ -32,16 +32,19 @@ import {
   getMonday,
   isSameWeek,
   normalizeCategory,
-  getTaskPriority,
-  setTaskPriority
+  syncTaskPrioritiesForOrder
 } from '../utils/dateUtils'
 
-function syncMovedTaskPriority(movedTask, targetTask) {
-  if (!movedTask || !targetTask || movedTask.is_completed || targetTask.is_completed) return
-  const targetPrio = getTaskPriority(targetTask).level
-  if (getTaskPriority(movedTask).level !== targetPrio) {
-    setTaskPriority(movedTask, targetPrio, false, false)
-  }
+function renderCompletedDivider(completedCount) {
+  return (
+    <div className="flex items-center gap-2 pt-2.5 pb-0.5 text-xs font-bold text-[#78716C] select-none">
+      <div className="h-[1.5px] flex-1 bg-[#1C1917]/15 rounded-full" />
+      <span className="font-mono text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-[#78716C] bg-white px-2.5 py-0.5 rounded-md border border-[#1C1917]/20 shadow-xs">
+        Completed ({completedCount})
+      </span>
+      <div className="h-[1.5px] flex-1 bg-[#1C1917]/15 rounded-full" />
+    </div>
+  )
 }
 
 
@@ -125,11 +128,8 @@ export default function FocusedDayView({
       const targetList = isWeeklyList ? weeklyTasks : tasks;
       const targetDay = isWeeklyList ? 0 : selectedDay;
 
-      const movedTask = targetList.find((t) => t.id === draggedItem.id);
-      const targetTask = targetList.find((t) => t.id === finalTargetId);
-      syncMovedTaskPriority(movedTask, targetTask);
-
       const updatedList = reorderTaskList(targetList, draggedItem.id, finalTargetId, finalPosition);
+      syncTaskPrioritiesForOrder(updatedList.filter((t) => !t.is_completed));
       if (onReorderTasks) {
         onReorderTasks(targetDay, updatedList);
       }
@@ -142,31 +142,6 @@ export default function FocusedDayView({
   const handleDragEnd = () => {
     setDraggedItem(null);
     setDropTarget(null);
-  };
-
-  const handleMoveRelative = (taskId, direction, listType = 'day') => {
-    const isWeeklyList = listType === 'weekly';
-    const targetList = isWeeklyList ? weeklyTasks : tasks;
-    const targetDay = isWeeklyList ? 0 : selectedDay;
-
-    const currentIndex = targetList.findIndex((t) => t.id === taskId);
-    if (currentIndex === -1) return;
-    const newIndex = currentIndex + direction;
-    if (newIndex < 0 || newIndex >= targetList.length) return;
-
-    const adjacentTask = targetList[newIndex];
-    const nextList = [...targetList];
-    const [moved] = nextList.splice(currentIndex, 1);
-    syncMovedTaskPriority(moved, adjacentTask);
-    nextList.splice(newIndex, 0, moved);
-
-    const incomplete = nextList.filter((t) => !t.is_completed);
-    const completed = nextList.filter((t) => Boolean(t.is_completed));
-    const finalList = [...incomplete, ...completed];
-
-    if (onReorderTasks) {
-      onReorderTasks(targetDay, finalList);
-    }
   };
 
   const isWeeklyMaster = selectedDay === 0
@@ -281,23 +256,23 @@ export default function FocusedDayView({
   }
 
   return (
-    <div className="flex-1 flex flex-col gap-6 min-w-0 pb-16">
-      {/* Neo-Brutalist Segmented Days Strip & Stepper */}
+    <div className="flex-1 flex flex-col gap-4 sm:gap-6 min-w-0 pb-16">
+      {/* Segmented Days Navigation (8-col compact grid on mobile, spacious bar on sm+) */}
       <div
         data-tour="day-strip"
-        className="flex flex-wrap items-center justify-between gap-2 bg-white border-2 border-[#1C1917] rounded-2xl p-1.5 shadow-[2.5px_2.5px_0px_#1C1917]"
+        className="flex items-center justify-between gap-2 bg-white border border-[#1C1917]/25 sm:border-2 sm:border-[#1C1917] rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-xs sm:shadow-[2.5px_2.5px_0px_#1C1917]"
       >
         {/* Direct Day Selector Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
+        <div className="grid grid-cols-8 gap-1 w-full sm:w-auto sm:flex sm:items-center sm:gap-1 py-0.5">
           {[
-            { num: 0, label: 'Wk', name: 'Weekly Master' },
-            { num: 1, label: 'Mon', name: 'Monday' },
-            { num: 2, label: 'Tue', name: 'Tuesday' },
-            { num: 3, label: 'Wed', name: 'Wednesday' },
-            { num: 4, label: 'Thu', name: 'Thursday' },
-            { num: 5, label: 'Fri', name: 'Friday' },
-            { num: 6, label: 'Sat', name: 'Saturday' },
-            { num: 7, label: 'Sun', name: 'Sunday' }
+            { num: 0, label: 'Wk', mobileLabel: 'Wk', name: 'Weekly Master' },
+            { num: 1, label: 'Mon', mobileLabel: 'M', name: 'Monday' },
+            { num: 2, label: 'Tue', mobileLabel: 'T', name: 'Tuesday' },
+            { num: 3, label: 'Wed', mobileLabel: 'W', name: 'Wednesday' },
+            { num: 4, label: 'Thu', mobileLabel: 'T', name: 'Thursday' },
+            { num: 5, label: 'Fri', mobileLabel: 'F', name: 'Friday' },
+            { num: 6, label: 'Sat', mobileLabel: 'S', name: 'Saturday' },
+            { num: 7, label: 'Sun', mobileLabel: 'S', name: 'Sunday' }
           ].map((d) => {
             const isSelected = selectedDay === d.num
             const isTodayDay = isCurrentWeek && d.num === todayDayNumber
@@ -307,24 +282,28 @@ export default function FocusedDayView({
                 type="button"
                 onClick={() => onSelectDay?.(d.num)}
                 title={d.name}
-                className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                className={`relative flex items-center justify-center gap-1 px-1 sm:px-3 py-1.5 sm:py-1 rounded-lg sm:rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                   isSelected
-                    ? 'bg-[#FEF08A] text-[#1C1917] border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] font-black'
-                    : 'bg-white hover:bg-stone-50 text-[#57534E] hover:text-[#1C1917] border border-[#1C1917]/30'
+                    ? 'bg-[#FEF08A] text-[#1C1917] border border-[#1C1917] sm:border-2 shadow-none sm:shadow-[2px_2px_0px_#1C1917] font-black'
+                    : 'bg-transparent sm:bg-white hover:bg-stone-50 text-[#57534E] hover:text-[#1C1917] border border-transparent sm:border-[#1C1917]/30'
                 }`}
               >
-                {d.num === 0 && <ListTodo className="w-3 h-3 stroke-[2.5]" />}
-                <span>{d.label}</span>
+                {d.num === 0 && <ListTodo className="hidden sm:inline w-3 h-3 stroke-[2.5]" />}
+                <span className="sm:hidden">{d.mobileLabel}</span>
+                <span className="hidden sm:inline">{d.label}</span>
                 {isTodayDay && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" title="Today" />
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-[#16A34A] shrink-0"
+                    title="Today"
+                  />
                 )}
               </button>
             )
           })}
         </div>
 
-        {/* Stepper Controls: Previous / Today / Next */}
-        <div className="flex items-center gap-1 shrink-0 ml-auto">
+        {/* Stepper Controls: Previous / Today / Next (hidden on mobile; tabs and top Home icon handle navigation) */}
+        <div className="hidden sm:flex items-center gap-1 shrink-0 ml-auto">
           <button
             type="button"
             onClick={onPrevDay}
@@ -359,13 +338,13 @@ export default function FocusedDayView({
       {/* Main Architectural Workspace Card */}
       <div
         data-tour="time-budget"
-        className="bg-white border-2 border-[#1C1917] rounded-3xl p-5 sm:p-7 shadow-[4px_4px_0px_#1C1917]"
+        className="bg-white border border-[#1C1917]/30 sm:border-2 sm:border-[#1C1917] rounded-2xl sm:rounded-3xl p-3.5 sm:p-7 shadow-sm sm:shadow-[4px_4px_0px_#1C1917]"
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b-2 border-[#1C1917]/15">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-3.5 sm:pb-5 border-b sm:border-b-2 border-[#1C1917]/15">
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5 sm:gap-3">
               <div
-                className={`w-11 h-11 rounded-2xl flex items-center justify-center border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] ${
+                className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl flex items-center justify-center border sm:border-2 border-[#1C1917] shadow-none sm:shadow-[2px_2px_0px_#1C1917] ${
                   isSunday
                     ? 'bg-[#FECDD3] text-[#9F1239]'
                     : isWeeklyMaster
@@ -374,26 +353,26 @@ export default function FocusedDayView({
                 }`}
               >
                 {isSunday ? (
-                  <Sun className="w-5 h-5 stroke-[2.5]" />
+                  <Sun className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
                 ) : isWeeklyMaster ? (
-                  <ListTodo className="w-5 h-5 stroke-[2.5]" />
+                  <ListTodo className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
                 ) : (
-                  <Calendar className="w-5 h-5 stroke-[2.5] text-[#1C1917]" />
+                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5] text-[#1C1917]" />
                 )}
               </div>
 
               <div>
-                <div className="flex items-center gap-2.5">
-                  <h1 className="text-2xl sm:text-3xl font-black text-[#1C1917] tracking-tight">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl sm:text-3xl font-black text-[#1C1917] tracking-tight">
                     {title}
                   </h1>
                   {isToday && (
-                    <span className="text-[10px] uppercase font-black tracking-wider px-2 py-0.5 bg-[#FEF08A] text-[#1C1917] border-2 border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg">
+                    <span className="text-[10px] uppercase font-black tracking-wider px-2 py-0.5 bg-[#FEF08A] text-[#1C1917] border sm:border-2 border-[#1C1917] shadow-none sm:shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg">
                       Today
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-[#78716C] mt-1 font-semibold">
+                <p className="text-xs text-[#78716C] mt-0.5 sm:mt-1 font-semibold">
                   {isWeeklyMaster
                     ? 'Master goals for the entire week. Assign to any day when you are ready.'
                     : dayDate
@@ -407,7 +386,7 @@ export default function FocusedDayView({
           {/* Quick completion count */}
           <div
             title={`Day Progress: ${tasks.filter((t) => Boolean(t.is_completed)).length} of ${tasks.length} tasks completed (${tasks.length > 0 ? Math.round((tasks.filter((t) => Boolean(t.is_completed)).length / tasks.length) * 100) : 0}%)`}
-            className="flex items-center gap-2.5 self-start sm:self-auto font-mono text-xs px-3.5 py-1.5 rounded-xl bg-[#BBF7D0] border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] text-[#1C1917] font-bold"
+            className="flex items-center gap-2 sm:gap-2.5 self-start sm:self-auto font-mono text-xs px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-xl bg-[#BBF7D0] border sm:border-2 border-[#1C1917] shadow-none sm:shadow-[2px_2px_0px_#1C1917] text-[#1C1917] font-bold"
           >
             <div className="flex items-center gap-1.5">
               <span className="opacity-70 font-sans text-[11px] font-bold uppercase tracking-wider">Progress:</span>
@@ -437,12 +416,12 @@ export default function FocusedDayView({
 
         {/* Time Budget Breakdown Banner (shown on daily views Mon to Sun) */}
         {!isWeeklyMaster ? (
-          <div className="mt-5 pt-1 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-y-3 gap-x-4 text-xs sm:text-sm">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className="mt-3.5 sm:mt-5 pt-0.5 sm:pt-1 space-y-2.5 sm:space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-3 text-[11px] sm:text-sm">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-3">
                 {/* Focus: Completed Focus / Total Planned Focus */}
                 <div
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917]"
+                  className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-white border border-[#1C1917]/40 sm:border-2 sm:border-[#1C1917] shadow-none sm:shadow-[2px_2px_0px_#1C1917]"
                   title={`Focus completed: ${formatDuration(dayStats.completedFocusMinutes || 0)} of ${formatDuration(dayStats.focusMinutes)} planned (${dayStats.focusMinutes > 0 ? Math.round(((dayStats.completedFocusMinutes || 0) / dayStats.focusMinutes) * 100) : 0}%)`}
                 >
                   <Clock className="w-3.5 h-3.5 text-[#1C1917] shrink-0" />
@@ -468,7 +447,7 @@ export default function FocusedDayView({
                 </div>
 
                 {/* Breaks */}
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917]">
+                <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-white border border-[#1C1917]/40 sm:border-2 sm:border-[#1C1917] shadow-none sm:shadow-[2px_2px_0px_#1C1917]">
                   <Coffee className="w-3.5 h-3.5 text-[#1C1917] shrink-0" />
                   <span className="text-[#78716C] font-medium">Breaks:</span>
                   <span className="font-mono font-black text-[#1C1917]">
@@ -477,7 +456,7 @@ export default function FocusedDayView({
                 </div>
 
                 {/* Total Budgeted */}
-                <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1C1917] text-[#FAF7F0] border-2 border-[#1C1917] shadow-[2px_2px_0px_#78716C]">
+                <div className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-xl bg-[#1C1917] text-[#FAF7F0] border border-[#1C1917] sm:border-2 shadow-none sm:shadow-[2px_2px_0px_#78716C]">
                   <span className="text-stone-300 font-medium">Total Budgeted:</span>
                   <span className="font-mono font-black text-[#FEF08A]">
                     {formatDuration(dayStats.totalMinutes)}
@@ -487,16 +466,16 @@ export default function FocusedDayView({
 
               {/* Interactive Category Time Split Pills */}
               {tasks.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px] sm:text-xs">
                   {dayStats.careerFocusMinutes > 0 && (
                     <button
                       type="button"
                       onClick={() => handleToggleDayBreakdown('career')}
                       title="Click to see which Career / Study tasks take time today"
-                      className={`flex items-center gap-1 px-2.5 py-1 rounded-xl border-2 border-[#1C1917] font-bold transition-all cursor-pointer ${
+                      className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-xl border sm:border-2 border-[#1C1917] font-bold transition-all cursor-pointer ${
                         dayBreakdownCat === 'career'
                           ? 'bg-[#224A32] text-white shadow-none translate-x-0.5 translate-y-0.5'
-                          : 'bg-[#BBF7D0] hover:bg-[#86EFAC] text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917]'
+                          : 'bg-[#BBF7D0] hover:bg-[#86EFAC] text-[#1C1917] shadow-none sm:shadow-[1.5px_1.5px_0px_#1C1917]'
                       }`}
                     >
                       <Briefcase className="w-3 h-3" />
@@ -510,10 +489,10 @@ export default function FocusedDayView({
                       type="button"
                       onClick={() => handleToggleDayBreakdown('college')}
                       title="Click to see which College / Assignment tasks take time today"
-                      className={`flex items-center gap-1 px-2.5 py-1 rounded-xl border-2 border-[#1C1917] font-bold transition-all cursor-pointer ${
+                      className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-xl border sm:border-2 border-[#1C1917] font-bold transition-all cursor-pointer ${
                         dayBreakdownCat === 'college'
                           ? 'bg-[#3E364E] text-white shadow-none translate-x-0.5 translate-y-0.5'
-                          : 'bg-[#E9D5FF] hover:bg-[#D8B4FE] text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917]'
+                          : 'bg-[#E9D5FF] hover:bg-[#D8B4FE] text-[#1C1917] shadow-none sm:shadow-[1.5px_1.5px_0px_#1C1917]'
                       }`}
                     >
                       <BookOpen className="w-3 h-3" />
@@ -527,10 +506,10 @@ export default function FocusedDayView({
                       type="button"
                       onClick={() => handleToggleDayBreakdown('personal')}
                       title="Click to see which Personal / Other tasks take time today"
-                      className={`flex items-center gap-1 px-2.5 py-1 rounded-xl border-2 border-[#1C1917] font-bold transition-all cursor-pointer ${
+                      className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-xl border sm:border-2 border-[#1C1917] font-bold transition-all cursor-pointer ${
                         dayBreakdownCat === 'personal'
                           ? 'bg-[#635032] text-white shadow-none translate-x-0.5 translate-y-0.5'
-                          : 'bg-[#FDE68A] hover:bg-[#FCD34D] text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917]'
+                          : 'bg-[#FDE68A] hover:bg-[#FCD34D] text-[#1C1917] shadow-none sm:shadow-[1.5px_1.5px_0px_#1C1917]'
                       }`}
                     >
                       <Sparkles className="w-3 h-3" />
@@ -543,10 +522,10 @@ export default function FocusedDayView({
                     type="button"
                     onClick={() => handleToggleDayBreakdown('all')}
                     title="Inspect where today's hours go by task"
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded-xl border-2 border-[#1C1917] font-bold transition-all cursor-pointer ${
+                    className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-xl border sm:border-2 border-[#1C1917] font-bold transition-all cursor-pointer ${
                       dayBreakdownCat === 'all'
                         ? 'bg-[#FEF08A] text-[#1C1917] shadow-none translate-x-0.5 translate-y-0.5'
-                        : 'bg-white hover:bg-[#FEF08A] text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917]'
+                        : 'bg-white hover:bg-[#FEF08A] text-[#1C1917] shadow-none sm:shadow-[1.5px_1.5px_0px_#1C1917]'
                     }`}
                   >
                     <PieChart className="w-3 h-3" />
@@ -820,9 +799,9 @@ export default function FocusedDayView({
         </div>
 
         {tasks.length === 0 ? (
-          <div className="p-10 text-center bg-white border-2 border-[#1C1917] rounded-3xl shadow-[3px_3px_0px_#1C1917] space-y-2.5">
-            <div className="w-12 h-12 rounded-2xl bg-[#FEF08A] text-[#1C1917] flex items-center justify-center mx-auto border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917]">
-              <ListTodo className="w-6 h-6 stroke-[2.5]" />
+          <div className="p-8 sm:p-10 text-center bg-white border sm:border-2 border-[#1C1917] rounded-2xl sm:rounded-3xl shadow-sm sm:shadow-[3px_3px_0px_#1C1917] space-y-2.5">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#FEF08A] text-[#1C1917] flex items-center justify-center mx-auto border sm:border-2 border-[#1C1917] shadow-none sm:shadow-[2px_2px_0px_#1C1917]">
+              <ListTodo className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" />
             </div>
             <p className="text-base font-black text-[#1C1917]">No tasks planned yet</p>
             <p className="text-xs font-medium text-[#78716C] max-w-sm mx-auto leading-relaxed">
@@ -842,41 +821,31 @@ export default function FocusedDayView({
 
             return (
               <div key={task.id} className="contents">
-                {isFirstCompleted && (
-                  <div className="flex items-center gap-2 pt-2.5 pb-0.5 text-xs font-bold text-[#78716C] select-none">
-                    <div className="h-[1.5px] flex-1 bg-[#1C1917]/15 rounded-full" />
-                    <span className="font-mono text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-[#78716C] bg-white px-2.5 py-0.5 rounded-md border border-[#1C1917]/20 shadow-xs">
-                      Completed ({tasks.filter((t) => Boolean(t.is_completed)).length})
-                    </span>
-                    <div className="h-[1.5px] flex-1 bg-[#1C1917]/15 rounded-full" />
-                  </div>
-                )}
+                {isFirstCompleted && renderCompletedDivider(tasks.filter((t) => Boolean(t.is_completed)).length)}
                 <TaskItem
-                task={task}
-                index={index}
-                totalTasks={tasks.length}
-                subTasks={getSubTasksForTask(task)}
-                hasConnectedTasks={getHasConnectedTasks(task)}
-                allMilestones={allMilestones}
-                onRepeatAcrossDays={onRepeatAcrossDays}
-                onToggle={onToggle}
-                onMasterToggleRequest={handleMasterToggleRequest}
-                onToggleSubTask={onToggle}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onDeleteSeries={onDeleteSeries}
-                onMove={onMove}
-                onOpenMoveToWeek={(t) => setMoveToWeekData({ tasks: [t] })}
-                currentDay={selectedDay}
-                isDraggable={true}
-                isDragging={isDragging}
-                dropPosition={isTarget ? dropTarget.position : null}
-                onDragStart={(id) => handleDragStart(id, 'day')}
-                onDragOver={(id, pos) => handleDragOver(id, pos, 'day')}
-                onDragLeave={(id) => handleDragLeave(id, 'day')}
-                onDrop={(id, pos) => handleDrop(id, pos, 'day')}
-                onDragEnd={handleDragEnd}
-                onMoveRelative={(dir) => handleMoveRelative(task.id, dir, 'day')}
+                  task={task}
+                  index={index}
+                  subTasks={getSubTasksForTask(task)}
+                  hasConnectedTasks={getHasConnectedTasks(task)}
+                  allMilestones={allMilestones}
+                  onRepeatAcrossDays={onRepeatAcrossDays}
+                  onToggle={onToggle}
+                  onMasterToggleRequest={handleMasterToggleRequest}
+                  onToggleSubTask={onToggle}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onDeleteSeries={onDeleteSeries}
+                  onMove={onMove}
+                  onOpenMoveToWeek={(t) => setMoveToWeekData({ tasks: [t] })}
+                  currentDay={selectedDay}
+                  isDraggable={true}
+                  isDragging={isDragging}
+                  dropPosition={isTarget ? dropTarget.position : null}
+                  onDragStart={(id) => handleDragStart(id, 'day')}
+                  onDragOver={(id, pos) => handleDragOver(id, pos, 'day')}
+                  onDragLeave={(id) => handleDragLeave(id, 'day')}
+                  onDrop={(id, pos) => handleDrop(id, pos, 'day')}
+                  onDragEnd={handleDragEnd}
                 />
               </div>
             );
@@ -886,10 +855,10 @@ export default function FocusedDayView({
 
       {/* SUNDAY SPECIAL: WEEKLY MILESTONES REVIEW SECTION */}
       {isSunday && (
-        <div className="bg-white border-2 border-[#1C1917] rounded-3xl p-6 shadow-[4px_4px_0px_#1C1917] space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b-2 border-[#1C1917]/15">
+        <div className="bg-white border sm:border-2 border-[#1C1917] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm sm:shadow-[4px_4px_0px_#1C1917] space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b sm:border-b-2 border-[#1C1917]/15">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-[#FEF08A] text-[#1C1917] border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] flex items-center justify-center">
+              <div className="w-9 h-9 rounded-xl bg-[#FEF08A] text-[#1C1917] border sm:border-2 border-[#1C1917] shadow-none sm:shadow-[2px_2px_0px_#1C1917] flex items-center justify-center">
                 <ListTodo className="w-4 h-4 stroke-[2.5]" />
               </div>
               <div>
@@ -909,14 +878,14 @@ export default function FocusedDayView({
                   onClick={() => setMoveToWeekData({ tasks: incompleteWeeklyTasks })}
                   title="Move unfinished weekly milestones to next week"
                   aria-label="Roll over unfinished milestones to next week"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FEF08A] hover:bg-[#FDE047] border-2 border-[#1C1917] text-[#1C1917] text-xs font-bold shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer group"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FEF08A] hover:bg-[#FDE047] border sm:border-2 border-[#1C1917] text-[#1C1917] text-xs font-bold shadow-none sm:shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer group"
                 >
                   <CalendarDays className="w-3.5 h-3.5" />
                   <span>Roll over {incompleteWeeklyTasks.length} to Next Week</span>
                 </button>
               )}
 
-              <div className="text-xs font-mono font-bold px-3 py-1.5 rounded-xl bg-[#BBF7D0] border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] text-[#1C1917]">
+              <div className="text-xs font-mono font-bold px-3 py-1.5 rounded-xl bg-[#BBF7D0] border sm:border-2 border-[#1C1917] shadow-none sm:shadow-[2px_2px_0px_#1C1917] text-[#1C1917]">
                 <span className="font-black">{completedWeeklyCount}</span>/
                 <span>{weeklyTasks.length} Done</span>
               </div>
@@ -939,41 +908,31 @@ export default function FocusedDayView({
 
                 return (
                   <div key={task.id} className="contents">
-                    {isFirstCompleted && (
-                      <div className="flex items-center gap-2 pt-2.5 pb-0.5 text-xs font-bold text-[#78716C] select-none">
-                        <div className="h-[1.5px] flex-1 bg-[#1C1917]/15 rounded-full" />
-                        <span className="font-mono text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-[#78716C] bg-white px-2.5 py-0.5 rounded-md border border-[#1C1917]/20 shadow-xs">
-                          Completed ({weeklyTasks.filter((t) => Boolean(t.is_completed)).length})
-                        </span>
-                        <div className="h-[1.5px] flex-1 bg-[#1C1917]/15 rounded-full" />
-                      </div>
-                    )}
+                    {isFirstCompleted && renderCompletedDivider(weeklyTasks.filter((t) => Boolean(t.is_completed)).length)}
                     <TaskItem
-                    task={task}
-                    index={index}
-                    totalTasks={weeklyTasks.length}
-                    subTasks={getSubTasksForTask(task)}
-                    hasConnectedTasks={getHasConnectedTasks(task)}
-                    allMilestones={allMilestones}
-                    onRepeatAcrossDays={onRepeatAcrossDays}
-                    onToggle={onToggle}
-                    onMasterToggleRequest={handleMasterToggleRequest}
-                    onToggleSubTask={onToggle}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    onDeleteSeries={onDeleteSeries}
-                    onMove={onMove}
-                    onOpenMoveToWeek={(t) => setMoveToWeekData({ tasks: [t] })}
-                    currentDay={0}
-                    isDraggable={true}
-                    isDragging={isDragging}
-                    dropPosition={isTarget ? dropTarget.position : null}
-                    onDragStart={(id) => handleDragStart(id, 'weekly')}
-                    onDragOver={(id, pos) => handleDragOver(id, pos, 'weekly')}
-                    onDragLeave={(id) => handleDragLeave(id, 'weekly')}
-                    onDrop={(id, pos) => handleDrop(id, pos, 'weekly')}
-                    onDragEnd={handleDragEnd}
-                    onMoveRelative={(dir) => handleMoveRelative(task.id, dir, 'weekly')}
+                      task={task}
+                      index={index}
+                      subTasks={getSubTasksForTask(task)}
+                      hasConnectedTasks={getHasConnectedTasks(task)}
+                      allMilestones={allMilestones}
+                      onRepeatAcrossDays={onRepeatAcrossDays}
+                      onToggle={onToggle}
+                      onMasterToggleRequest={handleMasterToggleRequest}
+                      onToggleSubTask={onToggle}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                      onDeleteSeries={onDeleteSeries}
+                      onMove={onMove}
+                      onOpenMoveToWeek={(t) => setMoveToWeekData({ tasks: [t] })}
+                      currentDay={0}
+                      isDraggable={true}
+                      isDragging={isDragging}
+                      dropPosition={isTarget ? dropTarget.position : null}
+                      onDragStart={(id) => handleDragStart(id, 'weekly')}
+                      onDragOver={(id, pos) => handleDragOver(id, pos, 'weekly')}
+                      onDragLeave={(id) => handleDragLeave(id, 'weekly')}
+                      onDrop={(id, pos) => handleDrop(id, pos, 'weekly')}
+                      onDragEnd={handleDragEnd}
                     />
                   </div>
                 );

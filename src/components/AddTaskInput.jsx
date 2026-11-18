@@ -14,9 +14,7 @@ import {
   formatDuration,
   getDefaultBreakMinutes,
   TAG_OPTIONS,
-  HIGHLIGHTER_OPTIONS,
   PRIORITY_OPTIONS,
-  setTaskHighlighter,
   setTaskPriority
 } from '../utils/dateUtils'
 import { EditorialPriorityIcon } from './TaskItem'
@@ -31,8 +29,7 @@ export default function AddTaskInput({
   const [duration, setDuration] = useState(30)
   const [breakMinutes, setBreakMinutes] = useState(5)
   const [selectedTag, setSelectedTag] = useState('career')
-  const [selectedHighlight, setSelectedHighlight] = useState(null)
-  const [selectedPriority, setSelectedPriority] = useState(3)
+  const [selectedPriority, setSelectedPriority] = useState(null)
   const [showOptions, setShowOptions] = useState(false)
   const [isRecurring, setIsRecurring] = useState(false)
   const [selectedDays, setSelectedDays] = useState(() =>
@@ -113,9 +110,8 @@ export default function AddTaskInput({
     const finalDuration = Math.max(1, Math.min(1440, Number(duration) || 30))
     const finalBreak = Math.max(0, Math.min(240, Number(breakMinutes) || 0))
 
-    setTaskPriority({ title: trimmed }, selectedPriority, true, !selectedHighlight)
-    if (selectedHighlight) {
-      setTaskHighlighter({ title: trimmed }, selectedHighlight, true)
+    if (selectedPriority !== null) {
+      setTaskPriority({ title: trimmed }, selectedPriority, true, true)
     }
 
     if (isRecurring && onAddBatch && selectedDays.length > 0) {
@@ -128,8 +124,7 @@ export default function AddTaskInput({
     // Collapse the options panel and turn off repeat mode after each add
     setShowOptions(false)
     setIsRecurring(false)
-    setSelectedHighlight(null)
-    setSelectedPriority(3)
+    setSelectedPriority(null)
     if (inputRef.current) {
       inputRef.current.focus()
     }
@@ -155,7 +150,7 @@ export default function AddTaskInput({
       onSubmit={handleSubmit}
       onDoubleClick={handleToggleOptions}
       title="Double-click to expand or collapse editable settings"
-      className="bg-white border-2 border-[#1C1917] focus-within:border-[#1C1917] rounded-3xl p-3.5 shadow-[4px_4px_0px_#1C1917] transition-all cursor-pointer"
+      className="bg-white border sm:border-2 border-[#1C1917] focus-within:border-[#1C1917] rounded-2xl sm:rounded-3xl p-2.5 sm:p-3.5 shadow-[2px_2px_0px_#1C1917] sm:shadow-[4px_4px_0px_#1C1917] transition-all cursor-pointer"
     >
       {/* Title Input Row (double-click to expand/collapse editable settings) */}
       <div className="flex items-center gap-2">
@@ -194,10 +189,10 @@ export default function AddTaskInput({
           }}
           title="Click to toggle options • Double-click for custom focus time"
           aria-label="Toggle time, tag, and repeat options"
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border-2 border-[#1C1917] transition-all cursor-pointer shrink-0 ${
+          className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold border sm:border-2 border-[#1C1917] transition-all cursor-pointer shrink-0 ${
             showOptions || isRecurring
-              ? 'bg-[#FEF08A] text-[#1C1917] shadow-[2px_2px_0px_#1C1917]'
-              : 'bg-white border-[#1C1917] text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] hover:bg-[#FAF8F5]'
+              ? 'bg-[#FEF08A] text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] sm:shadow-[2px_2px_0px_#1C1917]'
+              : 'bg-white border-[#1C1917]/40 sm:border-[#1C1917] text-[#1C1917] shadow-none sm:shadow-[1.5px_1.5px_0px_#1C1917] hover:bg-[#FAF8F5]'
           }`}
         >
           {isRecurring && <Repeat className="w-3.5 h-3.5" />}
@@ -212,7 +207,7 @@ export default function AddTaskInput({
           type="submit"
           data-no-dblclick-toggle
           disabled={!title.trim()}
-          className="px-4 py-1.5 bg-[#FEF08A] hover:bg-[#FDE047] disabled:opacity-30 disabled:cursor-not-allowed text-[#1C1917] font-black rounded-xl text-xs border-2 border-[#1C1917] shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer shrink-0"
+          className="px-3 sm:px-4 py-1.5 bg-[#FEF08A] hover:bg-[#FDE047] disabled:opacity-30 disabled:cursor-not-allowed text-[#1C1917] font-black rounded-xl text-xs border sm:border-2 border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] sm:shadow-[2px_2px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer shrink-0"
         >
           {isRecurring
             ? selectedCalendarDaysCount > 0
@@ -343,8 +338,8 @@ export default function AddTaskInput({
             </div>
           </div>
 
-          {/* Tag, Priority & Highlighter Selectors */}
-          <div className="flex flex-wrap items-start justify-between gap-3">
+          {/* Tag & Priority / Color Selectors */}
+          <div className="flex flex-col gap-3">
             <div>
               <div className="text-[11px] font-black text-[#1C1917] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                 <Tag className="w-3 h-3 text-[#1C1917]" />
@@ -376,73 +371,47 @@ export default function AddTaskInput({
 
             <div>
               <div className="text-[11px] font-black text-[#1C1917] uppercase tracking-wider mb-1.5">
-                <span>Priority</span>
+                <span>Priority &amp; Color</span>
               </div>
               <div
-                className="inline-flex flex-wrap items-center gap-1 bg-white border-2 border-[#1C1917] rounded-xl p-1 shadow-[2px_2px_0px_#1C1917]"
+                className="flex flex-wrap items-center gap-1.5 bg-white border border-[#1C1917] rounded-xl p-1.5 shadow-[1.5px_1.5px_0px_#1C1917]"
                 role="group"
-                aria-label="Priority tier"
+                aria-label="Priority and color tier"
               >
+                <button
+                  type="button"
+                  onClick={() => setSelectedPriority(null)}
+                  title="Auto priority based on queue position"
+                  className={`px-2 py-0.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                    selectedPriority === null
+                      ? 'bg-[#FEF08A] text-[#1C1917] border-[#1C1917] font-black shadow-[1px_1px_0px_#1C1917]'
+                      : 'bg-stone-50 text-[#57534E] border-[#1C1917]/20 hover:border-[#1C1917]/60'
+                  }`}
+                >
+                  Auto
+                </button>
                 {PRIORITY_OPTIONS.map((opt) => {
                   const isSelected = selectedPriority === opt.level
                   return (
                     <button
                       key={opt.level}
                       type="button"
-                      onClick={() => setSelectedPriority(opt.level)}
+                      onClick={() => setSelectedPriority(isSelected ? null : opt.level)}
                       title={`${opt.code} ${opt.label}`}
                       style={
                         isSelected
                           ? { backgroundColor: opt.badgeBg, color: opt.badgeText }
-                          : undefined
+                          : { backgroundColor: opt.card }
                       }
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                         isSelected
-                          ? 'border border-[#1C1917] font-black shadow-[1px_1px_0px_#1C1917]'
-                          : 'text-[#57534E] hover:bg-stone-100'
+                          ? 'border-[#1C1917] font-black shadow-[1px_1px_0px_#1C1917]'
+                          : 'border-[#1C1917]/20 text-[#57534E] hover:border-[#1C1917]/60'
                       }`}
                     >
                       <EditorialPriorityIcon type={opt.icon} className="w-3 h-3" />
                       <span>{opt.code} {opt.label}</span>
                     </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div>
-              <div className="text-[11px] font-black text-[#1C1917] uppercase tracking-wider mb-1.5">
-                <span>Highlighter</span>
-              </div>
-              <div className="inline-flex items-center gap-1.5 bg-white border-2 border-[#1C1917] rounded-xl px-2.5 py-1 shadow-[2px_2px_0px_#1C1917]">
-                <button
-                  type="button"
-                  onClick={() => setSelectedHighlight(null)}
-                  title="Auto-assign highlighter color"
-                  className={`text-[10px] font-black px-1.5 py-0.5 rounded border border-[#1C1917] cursor-pointer transition-colors ${
-                    selectedHighlight === null
-                      ? 'bg-[#FEF08A] text-[#1C1917]'
-                      : 'bg-stone-100 text-[#57534E] hover:bg-stone-200'
-                  }`}
-                >
-                  Auto
-                </button>
-                {HIGHLIGHTER_OPTIONS.map((h) => {
-                  const isSelected = selectedHighlight === h.id
-                  return (
-                    <button
-                      key={h.id}
-                      type="button"
-                      onClick={() => setSelectedHighlight(isSelected ? null : h.id)}
-                      title={h.name}
-                      aria-label={`Set ${h.name} highlighter`}
-                      className={`w-4 h-4 rounded-full border border-[#1C1917] transition-transform cursor-pointer ${
-                        isSelected
-                          ? 'scale-115 ring-2 ring-[#1C1917]/35'
-                          : 'opacity-75 hover:opacity-100 hover:scale-110'
-                      }`}
-                      style={{ backgroundColor: h.marker }}
-                    />
                   )
                 })}
               </div>

@@ -12,7 +12,6 @@ import {
   Repeat,
   CalendarDays,
   GripVertical,
-  ChevronUp,
   ChevronDown
 } from 'lucide-react'
 import {
@@ -20,62 +19,86 @@ import {
   getDefaultBreakMinutes,
   TAG_OPTIONS,
   DAY_NAMES,
-  HIGHLIGHTER_OPTIONS,
   PRIORITY_OPTIONS,
   splitTaskTitleForHighlight,
-  getTaskHighlighter,
-  setTaskHighlighter,
   getTaskPriority,
   setTaskPriority,
   subscribeTaskHighlighters
 } from '../utils/dateUtils'
 
-/** Crisp editorial geometric symbols for task priority tiers. */
+/** High-contrast open-geometry aesthetic line-art symbols for the 6 priority tiers. */
 export function EditorialPriorityIcon({ type, className = 'w-3.5 h-3.5' }) {
   return (
     <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" className={className}>
-      {type === 'spark' && (
+      {type === 'crown' && (
         <path
-          d="M8 1L9.9 6.1L15 8L9.9 9.9L8 15L6.1 9.9L1 8L6.1 6.1Z"
-          fill="currentColor"
-          stroke="#1C1917"
-          strokeWidth="1.4"
+          d="M2 5L5.5 8.5L8 3L10.5 8.5L14 5L12.6 12.5H3.4L2 5Z"
+          fill="#FFFFFF"
+          stroke="currentColor"
+          strokeWidth="1.5"
           strokeLinejoin="round"
         />
       )}
-      {type === 'diamond' && (
+      {type === 'bolt' && (
+        <path
+          d="M9.2 1.5L3.5 9H8L6.8 14.5L12.5 7H8L9.2 1.5Z"
+          fill="#FFFFFF"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+        />
+      )}
+      {type === 'planet' && (
         <>
-          <path
-            d="M8 1.5L14.5 8L8 14.5L1.5 8Z"
-            fill="currentColor"
-            stroke="#1C1917"
-            strokeWidth="1.4"
-            strokeLinejoin="round"
+          <circle cx="8" cy="8" r="3.2" fill="#FFFFFF" stroke="currentColor" strokeWidth="1.5" />
+          <ellipse
+            cx="8"
+            cy="8"
+            rx="6.8"
+            ry="2.2"
+            transform="rotate(-24 8 8)"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
           />
-          <circle cx="8" cy="8" r="1.8" fill="#1C1917" />
         </>
       )}
-      {type === 'orbit' && (
-        <>
-          <circle cx="8" cy="8" r="6" fill="currentColor" stroke="#1C1917" strokeWidth="1.4" />
-          <circle cx="8" cy="8" r="2.2" fill="#1C1917" />
-        </>
-      )}
-      {type === 'botanical' && (
+      {type === 'glider' && (
         <>
           <path
-            d="M13.5 2.5C7.5 2.5 2.5 7.5 2.5 13.5C8.5 13.5 13.5 8.5 13.5 2.5Z"
-            fill="currentColor"
-            stroke="#1C1917"
-            strokeWidth="1.4"
+            d="M14.2 2.2L1.8 7.5L7.2 9.6L9.4 14.2L14.2 2.2Z"
+            fill="#FFFFFF"
+            stroke="currentColor"
+            strokeWidth="1.5"
             strokeLinejoin="round"
           />
           <path
-            d="M2.5 13.5L9.5 6.5"
-            stroke="#1C1917"
+            d="M14.2 2.2L7.2 9.6"
+            stroke="currentColor"
             strokeWidth="1.4"
             strokeLinecap="round"
           />
+        </>
+      )}
+      {type === 'hourglass' && (
+        <path
+          d="M4.2 2.5H11.8L8 8L11.8 13.5H4.2L8 8L4.2 2.5Z"
+          fill="#FFFFFF"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+        />
+      )}
+      {type === 'crescent' && (
+        <>
+          <path
+            d="M10.8 12.8A5 5 0 0 1 6.8 2.4A5.3 5.3 0 1 0 13.4 10.4A4.6 4.6 0 0 1 10.8 12.8Z"
+            fill="#FFFFFF"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+          />
+          <circle cx="12.2" cy="4.2" r="1" fill="currentColor" />
         </>
       )}
     </svg>
@@ -116,7 +139,6 @@ const DAY_LETTERS = ['', 'M', 'T', 'W', 'T', 'F', 'S', 'S']
 export default function TaskItem({
   task,
   index = 0,
-  totalTasks = 1,
   subTasks = [],
   hasConnectedTasks: hasConnectedTasksProp,
   allMilestones = [],
@@ -137,8 +159,7 @@ export default function TaskItem({
   onDragOver,
   onDragLeave,
   onDrop,
-  onDragEnd,
-  onMoveRelative
+  onDragEnd
 }) {
   const isWeeklyMilestone = task.day_of_week === 0 || currentDay === 0
   const [isEditing, setIsEditing] = useState(false)
@@ -345,27 +366,21 @@ export default function TaskItem({
 
   const tagObj = TAG_OPTIONS.find((t) => t.id === (task.tag || 'career')) || TAG_OPTIONS[0]
 
-  const activeHighlightId = useSyncExternalStore(
-    subscribeTaskHighlighters,
-    () => getTaskHighlighter(task).id
-  )
-  const activeHighlighter =
-    HIGHLIGHTER_OPTIONS.find((h) => h.id === activeHighlightId) || HIGHLIGHTER_OPTIONS[0]
-
   const activePriorityLevel = useSyncExternalStore(
     subscribeTaskHighlighters,
-    () => getTaskPriority(task).level
+    () => getTaskPriority(task, index).level
   )
   const activePriority =
     PRIORITY_OPTIONS.find((p) => p.level === activePriorityLevel) || PRIORITY_OPTIONS[2]
+  const cardTheme = activePriority
 
   const titleParts = useMemo(() => splitTaskTitleForHighlight(task.title), [task.title])
 
   const cardHighlightStyle =
     !isDragging && !task.is_completed
       ? {
-          backgroundColor: activeHighlighter.card,
-          borderLeft: `5px solid ${activeHighlighter.accent}`
+          backgroundColor: cardTheme.card,
+          borderLeft: `5px solid ${cardTheme.accent}`
         }
       : undefined
 
@@ -409,25 +424,15 @@ export default function TaskItem({
       onDragEnd={() => {
         if (onDragEnd) onDragEnd();
       }}
-      onKeyDown={(e) => {
-        if (isEditing) return;
-        if (e.altKey && e.key === 'ArrowUp') {
-          e.preventDefault();
-          if (onMoveRelative) onMoveRelative(-1);
-        } else if (e.altKey && e.key === 'ArrowDown') {
-          e.preventDefault();
-          if (onMoveRelative) onMoveRelative(1);
-        }
-      }}
       tabIndex={isEditing ? -1 : 0}
-      title={isEditing ? undefined : 'Double-click anywhere to edit • Hold to rearrange'}
+      title={isEditing ? undefined : 'Double-click anywhere to edit • Drag to reorder'}
       style={cardHighlightStyle}
-      className={`group relative flex flex-col gap-2 p-3 sm:p-3.5 rounded-2xl border-2 border-[#1C1917] transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#1C1917] ${
+      className={`group relative flex flex-col gap-2 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border sm:border-2 border-[#1C1917] transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#1C1917] ${
         isDragging
           ? 'opacity-40 scale-[0.99] border-dashed bg-[#FEF08A]/30 shadow-none'
           : task.is_completed
-          ? 'bg-[#F5F5F0] border-[#1C1917]/30 text-stone-400 shadow-[1.5px_1.5px_0px_#1C1917]/20'
-          : 'bg-white text-[#1C1917] shadow-[3px_3px_0px_#1C1917] hover:shadow-[4px_4px_0px_#1C1917] hover:-translate-x-0.5 hover:-translate-y-0.5'
+          ? 'bg-[#F5F5F0] border-[#1C1917]/25 text-stone-400 shadow-xs sm:shadow-[1.5px_1.5px_0px_#1C1917]/20'
+          : 'bg-white text-[#1C1917] shadow-[2px_2px_0px_#1C1917] sm:shadow-[3px_3px_0px_#1C1917] hover:shadow-[4px_4px_0px_#1C1917] hover:-translate-x-0.5 hover:-translate-y-0.5'
       }`}
     >
       {/* Drop slot indicator bar when dragging above */}
@@ -639,15 +644,15 @@ export default function TaskItem({
               </button>
             </div>
 
-            {/* Priority Tier & Highlighter Color Controls (shown while editing) */}
-            <div className="flex flex-wrap items-center gap-2 text-xs">
+            {/* Unified Priority & Color Selector (shown while editing) */}
+            <div className="flex flex-wrap items-center gap-1.5 text-xs">
               <div
-                className="inline-flex items-center gap-1 bg-white border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg px-2 py-0.5"
+                className="inline-flex flex-wrap items-center gap-1 bg-white border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg px-2 py-1"
                 role="group"
-                aria-label="Priority tier"
+                aria-label="Priority and color"
               >
                 <span className="text-[10px] font-black uppercase tracking-wider text-[#78716C] mr-0.5">
-                  Priority:
+                  Priority &amp; Color:
                 </span>
                 {PRIORITY_OPTIONS.map((opt) => {
                   const isSelected = activePriority.level === opt.level
@@ -661,44 +666,17 @@ export default function TaskItem({
                       style={
                         isSelected
                           ? { backgroundColor: opt.badgeBg, color: opt.badgeText }
-                          : undefined
+                          : { backgroundColor: opt.card }
                       }
-                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold transition-all cursor-pointer border ${
                         isSelected
-                          ? 'border border-[#1C1917] font-black shadow-[1px_1px_0px_#1C1917]'
-                          : 'text-[#57534E] hover:bg-stone-100'
+                          ? 'border-[#1C1917] font-black shadow-[1px_1px_0px_#1C1917]'
+                          : 'border-[#1C1917]/20 text-[#57534E] hover:border-[#1C1917]/60'
                       }`}
                     >
                       <EditorialPriorityIcon type={opt.icon} className="w-3 h-3" />
-                      <span>{opt.label}</span>
+                      <span>{opt.code} {opt.label}</span>
                     </button>
-                  )
-                })}
-              </div>
-
-              <div
-                className="inline-flex items-center gap-1.5 bg-white border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg px-2.5 py-1"
-                aria-label="Highlighter color"
-              >
-                <span className="text-[10px] font-black uppercase tracking-wider text-[#78716C]">
-                  Color:
-                </span>
-                {HIGHLIGHTER_OPTIONS.map((h) => {
-                  const isSelected = activeHighlighter.id === h.id
-                  return (
-                    <button
-                      key={h.id}
-                      type="button"
-                      onClick={() => setTaskHighlighter(task, h.id, updateEntireWeek)}
-                      title={`Highlighter: ${h.name}`}
-                      aria-label={`Highlight ${h.name}`}
-                      className={`w-3.5 h-3.5 rounded-full border border-[#1C1917] transition-transform cursor-pointer ${
-                        isSelected
-                          ? 'scale-115 ring-2 ring-[#1C1917]/30'
-                          : 'opacity-70 hover:opacity-100 hover:scale-110'
-                      }`}
-                      style={{ backgroundColor: h.marker }}
-                    />
                   )
                 })}
               </div>
@@ -841,7 +819,7 @@ export default function TaskItem({
                   if (onDrop) onDrop();
                   if (onDragEnd) onDragEnd();
                 }}
-                className="shrink-0 mt-0.5 -ml-1 text-stone-300 group-hover:text-stone-600 hover:!text-[#1C1917] cursor-grab active:cursor-grabbing p-1 rounded-md hover:bg-[#FAF8F5] transition-colors flex items-center justify-center select-none touch-none"
+                className="shrink-0 mt-0.5 -ml-0.5 sm:-ml-1 text-stone-400 sm:text-stone-300 group-hover:text-stone-600 hover:!text-[#1C1917] cursor-grab active:cursor-grabbing p-1 rounded-md hover:bg-[#FAF8F5] transition-colors flex items-center justify-center select-none touch-none"
                 title="Hold and drag to move task up or down"
                 aria-label="Drag handle to reorder task"
               >
@@ -849,14 +827,14 @@ export default function TaskItem({
               </div>
             )}
 
-            {/* Queue Stamp (#order + editorial symbol) for incomplete tasks */}
+            {/* Queue Stamp (#order + aesthetic symbol) for incomplete tasks */}
             {!task.is_completed && (
               <button
                 type="button"
                 data-no-drag
                 onClick={(e) => {
                   e.stopPropagation()
-                  const nextLevel = (activePriority.level % 4) + 1
+                  const nextLevel = (activePriority.level % PRIORITY_OPTIONS.length) + 1
                   setTaskPriority(task, nextLevel, true, true)
                 }}
                 title={`Queue #${index + 1} • ${activePriority.code} ${activePriority.label} (Click to cycle priority)`}
@@ -865,10 +843,10 @@ export default function TaskItem({
                   backgroundColor: activePriority.badgeBg,
                   color: activePriority.badgeText
                 }}
-                className="shrink-0 mt-0.5 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] hover:scale-105 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none font-mono font-black text-xs transition-all cursor-pointer select-none"
+                className="shrink-0 mt-0.5 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-[#1C1917] shadow-[1px_1px_0px_#1C1917] sm:shadow-[1.5px_1.5px_0px_#1C1917] hover:scale-105 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none font-mono font-black text-xs transition-all cursor-pointer select-none"
               >
                 <span>#{index + 1}</span>
-                <EditorialPriorityIcon type={activePriority.icon} className="w-3 h-3" />
+                <EditorialPriorityIcon type={activePriority.icon} className="w-3.5 h-3.5" />
               </button>
             )}
 
@@ -897,7 +875,7 @@ export default function TaskItem({
                 <>
                   <span
                     className="inline-flex items-center px-2 py-0.5 mr-1.5 rounded-md border border-[#1C1917] font-black text-xs text-[#1C1917] shadow-[1px_1px_0px_#1C1917] align-baseline"
-                    style={{ backgroundColor: activeHighlighter.marker }}
+                    style={{ backgroundColor: cardTheme.marker }}
                   >
                     {titleParts.prefix}
                   </span>
@@ -912,7 +890,7 @@ export default function TaskItem({
           </div>
 
           {/* Bottom Secondary Line: Badges (Left) + Actions (Right) */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pl-7.5 pt-0.5">
+          <div className="flex flex-wrap items-center justify-between gap-2 pl-0 sm:pl-7.5 pt-0.5">
             {/* Left section: Metadata Badges */}
             <div className="flex flex-wrap items-center gap-1.5">
               {/* Tag Badge */}
@@ -1006,33 +984,6 @@ export default function TaskItem({
               </div>
             ) : (
               <div className="flex items-center gap-1.5 shrink-0">
-                {/* Accessible / 1-click Move Up / Move Down buttons */}
-                {onMoveRelative && totalTasks > 1 && (
-                  <div className="flex items-center border border-[#1C1917] bg-white rounded-lg shadow-[1px_1px_0px_#1C1917] overflow-hidden">
-                    <button
-                      type="button"
-                      disabled={index === 0}
-                      onClick={() => onMoveRelative(-1)}
-                      aria-label="Move task up"
-                      title="Move task up (Alt+Up)"
-                      className="p-1 text-stone-500 hover:text-[#1C1917] hover:bg-[#FEF08A] disabled:opacity-20 disabled:hover:bg-transparent transition-colors cursor-pointer disabled:cursor-default"
-                    >
-                      <ChevronUp className="w-3 h-3 stroke-[2.5]" />
-                    </button>
-                    <div className="w-[1px] h-3 bg-[#1C1917]/20" />
-                    <button
-                      type="button"
-                      disabled={index === totalTasks - 1}
-                      onClick={() => onMoveRelative(1)}
-                      aria-label="Move task down"
-                      title="Move task down (Alt+Down)"
-                      className="p-1 text-stone-500 hover:text-[#1C1917] hover:bg-[#FEF08A] disabled:opacity-20 disabled:hover:bg-transparent transition-colors cursor-pointer disabled:cursor-default"
-                    >
-                      <ChevronDown className="w-3 h-3 stroke-[2.5]" />
-                    </button>
-                  </div>
-                )}
-
                 {/* Direct 1-click option to carry forward weekly milestone to another week */}
                 {onOpenMoveToWeek && task.day_of_week === 0 && (
                   <button

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { toDateString, getTaskPriority } from '../utils/dateUtils'
+import { toDateString, sortIncompleteByPriority } from '../utils/dateUtils'
 import { useAuth } from '../context/AuthContext'
 
 // Generates a UUID (used to link repeating tasks together as one "series")
@@ -53,28 +53,19 @@ function sortMilestonesBySavedOrder(items, orderMap) {
     const idToOrder = new Map();
     savedIds.forEach((id, index) => idToOrder.set(id, index));
 
-    dayTasks.sort((a, b) => {
-      // Incomplete tasks always come before completed tasks
-      const aDone = Boolean(a.is_completed);
-      const bDone = Boolean(b.is_completed);
-      if (aDone !== bDone) {
-        return aDone ? 1 : -1;
-      }
-      if (!aDone && !bDone) {
-        const prioDiff = getTaskPriority(a).level - getTaskPriority(b).level;
-        if (prioDiff !== 0) {
-          return prioDiff;
-        }
-      }
+    const bySavedOrder = (a, b) => {
       const orderA = idToOrder.has(a.id) ? idToOrder.get(a.id) : 999999;
       const orderB = idToOrder.has(b.id) ? idToOrder.get(b.id) : 999999;
       if (orderA !== orderB) {
         return orderA - orderB;
       }
       return new Date(a.created_at || 0) - new Date(b.created_at || 0);
-    });
+    };
 
-    result.push(...dayTasks);
+    const incompleteDay = dayTasks.filter((t) => !t.is_completed).sort(bySavedOrder);
+    const completedDay = dayTasks.filter((t) => Boolean(t.is_completed)).sort(bySavedOrder);
+
+    result.push(...sortIncompleteByPriority(incompleteDay), ...completedDay);
   });
 
   return result;

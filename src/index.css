@@ -66,18 +66,26 @@
   color: #1C1917;
 }
 
-/* Smooth custom scrollbars */
+/* Smooth subtle scrollbars & hidden utility for compact horizontal strips */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #F8F6F0;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1C1917;
-  border-radius: 4px;
+  background: #D6D3D1;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #44403C;
+  background: #A8A29E;
 }

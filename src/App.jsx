@@ -13,7 +13,7 @@ import {
   addWeeks,
   getTodayDayNumber,
   formatWeekRange,
-  getTaskPriority,
+  sortIncompleteByPriority,
   getPriorityStorageSnapshot,
   subscribeTaskHighlighters
 } from './utils/dateUtils'
@@ -159,9 +159,7 @@ function TrackerMain() {
   const sortTasksByPriorityAndCompletion = useCallback(
     (list) => {
       if (prioritySnapshot === null) return list
-      const incomplete = list
-        .filter((t) => !t.is_completed)
-        .sort((a, b) => getTaskPriority(a).level - getTaskPriority(b).level)
+      const incomplete = sortIncompleteByPriority(list.filter((t) => !t.is_completed))
       const completed = list.filter((t) => Boolean(t.is_completed))
       return [...incomplete, ...completed]
     },
@@ -209,7 +207,7 @@ function TrackerMain() {
       
 
       {/* Main Container: Focused Workspace with Spacious Breathing Room */}
-      <div className="flex-1 max-w-4xl lg:max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col items-center">
+      <div className="flex-1 max-w-4xl lg:max-w-5xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 flex flex-col items-center">
         <main className="w-full flex-1 flex flex-col gap-5 min-w-0">
           {/* Error Notification Banner */}
           {error && (
