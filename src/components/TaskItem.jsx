@@ -409,7 +409,7 @@ export default function TaskItem({
       tabIndex={isEditing ? -1 : 0}
       title={isEditing ? undefined : 'Double-click anywhere to edit • Drag to reorder'}
       style={cardHighlightStyle}
-      className={`group relative flex flex-col gap-2 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border sm:border-2 border-[#1C1917] transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#1C1917] ${
+      className={`group relative flex flex-col gap-2 px-2.5 py-2 sm:px-3 sm:py-2.5 rounded-xl sm:rounded-2xl border sm:border-2 border-[#1C1917] transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#1C1917] ${
         isPriorityDockOpen ? 'z-40' : ''
       } ${
         isDragging
@@ -780,321 +780,308 @@ export default function TaskItem({
         </div>
       ) : (
         <>
-          {/* Top Primary Line: Grip Handle + Checkbox + Full Width Title */}
-          <div className="flex items-start gap-2.5 w-full">
-            {!isEditing && (
-              <div
-                data-drag-handle
-                onTouchStart={() => {
-                  if (onDragStart) onDragStart(task.id);
-                }}
-                onTouchMove={(e) => {
-                  const touch = e.touches[0];
-                  const el = document.elementFromPoint(touch.clientX, touch.clientY);
-                  const taskEl = el?.closest('[data-task-id]');
-                  if (taskEl) {
-                    const targetId = taskEl.getAttribute('data-task-id');
-                    const rect = taskEl.getBoundingClientRect();
-                    const isTop = touch.clientY < rect.top + rect.height / 2;
-                    if (onDragOver) onDragOver(targetId, isTop ? 'above' : 'below');
-                  }
-                }}
-                onTouchEnd={() => {
-                  if (onDrop) onDrop();
-                  if (onDragEnd) onDragEnd();
-                }}
-                className="shrink-0 mt-0.5 -ml-0.5 sm:-ml-1 text-stone-400 sm:text-stone-300 group-hover:text-stone-600 hover:!text-[#1C1917] cursor-grab active:cursor-grabbing p-1 rounded-md hover:bg-[#FAF8F5] transition-colors flex items-center justify-center select-none touch-none"
-                title="Hold and drag to move task up or down"
-                aria-label="Drag handle to reorder task"
-              >
-                <GripVertical className="w-4 h-4" />
-              </div>
-            )}
-
-            {/* Queue Stamp (#order + aesthetic symbol) + Floating Symbol Dock for incomplete tasks */}
-            {!task.is_completed && (
-              <div ref={priorityDockRef} className="relative shrink-0 mt-0.5" data-no-drag>
-                <button
-                  type="button"
-                  data-no-drag
-                  aria-expanded={isPriorityDockOpen}
-                  aria-haspopup="true"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setIsPriorityDockOpen((prev) => !prev)
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 w-full">
+            {/* Left Column: Grip Handle + Queue Stamp + Checkbox + Wrapping Title */}
+            <div className="flex items-start gap-2 min-w-0 flex-1">
+              {!isEditing && (
+                <div
+                  data-drag-handle
+                  onTouchStart={() => {
+                    if (onDragStart) onDragStart(task.id);
                   }}
-                  title={`Queue #${index + 1} • ${activePriority.code} ${activePriority.label} (Click to pick priority 1–6)`}
-                  aria-label={`Queue ${index + 1}, priority ${activePriority.label}, click to open priority dock`}
-                  style={{
-                    backgroundColor: activePriority.badgeBg,
-                    color: activePriority.badgeText
+                  onTouchMove={(e) => {
+                    const touch = e.touches[0];
+                    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                    const taskEl = el?.closest('[data-task-id]');
+                    if (taskEl) {
+                      const targetId = taskEl.getAttribute('data-task-id');
+                      const rect = taskEl.getBoundingClientRect();
+                      const isTop = touch.clientY < rect.top + rect.height / 2;
+                      if (onDragOver) onDragOver(targetId, isTop ? 'above' : 'below');
+                    }
                   }}
-                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-[#1C1917] shadow-[1px_1px_0px_#1C1917] sm:shadow-[1.5px_1.5px_0px_#1C1917] hover:scale-105 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none font-mono font-black text-xs transition-all cursor-pointer select-none"
+                  onTouchEnd={() => {
+                    if (onDrop) onDrop();
+                    if (onDragEnd) onDragEnd();
+                  }}
+                  className="shrink-0 mt-0.5 -ml-0.5 sm:-ml-1 text-stone-400 sm:text-stone-300 group-hover:text-stone-600 hover:!text-[#1C1917] cursor-grab active:cursor-grabbing p-1 rounded-md hover:bg-[#FAF8F5] transition-colors flex items-center justify-center select-none touch-none"
+                  title="Hold and drag to move task up or down"
+                  aria-label="Drag handle to reorder task"
                 >
-                  <span>#{index + 1}</span>
-                  <EditorialPriorityIcon type={activePriority.icon} className="w-4 h-4" />
-                </button>
-
-                {isPriorityDockOpen && (
-                  <div
-                    role="menu"
-                    aria-label="Select task priority"
-                    onClick={(e) => e.stopPropagation()}
-                    onDoubleClick={(e) => e.stopPropagation()}
-                    className="absolute left-0 top-full mt-1.5 z-50 flex items-center gap-1 bg-white border-2 border-[#1C1917] rounded-xl p-1.5 shadow-[3px_3px_0px_#1C1917] animate-in fade-in zoom-in-95 duration-100 whitespace-nowrap"
-                  >
-                    {PRIORITY_OPTIONS.map((opt) => {
-                      const isCurrentTier = activePriority.level === opt.level
-                      return (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          role="menuitem"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setTaskPriority(task, opt.level, true, true)
-                            setIsPriorityDockOpen(false)
-                          }}
-                          title={`${opt.code} ${opt.label} (Press ${opt.level})`}
-                          style={{
-                            backgroundColor: opt.badgeBg,
-                            color: opt.badgeText
-                          }}
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-[#1C1917] font-mono font-black text-[11px] transition-all cursor-pointer select-none ${
-                            isCurrentTier
-                              ? 'ring-2 ring-[#1C1917] shadow-none translate-x-[0.5px] translate-y-[0.5px]'
-                              : 'shadow-[1.5px_1.5px_0px_#1C1917] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none'
-                          }`}
-                        >
-                          <EditorialPriorityIcon type={opt.icon} className="w-4 h-4" />
-                          <span>{opt.level}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={handleCheckboxClick}
-              aria-label={task.is_completed ? `Mark "${task.title}" incomplete` : `Mark "${task.title}" complete`}
-              aria-pressed={task.is_completed}
-              className={`shrink-0 mt-0.5 w-5 h-5 rounded-md border-2 border-[#1C1917] flex items-center justify-center transition-all cursor-pointer ${
-                task.is_completed
-                  ? 'bg-[#22C55E] text-white shadow-[1px_1px_0px_#1C1917]'
-                  : 'bg-white hover:bg-[#FEF08A] shadow-[2px_2px_0px_#1C1917] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none'
-              }`}
-            >
-              {task.is_completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-            </button>
-
-            <span
-              onDoubleClick={handleStartEdit}
-              title="Double-click to edit"
-              className={`text-sm select-none cursor-pointer font-bold leading-relaxed break-words flex-1 min-w-0 ${
-                task.is_completed ? 'line-through text-stone-400 font-medium' : 'text-[#1C1917]'
-              }`}
-            >
-              {!task.is_completed && titleParts.prefix ? (
-                <>
-                  <span
-                    className="inline-flex items-center px-2 py-0.5 mr-1.5 rounded-md border border-[#1C1917] font-black text-xs text-[#1C1917] shadow-[1px_1px_0px_#1C1917] align-baseline"
-                    style={{ backgroundColor: cardTheme.marker }}
-                  >
-                    {titleParts.prefix}
-                  </span>
-                  {titleParts.rest && (
-                    <span className="font-bold text-[#1C1917]">{titleParts.rest}</span>
-                  )}
-                </>
-              ) : (
-                task.title
-              )}
-            </span>
-          </div>
-
-          {/* Bottom Secondary Line: Badges (Left) + Actions (Right) */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pl-0 sm:pl-7.5 pt-0.5">
-            {/* Left section: Metadata Badges */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              {/* Tag Badge */}
-              <span
-                className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md border border-[#1C1917] shadow-[1px_1px_0px_#1C1917] ${tagObj.badgeClass}`}
-              >
-                {tagObj.id === 'career' && <Briefcase className="w-3 h-3" />}
-                {tagObj.id === 'college' && <BookOpen className="w-3 h-3" />}
-                {tagObj.id === 'personal' && <Sparkles className="w-3 h-3" />}
-                <span>{tagObj.shortLabel}</span>
-              </span>
-
-              {/* Repeating indicator for daily tasks */}
-              {isRepeating && !hasSubTasks && (
-                <span
-                  title="Daily session of a repeating weekly routine"
-                  className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-[#FEF08A] border border-[#1C1917] shadow-[1px_1px_0px_#1C1917] text-[#1C1917]"
-                >
-                  <Repeat className="w-3 h-3" />
-                  <span>Weekly Routine</span>
-                </span>
+                  <GripVertical className="w-4 h-4" />
+                </div>
               )}
 
-              {/* Master Task Sub-Task Sessions Progress Badge */}
-              {hasSubTasks && (
-                <span
-                  title={`Master milestone with ${totalSubTasks} daily execution sessions`}
-                  className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-[#BBF7D0] border border-[#1C1917] shadow-[1px_1px_0px_#1C1917] text-[#166534]"
-                >
-                  <Repeat className="w-3 h-3" />
-                  <span>{completedSubTasks}/{totalSubTasks} sessions ({percentSubTasks}%)</span>
-                </span>
-              )}
-
-              {/* Time Badge - Double-click enables custom focus time directly */}
-              {!isWeeklyMilestone && (
-                <span
-                  onDoubleClick={(e) => {
-                    e.stopPropagation()
-                    setIsCustomDuration(true)
-                    setUpdateEntireWeek(true)
-                    setEditRepeatDays(connectedDays)
-                    setIsEditing(true)
-                  }}
-                  className="inline-flex items-center gap-1 text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-white border border-[#1C1917] shadow-[1px_1px_0px_#1C1917] text-[#1C1917] cursor-pointer hover:bg-[#FEF08A] hover:shadow-[2px_2px_0px_#1C1917] transition-all select-none"
-                  title={`${formatDuration(task.duration_minutes ?? 30)} focus${(task.break_minutes ?? 0) > 0 ? ` + ${formatDuration(task.break_minutes)} rest` : ''} • Double-click for custom focus time`}
-                >
-                  <Clock className="w-3 h-3 text-[#1C1917] shrink-0" />
-                  <span>{formatDuration(task.duration_minutes ?? 30)}</span>
-                  {(task.break_minutes ?? 0) > 0 && (
-                    <span className="text-[#78716C] flex items-center gap-0.5">
-                      +<Coffee className="w-2.5 h-2.5 shrink-0" />
-                      {formatDuration(task.break_minutes)}
-                    </span>
-                  )}
-                </span>
-              )}
-            </div>
-
-            {/* Right section: Move to Day / Edit / Delete */}
-            {confirmDelete ? (
-              <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <span className="text-[#1C1917] mr-1 font-bold">Delete repeating task:</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setConfirmDelete(false)
-                    onDelete(task.id)
-                  }}
-                  className="px-2.5 py-1 rounded-lg bg-white hover:bg-stone-100 border border-[#1C1917] text-[#1C1917] font-bold shadow-[1px_1px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
-                >
-                  Just this one
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setConfirmDelete(false)
-                    onDeleteSeries(task.series_id, task.day_of_week)
-                  }}
-                  className="px-2.5 py-1 rounded-lg bg-[#FECDD3] hover:bg-[#FDA4AF] border border-[#1C1917] text-[#9F1239] font-bold shadow-[1px_1px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
-                >
-                  This & following days
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmDelete(false)}
-                  className="px-2 py-1 text-stone-500 hover:text-[#1C1917] font-bold cursor-pointer"
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 shrink-0">
-                {/* Direct 1-click option to carry forward weekly milestone to another week */}
-                {onOpenMoveToWeek && task.day_of_week === 0 && (
+              {/* Queue Stamp (#order + aesthetic symbol) + Floating Symbol Dock for incomplete tasks */}
+              {!task.is_completed && (
+                <div ref={priorityDockRef} className="relative shrink-0 mt-0.5" data-no-drag>
                   <button
                     type="button"
-                    onClick={() => onOpenMoveToWeek(task)}
-                    aria-label="Carry milestone to another week"
-                    title="Carry forward this milestone to another week (schedules on Mon–Sat & preserves history)"
-                    className="flex items-center gap-1 text-[11px] font-bold bg-[#FEF08A] hover:bg-[#FDE047] border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] text-[#1C1917] rounded-lg px-2 py-0.5 transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
+                    data-no-drag
+                    aria-expanded={isPriorityDockOpen}
+                    aria-haspopup="true"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setIsPriorityDockOpen((prev) => !prev)
+                    }}
+                    title={`Queue #${index + 1} • ${activePriority.code} ${activePriority.label} (Click to pick priority 1–6)`}
+                    aria-label={`Queue ${index + 1}, priority ${activePriority.label}, click to open priority dock`}
+                    style={{
+                      backgroundColor: activePriority.badgeBg,
+                      color: activePriority.badgeText
+                    }}
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-[#1C1917] shadow-[1px_1px_0px_#1C1917] sm:shadow-[1.5px_1.5px_0px_#1C1917] hover:scale-105 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none font-mono font-black text-xs transition-all cursor-pointer select-none"
                   >
-                    <CalendarDays className="w-3 h-3" />
-                    <span>Carry</span>
+                    <span>#{index + 1}</span>
+                    <EditorialPriorityIcon type={activePriority.icon} className="w-4 h-4" />
+                  </button>
+
+                  {isPriorityDockOpen && (
+                    <div
+                      role="menu"
+                      aria-label="Select task priority"
+                      onClick={(e) => e.stopPropagation()}
+                      onDoubleClick={(e) => e.stopPropagation()}
+                      className="absolute left-0 top-full mt-1.5 z-50 flex items-center gap-1 bg-white border-2 border-[#1C1917] rounded-xl p-1.5 shadow-[3px_3px_0px_#1C1917] animate-in fade-in zoom-in-95 duration-100 whitespace-nowrap"
+                    >
+                      {PRIORITY_OPTIONS.map((opt) => {
+                        const isCurrentTier = activePriority.level === opt.level
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            role="menuitem"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setTaskPriority(task, opt.level, true, true)
+                              setIsPriorityDockOpen(false)
+                            }}
+                            title={`${opt.code} ${opt.label} (Press ${opt.level})`}
+                            style={{
+                              backgroundColor: opt.badgeBg,
+                              color: opt.badgeText
+                            }}
+                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-[#1C1917] font-mono font-black text-[11px] transition-all cursor-pointer select-none ${
+                              isCurrentTier
+                                ? 'ring-2 ring-[#1C1917] shadow-none translate-x-[0.5px] translate-y-[0.5px]'
+                                : 'shadow-[1.5px_1.5px_0px_#1C1917] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none'
+                            }`}
+                          >
+                            <EditorialPriorityIcon type={opt.icon} className="w-4 h-4" />
+                            <span>{opt.level}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={handleCheckboxClick}
+                aria-label={task.is_completed ? `Mark "${task.title}" incomplete` : `Mark "${task.title}" complete`}
+                aria-pressed={task.is_completed}
+                className={`shrink-0 mt-0.5 w-5 h-5 rounded-md border-2 border-[#1C1917] flex items-center justify-center transition-all cursor-pointer ${
+                  task.is_completed
+                    ? 'bg-[#22C55E] text-white shadow-[1px_1px_0px_#1C1917]'
+                    : 'bg-white text-[#1C1917] hover:bg-[#FEF08A] shadow-[2px_2px_0px_#1C1917] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none'
+                }`}
+              >
+                {task.is_completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+              </button>
+
+              <span
+                onDoubleClick={handleStartEdit}
+                title="Double-click to edit"
+                className={`text-sm select-none cursor-pointer font-bold leading-relaxed break-words flex-1 min-w-0 ${
+                  task.is_completed ? 'line-through text-stone-400 font-medium' : 'text-[#1C1917]'
+                }`}
+              >
+                {!task.is_completed && titleParts.prefix ? (
+                  <>
+                    <span
+                      className="inline-flex items-center px-2 py-0.5 mr-1.5 rounded-md border border-[#1C1917] font-black text-xs text-[#1C1917] shadow-[1px_1px_0px_#1C1917] align-baseline"
+                      style={{ backgroundColor: cardTheme.marker }}
+                    >
+                      {titleParts.prefix}
+                    </span>
+                    {titleParts.rest && (
+                      <span className="font-bold text-[#1C1917]">{titleParts.rest}</span>
+                    )}
+                  </>
+                ) : (
+                  task.title
+                )}
+              </span>
+            </div>
+
+            {/* Right Column: Joined Compact Metadata Pill + Joined Compact Action Pill */}
+            <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0 pl-6 sm:pl-0">
+              {/* Joined Compact Metadata Pill: [ Category | Routine · 6d | Time ] */}
+              <div className="inline-flex items-center bg-white text-[#1C1917] border border-[#1C1917] rounded-lg shadow-[1.5px_1.5px_0px_#1C1917] overflow-hidden text-[11px] font-bold divide-x divide-[#1C1917]/20">
+                {/* Category Segment */}
+                <span className={`inline-flex items-center gap-1 px-2 py-1 ${tagObj.badgeClass} border-0`}>
+                  {tagObj.id === 'career' && <Briefcase className="w-3 h-3 shrink-0" />}
+                  {tagObj.id === 'college' && <BookOpen className="w-3 h-3 shrink-0" />}
+                  {tagObj.id === 'personal' && <Sparkles className="w-3 h-3 shrink-0" />}
+                  <span>{tagObj.shortLabel}</span>
+                </span>
+
+                {/* Master Sub-Task Progress Segment OR Combined Weekly Routine / Repeat Segment */}
+                {hasSubTasks ? (
+                  <span
+                    title={`Master milestone with ${totalSubTasks} daily execution sessions`}
+                    className="inline-flex items-center gap-1 px-2 py-1 bg-[#BBF7D0] text-[#166534]"
+                  >
+                    <Repeat className="w-3 h-3 shrink-0" />
+                    <span>{completedSubTasks}/{totalSubTasks} ({percentSubTasks}%)</span>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleStartEdit}
+                    aria-label="Repeat task across multiple days"
+                    title={
+                      isRepeating && connectedCalendarDaysCount > 0
+                        ? `Weekly Routine repeating on ${connectedCalendarDaysCount} ${connectedCalendarDaysCount === 1 ? 'day' : 'days'} (Click to change repeat days)`
+                        : 'Make this task repeat across multiple days (e.g. Mon–Sat)'
+                    }
+                    className={`inline-flex items-center gap-1 px-2 py-1 transition-colors cursor-pointer ${
+                      isRepeating
+                        ? 'bg-[#FEF08A] hover:bg-[#FDE047] text-[#1C1917]'
+                        : 'bg-white hover:bg-[#FEF08A] text-[#57534E] hover:text-[#1C1917]'
+                    }`}
+                  >
+                    <Repeat className="w-3 h-3 stroke-[2.5] shrink-0" />
+                    {isRepeating && (
+                      <span>
+                        {connectedCalendarDaysCount > 0 ? `${connectedCalendarDaysCount}d` : 'Routine'}
+                      </span>
+                    )}
                   </button>
                 )}
 
-                {/* Direct 1-click option to make task repeat across days */}
-                <button
-                  type="button"
-                  onClick={handleStartEdit}
-                  aria-label="Repeat task across multiple days"
-                  title={
-                    isRepeating && connectedCalendarDaysCount > 0
-                      ? `Repeating on ${connectedCalendarDaysCount} ${connectedCalendarDaysCount === 1 ? 'day' : 'days'} (Click to change repeat days)`
-                      : 'Make this task repeat across multiple days (e.g. Mon–Sat)'
-                  }
-                  className={`flex items-center gap-1 text-[11px] font-bold border border-[#1C1917] rounded-lg px-2 py-0.5 transition-all cursor-pointer ${
-                    isRepeating
-                      ? 'bg-[#FEF08A] text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917]'
-                      : 'bg-white hover:bg-[#FEF08A] text-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917]'
-                  }`}
-                >
-                  <Repeat className="w-3 h-3 stroke-[2.5]" />
-                  <span className="hidden sm:inline">
-                    {isRepeating && connectedCalendarDaysCount > 0
-                      ? `${connectedCalendarDaysCount}d`
-                      : 'Repeat'}
+                {/* Time Segment - Double-click enables custom focus time directly */}
+                {!isWeeklyMilestone && (
+                  <span
+                    onDoubleClick={(e) => {
+                      e.stopPropagation()
+                      setIsCustomDuration(true)
+                      setUpdateEntireWeek(true)
+                      setEditRepeatDays(connectedDays)
+                      setIsEditing(true)
+                    }}
+                    className="inline-flex items-center gap-1 px-2 py-1 font-mono bg-white text-[#1C1917] hover:bg-[#FEF08A] cursor-pointer transition-colors select-none"
+                    title={`${formatDuration(task.duration_minutes ?? 30)} focus${(task.break_minutes ?? 0) > 0 ? ` + ${formatDuration(task.break_minutes)} rest` : ''} • Double-click for custom focus time`}
+                  >
+                    <Clock className="w-3 h-3 text-[#1C1917] shrink-0" />
+                    <span>{formatDuration(task.duration_minutes ?? 30)}</span>
+                    {(task.break_minutes ?? 0) > 0 && (
+                      <span className="text-[#78716C] flex items-center gap-0.5">
+                        +<Coffee className="w-2.5 h-2.5 shrink-0" />
+                        {formatDuration(task.break_minutes)}
+                      </span>
+                    )}
                   </span>
-                </button>
-
-                <select
-                  value={task.day_of_week}
-                  onChange={(e) => {
-                    if (e.target.value === 'repeat') {
-                      handleStartEdit()
-                    } else if (e.target.value === 'move-week') {
-                      if (onOpenMoveToWeek) onOpenMoveToWeek(task)
-                    } else if (onMove) {
-                      onMove(task.id, Number(e.target.value))
-                    }
-                  }}
-                  aria-label="Assign to day"
-                  title="Move or assign this task"
-                  className="text-[11px] font-bold bg-white border border-[#1C1917] hover:bg-[#FEF08A] shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg px-1.5 py-0.5 text-[#1C1917] focus:outline-none cursor-pointer transition-all"
-                >
-                  <option value={0}>📋 Wk</option>
-                  <option value={1}>Mon</option>
-                  <option value={2}>Tue</option>
-                  <option value={3}>Wed</option>
-                  <option value={4}>Thu</option>
-                  <option value={5}>Fri</option>
-                  <option value={6}>Sat</option>
-                  <option value={7}>Sun</option>
-                  <option value="repeat">🔁 Repeat across days…</option>
-                  <option value="move-week">🗓️ Carry…</option>
-                </select>
-
-                <button
-                  type="button"
-                  onClick={handleStartEdit}
-                  aria-label="Edit task"
-                  title="Edit task (double-click also works)"
-                  className="p-1 rounded-lg border border-[#1C1917] bg-white text-[#1C1917] hover:bg-[#FEF08A] shadow-[1.5px_1.5px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
-                >
-                  <Pencil className="w-3 h-3" />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDeleteClick}
-                  aria-label="Delete task"
-                  title="Delete task"
-                  className="p-1 rounded-lg border border-[#1C1917] bg-white text-[#1C1917] hover:bg-[#FECDD3] shadow-[1.5px_1.5px_0px_#1C1917] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
+                )}
               </div>
-            )}
+
+              {/* Joined Compact Action Pill: [ Carry | Day ▾ | Edit | Delete ] */}
+              {confirmDelete ? (
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-[#1C1917]">
+                  <span className="text-[#1C1917] mr-1 font-bold">Delete repeating:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setConfirmDelete(false)
+                      onDelete(task.id)
+                    }}
+                    className="px-2 py-0.5 rounded-lg bg-white hover:bg-stone-100 border border-[#1C1917] text-[#1C1917] font-bold shadow-[1px_1px_0px_#1C1917] cursor-pointer"
+                  >
+                    This one
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setConfirmDelete(false)
+                      onDeleteSeries(task.series_id, task.day_of_week)
+                    }}
+                    className="px-2 py-0.5 rounded-lg bg-[#FECDD3] hover:bg-[#FDA4AF] border border-[#1C1917] text-[#9F1239] font-bold shadow-[1px_1px_0px_#1C1917] cursor-pointer"
+                  >
+                    All following
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(false)}
+                    className="px-1.5 py-0.5 text-stone-500 hover:text-[#1C1917] font-bold cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div className="inline-flex items-center bg-white text-[#1C1917] border border-[#1C1917] rounded-lg shadow-[1.5px_1.5px_0px_#1C1917] overflow-hidden text-[11px] font-bold divide-x divide-[#1C1917]/20 shrink-0">
+                  {onOpenMoveToWeek && task.day_of_week === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => onOpenMoveToWeek(task)}
+                      aria-label="Carry milestone to another week"
+                      title="Carry forward this milestone to another week (schedules on Mon–Sat & preserves history)"
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-[#FEF08A] hover:bg-[#FDE047] text-[#1C1917] transition-colors cursor-pointer"
+                    >
+                      <CalendarDays className="w-3 h-3 shrink-0" />
+                      <span>Carry</span>
+                    </button>
+                  )}
+
+                  <select
+                    value={task.day_of_week}
+                    onChange={(e) => {
+                      if (e.target.value === 'repeat') {
+                        handleStartEdit()
+                      } else if (e.target.value === 'move-week') {
+                        if (onOpenMoveToWeek) onOpenMoveToWeek(task)
+                      } else if (onMove) {
+                        onMove(task.id, Number(e.target.value))
+                      }
+                    }}
+                    aria-label="Assign to day"
+                    title="Move or assign this task"
+                    className="text-[11px] font-bold bg-white hover:bg-[#FEF08A] px-1.5 py-1 text-[#1C1917] focus:outline-none cursor-pointer transition-colors"
+                  >
+                    <option value={0}>📋 Wk</option>
+                    <option value={1}>Mon</option>
+                    <option value={2}>Tue</option>
+                    <option value={3}>Wed</option>
+                    <option value={4}>Thu</option>
+                    <option value={5}>Fri</option>
+                    <option value={6}>Sat</option>
+                    <option value={7}>Sun</option>
+                    <option value="repeat">🔁 Repeat across days…</option>
+                    <option value="move-week">🗓️ Carry…</option>
+                  </select>
+
+                  <button
+                    type="button"
+                    onClick={handleStartEdit}
+                    aria-label="Edit task"
+                    title="Edit task (double-click also works)"
+                    className="p-1.5 bg-white text-[#1C1917] hover:bg-[#FEF08A] transition-colors cursor-pointer"
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteClick}
+                    aria-label="Delete task"
+                    title="Delete task"
+                    className="p-1.5 bg-white text-[#1C1917] hover:bg-[#FECDD3] hover:text-[#9F1239] transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </>
       )}
