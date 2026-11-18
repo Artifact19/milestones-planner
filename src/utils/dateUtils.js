@@ -164,7 +164,6 @@ export const HIGHLIGHTER_OPTIONS = [
 
 const HIGHLIGHT_STORAGE_KEY = 'milestones_task_highlights_v1'
 const PRIORITY_STORAGE_KEY = 'milestones_task_priorities_v1'
-const PRIORITY_TS_STORAGE_KEY = 'milestones_task_priority_ts_v1'
 const SHORT_CONNECTOR_WORDS = new Set(['for', 'to', 'of', 'in', 'on', 'and', 'the', 'a', 'with', '&'])
 
 // 6 priority tiers mapped 1-to-1 with cool editorial line-art symbols and pastel colors
@@ -272,13 +271,6 @@ export function getStoredTaskPriorityLevel(task) {
   return Number.isInteger(num) && num >= 1 ? num : null
 }
 
-export function getStoredTaskPriorityTimestamp(task) {
-  const map = readTaskMap(PRIORITY_TS_STORAGE_KEY)
-  const raw = lookupTaskMapValue(map, task)
-  const num = Number(raw)
-  return Number.isFinite(num) && num > 0 ? num : 0
-}
-
 export function getTaskPriority(task, fallbackIndex = 0) {
   const stored = getStoredTaskPriorityLevel(task)
   const effectiveRank = stored !== null ? stored : Math.max(0, Number(fallbackIndex) || 0) + 1
@@ -300,7 +292,6 @@ export function setTaskPriority(task, level, syncSeries = true, syncColor = true
   if (!Number.isInteger(num) || num < 1) return
   const tier = PRIORITY_OPTIONS[(num - 1) % PRIORITY_OPTIONS.length]
 
-  saveTaskMapValue(PRIORITY_TS_STORAGE_KEY, task, Date.now(), syncSeries, false)
   // When also syncing color, defer event dispatch until highlighter write so subscribers re-read both atomically
   saveTaskMapValue(PRIORITY_STORAGE_KEY, task, num, syncSeries, !syncColor)
   if (syncColor) {
@@ -308,28 +299,97 @@ export function setTaskPriority(task, level, syncSeries = true, syncColor = true
   }
 }
 
-export function syncTaskPrioritiesForOrder(incompleteTasks = []) {
+export function syncTaskPrioritiesForOrder(
+  incompleteTasks = [],
+  movedTaskId = null,
+  previousIncompleteTasks = []
+) {
   if (!Array.isArray(incompleteTasks) || incompleteTasks.length === 0) return
   const prioMap = readTaskMap(PRIORITY_STORAGE_KEY)
   const hlMap = readTaskMap(HIGHLIGHT_STORAGE_KEY)
-  const tsMap = readTaskMap(PRIORITY_TS_STORAGE_KEY)
 
-  incompleteTasks.forEach((task, idx) => {
-    if (!task?.id) return
-    const tier = PRIORITY_OPTIONS[idx % PRIORITY_OPTIONS.length]
-    prioMap[`id:${task.id}`] = idx + 1
-    hlMap[`id:${task.id}`] = tier.defaultColor
-    delete tsMap[`id:${task.id}`]
-    if (task?.series_id) delete tsMap[`series:${task.series_id}`]
+  // 1. Lock in existing priorities for all non-moved tasks so none of them get downgraded when their index shifts
+  const baseList =
+    Array.isArray(previousIncompleteTasks) && previousIncompleteTasks.length > 0
+      ? previousIncompleteTasks
+      : incompleteTasks
+
+  baseList.forEach((task, oldIdx) => {
+    if (!task?.id || task.id === movedTaskId) return
+    const currentTier = getTaskPriority(task, oldIdx)
+    prioMap[`id:${task.id}`] = currentTier.level
+    hlMap[`id:${task.id}`] = currentTier.defaultColor
   })
 
-  writeTaskMap(PRIORITY_TS_STORAGE_KEY, tsMap, false)
+  // 2. Update ONLY the reordered (dragged) task's priority to match its new position
+  if (movedTaskId) {
+    const movedIndex = incompleteTasks.findIndex((t) => t.id === movedTaskId)
+    if (movedIndex !== -1) {
+      const movedTask = incompleteTasks[movedIndex]
+      const taskAbove = movedIndex > 0 ? incompleteTasks[movedIndex - 1] : null
+      const taskBelow =
+        movedIndex < incompleteTasks.length - 1 ? incompleteTasks[movedIndex + 1] : null
+
+      let targetLevel = 1
+      if (movedIndex === 0) {
+        targetLevel = taskBelow
+          ? prioMap[`id:${taskBelow.id}`] || getTaskPriority(taskBelow, 0).level
+          : 1
+      } else if (taskAbove) {
+        targetLevel =
+          prioMap[`id:${taskAbove.id}`] || getTaskPriority(taskAbove, movedIndex - 1).level
+      }
+
+      if (taskBelow) {
+        const belowLevel =
+          prioMap[`id:${taskBelow.id}`] || getTaskPriority(taskBelow, movedIndex + 1).level
+        if (targetLevel > belowLevel) {
+          targetLevel = belowLevel
+        }
+      }
+
+      const movedTier = PRIORITY_OPTIONS[(targetLevel - 1) % PRIORITY_OPTIONS.length]
+      prioMap[`id:${movedTask.id}`] = movedTier.level
+      hlMap[`id:${movedTask.id}`] = movedTier.defaultColor
+    }
+  }
+
   writeTaskMap(PRIORITY_STORAGE_KEY, prioMap, false)
   writeTaskMap(HIGHLIGHT_STORAGE_KEY, hlMap, true)
 }
 
-/** Stable-sort incomplete tasks by explicit priority rank while preserving fallback order for unprioritized items. */
+/** Stable-sort incomplete tasks by explicit priority rank while preserving queue order within the same priority. */
 export function sortIncompleteByPriority(incompleteList = []) {
+  if (!Array.isArray(incompleteList) || incompleteList.length === 0) return []
+
+  const prioMap = readTaskMap(PRIORITY_STORAGE_KEY)
+  const hlMap = readTaskMap(HIGHLIGHT_STORAGE_KEY)
+  let dirty = false
+  let maxRankSeen = 1
+
+  incompleteList.forEach((t, idx) => {
+    if (!t?.id) return
+    const existing = getStoredTaskPriorityLevel(t)
+    if (existing !== null) {
+      if (existing > maxRankSeen) maxRankSeen = existing
+    } else {
+      const defaultLevel = Math.min(
+        PRIORITY_OPTIONS.length,
+        Math.max((idx % PRIORITY_OPTIONS.length) + 1, maxRankSeen)
+      )
+      const tier = PRIORITY_OPTIONS[(defaultLevel - 1) % PRIORITY_OPTIONS.length]
+      prioMap[`id:${t.id}`] = defaultLevel
+      hlMap[`id:${t.id}`] = tier.defaultColor
+      if (defaultLevel > maxRankSeen) maxRankSeen = defaultLevel
+      dirty = true
+    }
+  })
+
+  if (dirty) {
+    writeTaskMap(PRIORITY_STORAGE_KEY, prioMap, false)
+    writeTaskMap(HIGHLIGHT_STORAGE_KEY, hlMap, false)
+  }
+
   const indexMap = new Map(incompleteList.map((t, idx) => [t.id, idx]))
   return [...incompleteList].sort((a, b) => {
     const pA = getStoredTaskPriorityLevel(a)
@@ -337,10 +397,6 @@ export function sortIncompleteByPriority(incompleteList = []) {
     const rankA = pA !== null ? pA : (indexMap.get(a.id) ?? 0) + 1
     const rankB = pB !== null ? pB : (indexMap.get(b.id) ?? 0) + 1
     if (rankA !== rankB) return rankA - rankB
-    if ((pA !== null) !== (pB !== null)) return pA !== null ? -1 : 1
-    const tsA = getStoredTaskPriorityTimestamp(a)
-    const tsB = getStoredTaskPriorityTimestamp(b)
-    if (tsA !== tsB) return tsB - tsA
     return (indexMap.get(a.id) ?? 0) - (indexMap.get(b.id) ?? 0)
   })
 }

@@ -128,8 +128,13 @@ export default function FocusedDayView({
       const targetList = isWeeklyList ? weeklyTasks : tasks;
       const targetDay = isWeeklyList ? 0 : selectedDay;
 
+      const prevIncomplete = targetList.filter((t) => !t.is_completed);
       const updatedList = reorderTaskList(targetList, draggedItem.id, finalTargetId, finalPosition);
-      syncTaskPrioritiesForOrder(updatedList.filter((t) => !t.is_completed));
+      syncTaskPrioritiesForOrder(
+        updatedList.filter((t) => !t.is_completed),
+        draggedItem.id,
+        prevIncomplete
+      );
       if (onReorderTasks) {
         onReorderTasks(targetDay, updatedList);
       }

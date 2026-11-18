@@ -26,82 +26,26 @@ import {
   subscribeTaskHighlighters
 } from '../utils/dateUtils'
 
-/** High-contrast open-geometry aesthetic line-art symbols for the 6 priority tiers. */
-export function EditorialPriorityIcon({ type, className = 'w-3.5 h-3.5' }) {
+const PRIORITY_ICON_PATHS = {
+  crown: '/priority-icons/crown.png',
+  bolt: '/priority-icons/bolt.png',
+  planet: '/priority-icons/planet.png',
+  glider: '/priority-icons/glider.png',
+  hourglass: '/priority-icons/hourglass.png',
+  crescent: '/priority-icons/crescent.png'
+}
+
+/** Crisp illustrated image icons for the 6 priority tiers. */
+export function EditorialPriorityIcon({ type, className = 'w-4 h-4' }) {
+  const src = PRIORITY_ICON_PATHS[type] || PRIORITY_ICON_PATHS.crown
   return (
-    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" className={className}>
-      {type === 'crown' && (
-        <path
-          d="M2 5L5.5 8.5L8 3L10.5 8.5L14 5L12.6 12.5H3.4L2 5Z"
-          fill="#FFFFFF"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinejoin="round"
-        />
-      )}
-      {type === 'bolt' && (
-        <path
-          d="M9.2 1.5L3.5 9H8L6.8 14.5L12.5 7H8L9.2 1.5Z"
-          fill="#FFFFFF"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinejoin="round"
-        />
-      )}
-      {type === 'planet' && (
-        <>
-          <circle cx="8" cy="8" r="3.2" fill="#FFFFFF" stroke="currentColor" strokeWidth="1.5" />
-          <ellipse
-            cx="8"
-            cy="8"
-            rx="6.8"
-            ry="2.2"
-            transform="rotate(-24 8 8)"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
-        </>
-      )}
-      {type === 'glider' && (
-        <>
-          <path
-            d="M14.2 2.2L1.8 7.5L7.2 9.6L9.4 14.2L14.2 2.2Z"
-            fill="#FFFFFF"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M14.2 2.2L7.2 9.6"
-            stroke="currentColor"
-            strokeWidth="1.4"
-            strokeLinecap="round"
-          />
-        </>
-      )}
-      {type === 'hourglass' && (
-        <path
-          d="M4.2 2.5H11.8L8 8L11.8 13.5H4.2L8 8L4.2 2.5Z"
-          fill="#FFFFFF"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinejoin="round"
-        />
-      )}
-      {type === 'crescent' && (
-        <>
-          <path
-            d="M10.8 12.8A5 5 0 0 1 6.8 2.4A5.3 5.3 0 1 0 13.4 10.4A4.6 4.6 0 0 1 10.8 12.8Z"
-            fill="#FFFFFF"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinejoin="round"
-          />
-          <circle cx="12.2" cy="4.2" r="1" fill="currentColor" />
-        </>
-      )}
-    </svg>
+    <img
+      src={src}
+      alt=""
+      aria-hidden="true"
+      draggable={false}
+      className={`${className} object-contain shrink-0 select-none pointer-events-none`}
+    />
   )
 }
 
@@ -714,7 +658,7 @@ export default function TaskItem({
                           : 'border-[#1C1917]/20 text-[#57534E] hover:border-[#1C1917]/60'
                       }`}
                     >
-                      <EditorialPriorityIcon type={opt.icon} className="w-3 h-3" />
+                      <EditorialPriorityIcon type={opt.icon} className="w-4 h-4" />
                       <span>{opt.code} {opt.label}</span>
                     </button>
                   )
@@ -888,7 +832,7 @@ export default function TaskItem({
                   className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-[#1C1917] shadow-[1px_1px_0px_#1C1917] sm:shadow-[1.5px_1.5px_0px_#1C1917] hover:scale-105 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none font-mono font-black text-xs transition-all cursor-pointer select-none"
                 >
                   <span>#{index + 1}</span>
-                  <EditorialPriorityIcon type={activePriority.icon} className="w-3.5 h-3.5" />
+                  <EditorialPriorityIcon type={activePriority.icon} className="w-4 h-4" />
                 </button>
 
                 {isPriorityDockOpen && (
@@ -922,7 +866,7 @@ export default function TaskItem({
                               : 'shadow-[1.5px_1.5px_0px_#1C1917] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none'
                           }`}
                         >
-                          <EditorialPriorityIcon type={opt.icon} className="w-3.5 h-3.5" />
+                          <EditorialPriorityIcon type={opt.icon} className="w-4 h-4" />
                           <span>{opt.level}</span>
                         </button>
                       )
