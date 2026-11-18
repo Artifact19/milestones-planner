@@ -152,3 +152,128 @@ export const FOCUS_CATEGORY_OPTIONS = [
   }
 ]
 
+// Curated light highlighter shades harmonized with the #F8F6F0 / #1C1917 neo-brutalist palette
+export const HIGHLIGHTER_OPTIONS = [
+  { id: 'yellow', name: 'Sunburst Yellow', card: '#FEFCE8', marker: '#FEF08A', accent: '#EAB308' },
+  { id: 'mint', name: 'Mint Sage', card: '#F0FDF4', marker: '#BBF7D0', accent: '#22C55E' },
+  { id: 'sky', name: 'Sky Breeze', card: '#F0F9FF', marker: '#BAE6FD', accent: '#0EA5E9' },
+  { id: 'violet', name: 'Lavender Mist', card: '#FAF5FF', marker: '#E9D5FF', accent: '#A855F7' },
+  { id: 'peach', name: 'Peach Apricot', card: '#FFF7ED', marker: '#FED7AA', accent: '#F97316' },
+  { id: 'rose', name: 'Rose Quartz', card: '#FFF1F2', marker: '#FECDD3', accent: '#F43F5E' }
+]
+
+const HIGHLIGHT_STORAGE_KEY = 'milestones_task_highlights_v1'
+const SHORT_CONNECTOR_WORDS = new Set(['for', 'to', 'of', 'in', 'on', 'and', 'the', 'a', 'with', '&'])
+
+// Extract a short scannable prefix from long task titles for the highlighter pill
+export function splitTaskTitleForHighlight(title = '') {
+  const trimmed = String(title || '').trim()
+  if (!trimmed) return { prefix: '', rest: '' }
+
+  // Handle leading numbered prefixes like "6 - DSA problems old (python & c++)..."
+  const numPrefixMatch = trimmed.match(/^(\d+\s*[-–]\s*\S+(?:\s+\S+){0,1})\s+(.+)$/)
+  if (numPrefixMatch) {
+    return { prefix: numPrefixMatch[1].trim(), rest: numPrefixMatch[2].trim() }
+  }
+
+  // Split at delimiters (: — – or spaced -)
+  const sepMatch = trimmed.match(/^(.{2,34}?)\s*(?:[:—–]|\s-\s)\s*(.+)$/)
+  if (sepMatch) {
+    return { prefix: sepMatch[1].trim(), rest: sepMatch[2].trim() }
+  }
+
+  const words = trimmed.split(/\s+/)
+  if (words.length <= 3) {
+    return { prefix: trimmed, rest: '' }
+  }
+
+  const takeCount = SHORT_CONNECTOR_WORDS.has(words[1].toLowerCase()) ? 3 : 2
+  return {
+    prefix: words.slice(0, takeCount).join(' '),
+    rest: words.slice(takeCount).join(' ')
+  }
+}
+
+function readHighlightMap() {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = window.localStorage.getItem(HIGHLIGHT_STORAGE_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
+function writeHighlightMap(map) {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(HIGHLIGHT_STORAGE_KEY, JSON.stringify(map))
+    window.dispatchEvent(new CustomEvent('milestones-highlight-change'))
+  } catch {
+    // ignore storage quota errors
+  }
+}
+
+function findHighlighterById(colorId) {
+  return HIGHLIGHTER_OPTIONS.find((h) => h.id === colorId) || null
+}
+
+function hashSeed(str) {
+  let hash = 2166136261
+  for (let i = 0; i < str.length; i += 1) {
+    hash ^= str.charCodeAt(i)
+    hash = Math.imul(hash, 16777619)
+  }
+  return hash >>> 0
+}
+
+export function getTaskHighlighter(task) {
+  const map = readHighlightMap()
+  const normTitle = String(task?.title || '').trim().toLowerCase()
+
+  const storedId =
+    (task?.id && map[`id:${task.id}`]) ||
+    (task?.series_id && map[`series:${task.series_id}`]) ||
+    (normTitle && map[`title:${normTitle}`])
+
+  const matched = findHighlighterById(storedId)
+  if (matched) return matched
+
+  const { prefix } = splitTaskTitleForHighlight(task?.title || '')
+  const seed = String(task?.series_id || prefix.toLowerCase() || normTitle || task?.id || 'default')
+  return HIGHLIGHTER_OPTIONS[hashSeed(seed) % HIGHLIGHTER_OPTIONS.length]
+}
+
+export function setTaskHighlighter(task, colorId, syncSeries = true) {
+  if (!findHighlighterById(colorId)) return
+  const map = readHighlightMap()
+  const normTitle = String(task?.title || '').trim().toLowerCase()
+
+  if (syncSeries) {
+    if (task?.series_id) {
+      map[`series:${task.series_id}`] = colorId
+      // Remove any stale per-task override on this card so it stays synced with the series
+      if (task?.id) delete map[`id:${task.id}`]
+    } else if (task?.id) {
+      map[`id:${task.id}`] = colorId
+    }
+    if (normTitle) {
+      map[`title:${normTitle}`] = colorId
+    }
+  } else if (task?.id) {
+    map[`id:${task.id}`] = colorId
+  }
+
+  writeHighlightMap(map)
+}
+
+export function subscribeTaskHighlighters(callback) {
+  if (typeof window === 'undefined') return () => {}
+  window.addEventListener('milestones-highlight-change', callback)
+  window.addEventListener('storage', callback)
+  return () => {
+    window.removeEventListener('milestones-highlight-change', callback)
+    window.removeEventListener('storage', callback)
+  }
+}
+

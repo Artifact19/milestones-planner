@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, useSyncExternalStore } from 'react'
 import {
   Check,
   CheckCircle2,
@@ -15,7 +15,17 @@ import {
   ChevronUp,
   ChevronDown
 } from 'lucide-react'
-import { formatDuration, getDefaultBreakMinutes, TAG_OPTIONS, DAY_NAMES } from '../utils/dateUtils'
+import {
+  formatDuration,
+  getDefaultBreakMinutes,
+  TAG_OPTIONS,
+  DAY_NAMES,
+  HIGHLIGHTER_OPTIONS,
+  splitTaskTitleForHighlight,
+  getTaskHighlighter,
+  setTaskHighlighter,
+  subscribeTaskHighlighters
+} from '../utils/dateUtils'
 
 const DURATION_PRESETS = [
   { value: 15, label: '15m focus' },
@@ -280,6 +290,49 @@ export default function TaskItem({
 
   const tagObj = TAG_OPTIONS.find((t) => t.id === (task.tag || 'career')) || TAG_OPTIONS[0]
 
+  const activeHighlightId = useSyncExternalStore(
+    subscribeTaskHighlighters,
+    () => getTaskHighlighter(task).id
+  )
+  const activeHighlighter =
+    HIGHLIGHTER_OPTIONS.find((h) => h.id === activeHighlightId) || HIGHLIGHTER_OPTIONS[0]
+
+  const titleParts = useMemo(() => splitTaskTitleForHighlight(task.title), [task.title])
+
+  const cardHighlightStyle =
+    !isDragging && !task.is_completed
+      ? {
+          backgroundColor: activeHighlighter.card,
+          borderLeft: `5px solid ${activeHighlighter.accent}`
+        }
+      : undefined
+
+  const renderColorDots = (syncSeries, containerClass) => (
+    <div className={containerClass} aria-label="Highlighter color" data-no-drag>
+      {HIGHLIGHTER_OPTIONS.map((h) => {
+        const isSelected = activeHighlighter.id === h.id
+        return (
+          <button
+            key={h.id}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setTaskHighlighter(task, h.id, syncSeries)
+            }}
+            title={`Highlight: ${h.name}`}
+            aria-label={`Highlight ${h.name}`}
+            className={`w-3.5 h-3.5 rounded-full border border-[#1C1917] transition-transform cursor-pointer ${
+              isSelected
+                ? 'scale-115 ring-2 ring-[#1C1917]/30'
+                : 'opacity-70 hover:opacity-100 hover:scale-110'
+            }`}
+            style={{ backgroundColor: h.marker }}
+          />
+        )
+      })}
+    </div>
+  )
+
   return (
     <div
       data-task-id={task.id}
@@ -332,6 +385,7 @@ export default function TaskItem({
       }}
       tabIndex={isEditing ? -1 : 0}
       title={isEditing ? undefined : 'Double-click anywhere to edit • Hold to rearrange'}
+      style={cardHighlightStyle}
       className={`group relative flex flex-col gap-2 p-3 sm:p-3.5 rounded-2xl border-2 border-[#1C1917] transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#1C1917] ${
         isDragging
           ? 'opacity-40 scale-[0.99] border-dashed bg-[#FEF08A]/30 shadow-none'
@@ -529,6 +583,11 @@ export default function TaskItem({
                 ))}
               </select>
 
+              {renderColorDots(
+                updateEntireWeek,
+                'inline-flex items-center gap-1 bg-white border border-[#1C1917] shadow-[1.5px_1.5px_0px_#1C1917] rounded-lg px-2 py-1'
+              )}
+
               <button
                 type="button"
                 onClick={handleSaveEdit}
@@ -715,7 +774,21 @@ export default function TaskItem({
                 task.is_completed ? 'line-through text-stone-400 font-medium' : 'text-[#1C1917]'
               }`}
             >
-              {task.title}
+              {!task.is_completed && titleParts.prefix ? (
+                <>
+                  <span
+                    className="inline-flex items-center px-2 py-0.5 mr-1.5 rounded-md border border-[#1C1917] font-black text-xs text-[#1C1917] shadow-[1px_1px_0px_#1C1917] align-baseline"
+                    style={{ backgroundColor: activeHighlighter.marker }}
+                  >
+                    {titleParts.prefix}
+                  </span>
+                  {titleParts.rest && (
+                    <span className="font-bold text-[#1C1917]">{titleParts.rest}</span>
+                  )}
+                </>
+              ) : (
+                task.title
+              )}
             </span>
           </div>
 
@@ -778,6 +851,13 @@ export default function TaskItem({
                   )}
                 </span>
               )}
+
+              {/* 1-Click Highlighter Color Dots */}
+              {!task.is_completed &&
+                renderColorDots(
+                  true,
+                  'inline-flex items-center gap-1 px-1.5 py-1 rounded-md bg-white/80 border border-[#1C1917]/25'
+                )}
             </div>
 
             {/* Right section: Move to Day / Edit / Delete */}

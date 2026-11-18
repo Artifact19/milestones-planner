@@ -10,7 +10,13 @@ import {
   ChevronDown,
   Repeat
 } from 'lucide-react'
-import { formatDuration, getDefaultBreakMinutes, TAG_OPTIONS } from '../utils/dateUtils'
+import {
+  formatDuration,
+  getDefaultBreakMinutes,
+  TAG_OPTIONS,
+  HIGHLIGHTER_OPTIONS,
+  setTaskHighlighter
+} from '../utils/dateUtils'
 
 export default function AddTaskInput({
   selectedDay = null,
@@ -22,6 +28,7 @@ export default function AddTaskInput({
   const [duration, setDuration] = useState(30)
   const [breakMinutes, setBreakMinutes] = useState(5)
   const [selectedTag, setSelectedTag] = useState('career')
+  const [selectedHighlight, setSelectedHighlight] = useState(null)
   const [showOptions, setShowOptions] = useState(false)
   const [isRecurring, setIsRecurring] = useState(false)
   const [selectedDays, setSelectedDays] = useState(() =>
@@ -102,6 +109,10 @@ export default function AddTaskInput({
     const finalDuration = Math.max(1, Math.min(1440, Number(duration) || 30))
     const finalBreak = Math.max(0, Math.min(240, Number(breakMinutes) || 0))
 
+    if (selectedHighlight) {
+      setTaskHighlighter({ title: trimmed }, selectedHighlight, true)
+    }
+
     if (isRecurring && onAddBatch && selectedDays.length > 0) {
       onAddBatch(selectedDays, trimmed, finalDuration, finalBreak, selectedTag)
     } else {
@@ -112,6 +123,7 @@ export default function AddTaskInput({
     // Collapse the options panel and turn off repeat mode after each add
     setShowOptions(false)
     setIsRecurring(false)
+    setSelectedHighlight(null)
     if (inputRef.current) {
       inputRef.current.focus()
     }
@@ -325,33 +337,73 @@ export default function AddTaskInput({
             </div>
           </div>
 
-          {/* Tag Selector */}
-          <div>
-            <div className="text-[11px] font-black text-[#1C1917] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <Tag className="w-3 h-3 text-[#1C1917]" />
-              <span>Category / Tag</span>
+          {/* Tag & Highlighter Selectors */}
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="text-[11px] font-black text-[#1C1917] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                <Tag className="w-3 h-3 text-[#1C1917]" />
+                <span>Category / Tag</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {TAG_OPTIONS.map((tag) => {
+                  const isSelected = selectedTag === tag.id
+                  return (
+                    <button
+                      key={tag.id}
+                      type="button"
+                      onClick={() => setSelectedTag(tag.id)}
+                      className={`flex items-center gap-1.5 text-xs px-3 py-1 rounded-xl border-2 font-bold transition-all cursor-pointer ${
+                        isSelected
+                          ? tag.badgeClass + ' border-[#1C1917] shadow-[2px_2px_0px_#1C1917]'
+                          : 'bg-white border-[#1C1917]/40 text-[#57534E] hover:border-[#1C1917]'
+                      }`}
+                    >
+                      {tag.id === 'career' && <Briefcase className="w-3 h-3" />}
+                      {tag.id === 'college' && <BookOpen className="w-3 h-3" />}
+                      {tag.id === 'personal' && <Sparkles className="w-3 h-3" />}
+                      <span>{tag.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              {TAG_OPTIONS.map((tag) => {
-                const isSelected = selectedTag === tag.id
-                return (
-                  <button
-                    key={tag.id}
-                    type="button"
-                    onClick={() => setSelectedTag(tag.id)}
-                    className={`flex items-center gap-1.5 text-xs px-3 py-1 rounded-xl border-2 font-bold transition-all cursor-pointer ${
-                      isSelected
-                        ? tag.badgeClass + ' border-[#1C1917] shadow-[2px_2px_0px_#1C1917]'
-                        : 'bg-white border-[#1C1917]/40 text-[#57534E] hover:border-[#1C1917]'
-                    }`}
-                  >
-                    {tag.id === 'career' && <Briefcase className="w-3 h-3" />}
-                    {tag.id === 'college' && <BookOpen className="w-3 h-3" />}
-                    {tag.id === 'personal' && <Sparkles className="w-3 h-3" />}
-                    <span>{tag.label}</span>
-                  </button>
-                )
-              })}
+
+            <div>
+              <div className="text-[11px] font-black text-[#1C1917] uppercase tracking-wider mb-1.5">
+                <span>Highlighter</span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 bg-white border-2 border-[#1C1917] rounded-xl px-2.5 py-1 shadow-[2px_2px_0px_#1C1917]">
+                <button
+                  type="button"
+                  onClick={() => setSelectedHighlight(null)}
+                  title="Auto-assign highlighter color"
+                  className={`text-[10px] font-black px-1.5 py-0.5 rounded border border-[#1C1917] cursor-pointer transition-colors ${
+                    selectedHighlight === null
+                      ? 'bg-[#FEF08A] text-[#1C1917]'
+                      : 'bg-stone-100 text-[#57534E] hover:bg-stone-200'
+                  }`}
+                >
+                  Auto
+                </button>
+                {HIGHLIGHTER_OPTIONS.map((h) => {
+                  const isSelected = selectedHighlight === h.id
+                  return (
+                    <button
+                      key={h.id}
+                      type="button"
+                      onClick={() => setSelectedHighlight(isSelected ? null : h.id)}
+                      title={h.name}
+                      aria-label={`Set ${h.name} highlighter`}
+                      className={`w-4 h-4 rounded-full border border-[#1C1917] transition-transform cursor-pointer ${
+                        isSelected
+                          ? 'scale-115 ring-2 ring-[#1C1917]/35'
+                          : 'opacity-75 hover:opacity-100 hover:scale-110'
+                      }`}
+                      style={{ backgroundColor: h.marker }}
+                    />
+                  )
+                })}
+              </div>
             </div>
           </div>
 
