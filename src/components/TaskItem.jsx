@@ -163,6 +163,7 @@ export default function TaskItem({
 }) {
   const isWeeklyMilestone = task.day_of_week === 0 || currentDay === 0
   const [isEditing, setIsEditing] = useState(false)
+  const [isPriorityDockOpen, setIsPriorityDockOpen] = useState(false)
   const [editText, setEditText] = useState(task.title)
   const [editDuration, setEditDuration] = useState(task.duration_minutes ?? 30)
   const [isCustomDuration, setIsCustomDuration] = useState(false)
@@ -172,6 +173,7 @@ export default function TaskItem({
   const inputRef = useRef(null)
   const customDurationInputRef = useRef(null)
   const focusDropdownRef = useRef(null)
+  const priorityDockRef = useRef(null)
   const lastFocusClickRef = useRef(0)
   // Shows the "just this one / all following" choice for repeating tasks
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -277,6 +279,41 @@ export default function TaskItem({
     }
   }, [isDurationDropdownOpen])
 
+  // Outside click and keyboard shortcut listener (1-6, Escape) for Floating Symbol Dock
+  useEffect(() => {
+    if (!isPriorityDockOpen) return
+
+    const handleOutsideClick = (e) => {
+      if (priorityDockRef.current && !priorityDockRef.current.contains(e.target)) {
+        setIsPriorityDockOpen(false)
+      }
+    }
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation()
+        setIsPriorityDockOpen(false)
+        return
+      }
+      if (/^[1-6]$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault()
+        e.stopPropagation()
+        const chosenLevel = Number(e.key)
+        setTaskPriority(task, chosenLevel, true, true)
+        setIsPriorityDockOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleOutsideClick)
+    document.addEventListener('touchstart', handleOutsideClick)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick)
+      document.removeEventListener('touchstart', handleOutsideClick)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isPriorityDockOpen, task])
+
   
   const handleCapsuleDoubleClick = (e) => {
     if (isEditing) return;
@@ -288,6 +325,7 @@ export default function TaskItem({
   };
 
   const handleStartEdit = () => {
+    setIsPriorityDockOpen(false)
     setIsCustomDuration(!DURATION_PRESETS.some((p) => p.value === (task.duration_minutes ?? 30)))
     setUpdateEntireWeek(true)
     setEditRepeatDays(connectedDays)
@@ -428,6 +466,8 @@ export default function TaskItem({
       title={isEditing ? undefined : 'Double-click anywhere to edit • Drag to reorder'}
       style={cardHighlightStyle}
       className={`group relative flex flex-col gap-2 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border sm:border-2 border-[#1C1917] transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#1C1917] ${
+        isPriorityDockOpen ? 'z-40' : ''
+      } ${
         isDragging
           ? 'opacity-40 scale-[0.99] border-dashed bg-[#FEF08A]/30 shadow-none'
           : task.is_completed
@@ -827,27 +867,69 @@ export default function TaskItem({
               </div>
             )}
 
-            {/* Queue Stamp (#order + aesthetic symbol) for incomplete tasks */}
+            {/* Queue Stamp (#order + aesthetic symbol) + Floating Symbol Dock for incomplete tasks */}
             {!task.is_completed && (
-              <button
-                type="button"
-                data-no-drag
-                onClick={(e) => {
-                  e.stopPropagation()
-                  const nextLevel = (activePriority.level % PRIORITY_OPTIONS.length) + 1
-                  setTaskPriority(task, nextLevel, true, true)
-                }}
-                title={`Queue #${index + 1} • ${activePriority.code} ${activePriority.label} (Click to cycle priority)`}
-                aria-label={`Queue ${index + 1}, priority ${activePriority.label}, click to change`}
-                style={{
-                  backgroundColor: activePriority.badgeBg,
-                  color: activePriority.badgeText
-                }}
-                className="shrink-0 mt-0.5 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-[#1C1917] shadow-[1px_1px_0px_#1C1917] sm:shadow-[1.5px_1.5px_0px_#1C1917] hover:scale-105 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none font-mono font-black text-xs transition-all cursor-pointer select-none"
-              >
-                <span>#{index + 1}</span>
-                <EditorialPriorityIcon type={activePriority.icon} className="w-3.5 h-3.5" />
-              </button>
+              <div ref={priorityDockRef} className="relative shrink-0 mt-0.5" data-no-drag>
+                <button
+                  type="button"
+                  data-no-drag
+                  aria-expanded={isPriorityDockOpen}
+                  aria-haspopup="true"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setIsPriorityDockOpen((prev) => !prev)
+                  }}
+                  title={`Queue #${index + 1} • ${activePriority.code} ${activePriority.label} (Click to pick priority 1–6)`}
+                  aria-label={`Queue ${index + 1}, priority ${activePriority.label}, click to open priority dock`}
+                  style={{
+                    backgroundColor: activePriority.badgeBg,
+                    color: activePriority.badgeText
+                  }}
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-[#1C1917] shadow-[1px_1px_0px_#1C1917] sm:shadow-[1.5px_1.5px_0px_#1C1917] hover:scale-105 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none font-mono font-black text-xs transition-all cursor-pointer select-none"
+                >
+                  <span>#{index + 1}</span>
+                  <EditorialPriorityIcon type={activePriority.icon} className="w-3.5 h-3.5" />
+                </button>
+
+                {isPriorityDockOpen && (
+                  <div
+                    role="menu"
+                    aria-label="Select task priority"
+                    onClick={(e) => e.stopPropagation()}
+                    onDoubleClick={(e) => e.stopPropagation()}
+                    className="absolute left-0 top-full mt-1.5 z-50 flex items-center gap-1 bg-white border-2 border-[#1C1917] rounded-xl p-1.5 shadow-[3px_3px_0px_#1C1917] animate-in fade-in zoom-in-95 duration-100 whitespace-nowrap"
+                  >
+                    {PRIORITY_OPTIONS.map((opt) => {
+                      const isCurrentTier = activePriority.level === opt.level
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          role="menuitem"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setTaskPriority(task, opt.level, true, true)
+                            setIsPriorityDockOpen(false)
+                          }}
+                          title={`${opt.code} ${opt.label} (Press ${opt.level})`}
+                          style={{
+                            backgroundColor: opt.badgeBg,
+                            color: opt.badgeText
+                          }}
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-[#1C1917] font-mono font-black text-[11px] transition-all cursor-pointer select-none ${
+                            isCurrentTier
+                              ? 'ring-2 ring-[#1C1917] shadow-none translate-x-[0.5px] translate-y-[0.5px]'
+                              : 'shadow-[1.5px_1.5px_0px_#1C1917] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none'
+                          }`}
+                        >
+                          <EditorialPriorityIcon type={opt.icon} className="w-3.5 h-3.5" />
+                          <span>{opt.level}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
             )}
 
             <button

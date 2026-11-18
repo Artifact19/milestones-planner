@@ -164,6 +164,7 @@ export const HIGHLIGHTER_OPTIONS = [
 
 const HIGHLIGHT_STORAGE_KEY = 'milestones_task_highlights_v1'
 const PRIORITY_STORAGE_KEY = 'milestones_task_priorities_v1'
+const PRIORITY_TS_STORAGE_KEY = 'milestones_task_priority_ts_v1'
 const SHORT_CONNECTOR_WORDS = new Set(['for', 'to', 'of', 'in', 'on', 'and', 'the', 'a', 'with', '&'])
 
 // 6 priority tiers mapped 1-to-1 with cool editorial line-art symbols and pastel colors
@@ -271,6 +272,13 @@ export function getStoredTaskPriorityLevel(task) {
   return Number.isInteger(num) && num >= 1 ? num : null
 }
 
+export function getStoredTaskPriorityTimestamp(task) {
+  const map = readTaskMap(PRIORITY_TS_STORAGE_KEY)
+  const raw = lookupTaskMapValue(map, task)
+  const num = Number(raw)
+  return Number.isFinite(num) && num > 0 ? num : 0
+}
+
 export function getTaskPriority(task, fallbackIndex = 0) {
   const stored = getStoredTaskPriorityLevel(task)
   const effectiveRank = stored !== null ? stored : Math.max(0, Number(fallbackIndex) || 0) + 1
@@ -292,6 +300,7 @@ export function setTaskPriority(task, level, syncSeries = true, syncColor = true
   if (!Number.isInteger(num) || num < 1) return
   const tier = PRIORITY_OPTIONS[(num - 1) % PRIORITY_OPTIONS.length]
 
+  saveTaskMapValue(PRIORITY_TS_STORAGE_KEY, task, Date.now(), syncSeries, false)
   // When also syncing color, defer event dispatch until highlighter write so subscribers re-read both atomically
   saveTaskMapValue(PRIORITY_STORAGE_KEY, task, num, syncSeries, !syncColor)
   if (syncColor) {
@@ -303,14 +312,18 @@ export function syncTaskPrioritiesForOrder(incompleteTasks = []) {
   if (!Array.isArray(incompleteTasks) || incompleteTasks.length === 0) return
   const prioMap = readTaskMap(PRIORITY_STORAGE_KEY)
   const hlMap = readTaskMap(HIGHLIGHT_STORAGE_KEY)
+  const tsMap = readTaskMap(PRIORITY_TS_STORAGE_KEY)
 
   incompleteTasks.forEach((task, idx) => {
     if (!task?.id) return
     const tier = PRIORITY_OPTIONS[idx % PRIORITY_OPTIONS.length]
     prioMap[`id:${task.id}`] = idx + 1
     hlMap[`id:${task.id}`] = tier.defaultColor
+    delete tsMap[`id:${task.id}`]
+    if (task?.series_id) delete tsMap[`series:${task.series_id}`]
   })
 
+  writeTaskMap(PRIORITY_TS_STORAGE_KEY, tsMap, false)
   writeTaskMap(PRIORITY_STORAGE_KEY, prioMap, false)
   writeTaskMap(HIGHLIGHT_STORAGE_KEY, hlMap, true)
 }
@@ -325,6 +338,9 @@ export function sortIncompleteByPriority(incompleteList = []) {
     const rankB = pB !== null ? pB : (indexMap.get(b.id) ?? 0) + 1
     if (rankA !== rankB) return rankA - rankB
     if ((pA !== null) !== (pB !== null)) return pA !== null ? -1 : 1
+    const tsA = getStoredTaskPriorityTimestamp(a)
+    const tsB = getStoredTaskPriorityTimestamp(b)
+    if (tsA !== tsB) return tsB - tsA
     return (indexMap.get(a.id) ?? 0) - (indexMap.get(b.id) ?? 0)
   })
 }
